@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { orders, sellers, catalogItems } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { sendOrderConfirmation, sendNewOrderAlert } from "@/lib/email-service";
+import { getCustomerSession } from "@/lib/customer-session";
 
 export async function POST(
   req: NextRequest,
@@ -30,6 +31,10 @@ export async function POST(
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
+    // Link order to customer if logged in
+    const customerSession = await getCustomerSession().catch(() => null);
+    const customerId = customerSession?.customerId || null;
+
     const orderMessage = quantity && quantity > 1
       ? `Qty: ${quantity}. ${message || ""}`
       : message || "";
@@ -43,6 +48,7 @@ export async function POST(
         customerContact,
         message: orderMessage,
         status: "new",
+        customerId,
       })
       .returning();
 

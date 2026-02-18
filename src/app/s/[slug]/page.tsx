@@ -1,28 +1,13 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language";
 import {
-  Store,
-  MapPin,
-  MessageCircle,
-  Instagram,
-  Facebook,
-  AlertCircle,
-  Loader2,
-  ShoppingBag,
-  X,
-  Send,
-  CheckCircle,
-  Home,
-  Package,
-  Star,
-  MessageSquare,
-  Phone,
-  Info,
-  Image as ImageIcon,
+  Store, MapPin, MessageCircle, Instagram, Facebook, AlertCircle, Loader2,
+  ShoppingBag, X, Send, CheckCircle, Home, Package, Star, MessageSquare,
+  Phone, Info, Heart, User, LogIn, ChevronLeft, ChevronRight, Share2, Copy, Check,
 } from "lucide-react";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
 import { getTheme } from "@/lib/theme-colors";
@@ -37,148 +22,63 @@ function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; 
 
 /* ── Types ── */
 type Seller = {
-  id: number;
-  slug: string;
-  name: string;
-  description: string;
-  ownerName: string;
-  businessType: string;
-  currency: string;
-  city: string;
-  logoUrl: string;
-  bannerUrl: string;
+  id: number; slug: string; name: string; description: string; ownerName: string;
+  businessType: string; currency: string; city: string; logoUrl: string; bannerUrl: string;
   socialLinks: { whatsapp?: string; instagram?: string; facebook?: string };
-  themeColor: string;
-  address: string;
-  country: string;
+  themeColor: string; address: string; country: string;
   businessHours: Record<string, { open: string; close: string }>;
 };
-
-type Product = {
-  id: number;
-  sellerId: number;
-  name: string;
-  type: string;
-  category: string;
-  shortDescription: string;
-  imageUrl: string;
-  imageUrls: string;
-  price: string;
-  status: string;
-};
-
-type Comment = {
-  id: number;
-  catalogItemId: number | null;
-  sellerId: number | null;
-  authorName: string;
-  authorEmail: string | null;
-  content: string;
-  rating: number | null;
-  createdAt: string;
-};
+type Product = { id: number; sellerId: number; name: string; type: string; category: string; shortDescription: string; imageUrl: string; imageUrls: string; price: string; status: string };
+type Comment = { id: number; catalogItemId: number | null; sellerId: number | null; authorName: string; authorEmail: string | null; content: string; rating: number | null; createdAt: string };
+type CustomerInfo = { customerId: number; name: string; email: string; phone?: string; address?: string; city?: string; country?: string } | null;
 
 /* ── i18n ── */
 const dict = {
   en: {
-    loading: "Loading store...",
-    notFound: "Store not found",
-    notFoundHint: "This store doesn't exist or hasn't been set up yet.",
-    goHome: "Go home",
-    tabProducts: "Products",
-    tabAbout: "About",
-    tabReviews: "Reviews",
-    tabContact: "Contact",
-    allCategories: "All",
-    noProducts: "No products yet",
+    loading: "Loading store...", notFound: "Store not found",
+    notFoundHint: "This store doesn't exist or hasn't been set up yet.", goHome: "Go home",
+    tabProducts: "Products", tabAbout: "About", tabReviews: "Reviews", tabContact: "Contact",
+    allCategories: "All", noProducts: "No products yet",
     noProductsHint: "This seller hasn't published any products yet.",
-    order: "Order",
-    details: "Details",
-    reviews: "Reviews",
-    orderTab: "Order",
-    addToOrder: "Order",
-    orderTitle: "Place an Order",
-    orderName: "Your name",
-    orderNamePh: "Full name",
-    orderContact: "Email or phone",
-    orderContactPh: "email@example.com or +258...",
-    orderQty: "Quantity",
-    orderNotes: "Notes (optional)",
-    orderNotesPh: "Any details or questions...",
-    orderSubmit: "Send order",
-    orderSending: "Sending...",
-    orderSuccess: "Order placed successfully!",
-    orderRef: "Reference",
-    orderSuccessHint: "The seller will contact you soon.",
-    close: "Close",
-    noReviews: "No reviews yet",
-    writeReview: "Write a review",
-    yourName: "Your name",
-    yourReview: "Your review...",
-    submitReview: "Submit",
-    submitting: "Submitting...",
-    reviewSubmitted: "Review submitted!",
-    rating: "Rating",
-    aboutStore: "About this store",
-    businessType: "Business type",
-    location: "Location",
-    contactInfo: "Contact Information",
-    whatsapp: "WhatsApp",
-    socialLinks: "Social Links",
-    avgRating: "Average rating",
-    based: "based on",
-    reviewsCount: "reviews",
-    products: "products",
+    order: "Order", details: "Details", reviews: "Reviews", orderTab: "Order", addToOrder: "Order",
+    orderTitle: "Place an Order", orderName: "Your name", orderNamePh: "Full name",
+    orderContact: "Email or phone", orderContactPh: "email@example.com or +258...",
+    orderQty: "Quantity", orderNotes: "Notes (optional)", orderNotesPh: "Any details or questions...",
+    orderSubmit: "Send order", orderSending: "Sending...", orderSuccess: "Order placed successfully!",
+    orderRef: "Reference", orderSuccessHint: "The seller will contact you soon.",
+    close: "Close", noReviews: "No reviews yet", writeReview: "Write a review",
+    yourName: "Your name", yourReview: "Your review...", submitReview: "Submit",
+    submitting: "Submitting...", reviewSubmitted: "Review submitted!", rating: "Rating",
+    aboutStore: "About this store", businessType: "Business type", location: "Location",
+    contactInfo: "Contact Information", whatsapp: "WhatsApp", socialLinks: "Social Links",
+    avgRating: "Average rating", based: "based on", reviewsCount: "reviews", products: "products",
+    login: "Login", myAccount: "Account", wishlist: "Wishlist",
+    loginToSave: "Log in to save favorites", copied: "Copied!", share: "Share",
+    prev: "Previous", next: "Next",
   },
   pt: {
-    loading: "A carregar loja...",
-    notFound: "Loja não encontrada",
-    notFoundHint: "Esta loja não existe ou ainda não foi configurada.",
-    goHome: "Ir para início",
-    tabProducts: "Produtos",
-    tabAbout: "Sobre",
-    tabReviews: "Avaliações",
-    tabContact: "Contacto",
-    allCategories: "Todos",
-    noProducts: "Ainda sem produtos",
+    loading: "A carregar loja...", notFound: "Loja não encontrada",
+    notFoundHint: "Esta loja não existe ou ainda não foi configurada.", goHome: "Ir para início",
+    tabProducts: "Produtos", tabAbout: "Sobre", tabReviews: "Avaliações", tabContact: "Contacto",
+    allCategories: "Todos", noProducts: "Ainda sem produtos",
     noProductsHint: "Este vendedor ainda não publicou produtos.",
-    order: "Encomendar",
-    details: "Detalhes",
-    reviews: "Avaliações",
-    orderTab: "Encomendar",
-    addToOrder: "Encomendar",
-    orderTitle: "Fazer um Pedido",
-    orderName: "Seu nome",
-    orderNamePh: "Nome completo",
-    orderContact: "Email ou telefone",
-    orderContactPh: "email@exemplo.com ou +258...",
-    orderQty: "Quantidade",
-    orderNotes: "Notas (opcional)",
-    orderNotesPh: "Detalhes ou perguntas...",
-    orderSubmit: "Enviar pedido",
-    orderSending: "A enviar...",
-    orderSuccess: "Pedido feito com sucesso!",
-    orderRef: "Referência",
-    orderSuccessHint: "O vendedor entrará em contacto em breve.",
-    close: "Fechar",
-    noReviews: "Ainda sem avaliações",
-    writeReview: "Escrever avaliação",
-    yourName: "Seu nome",
-    yourReview: "Sua avaliação...",
-    submitReview: "Enviar",
-    submitting: "A enviar...",
-    reviewSubmitted: "Avaliação enviada!",
-    rating: "Classificação",
-    aboutStore: "Sobre esta loja",
-    businessType: "Tipo de negócio",
-    location: "Localização",
-    contactInfo: "Informações de Contacto",
-    whatsapp: "WhatsApp",
-    socialLinks: "Redes Sociais",
-    avgRating: "Classificação média",
-    based: "baseado em",
-    reviewsCount: "avaliações",
-    products: "produtos",
+    order: "Encomendar", details: "Detalhes", reviews: "Avaliações", orderTab: "Encomendar",
+    addToOrder: "Encomendar", orderTitle: "Fazer um Pedido", orderName: "Seu nome",
+    orderNamePh: "Nome completo", orderContact: "Email ou telefone",
+    orderContactPh: "email@exemplo.com ou +258...", orderQty: "Quantidade",
+    orderNotes: "Notas (opcional)", orderNotesPh: "Detalhes ou perguntas...",
+    orderSubmit: "Enviar pedido", orderSending: "A enviar...",
+    orderSuccess: "Pedido feito com sucesso!", orderRef: "Referência",
+    orderSuccessHint: "O vendedor entrará em contacto em breve.", close: "Fechar",
+    noReviews: "Ainda sem avaliações", writeReview: "Escrever avaliação",
+    yourName: "Seu nome", yourReview: "Sua avaliação...", submitReview: "Enviar",
+    submitting: "A enviar...", reviewSubmitted: "Avaliação enviada!", rating: "Classificação",
+    aboutStore: "Sobre esta loja", businessType: "Tipo de negócio", location: "Localização",
+    contactInfo: "Informações de Contacto", whatsapp: "WhatsApp", socialLinks: "Redes Sociais",
+    avgRating: "Classificação média", based: "baseado em", reviewsCount: "avaliações", products: "produtos",
+    login: "Entrar", myAccount: "Conta", wishlist: "Favoritos",
+    loginToSave: "Entre para guardar favoritos", copied: "Copiado!", share: "Partilhar",
+    prev: "Anterior", next: "Seguinte",
   },
 };
 
@@ -194,23 +94,49 @@ export default function StorefrontPage() {
   const [activeTab, setActiveTab] = useState<"products" | "about" | "reviews" | "contact">("products");
   const [category, setCategory] = useState("all");
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
+  const [customer, setCustomer] = useState<CustomerInfo>(null);
+  const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
+  const [loginPrompt, setLoginPrompt] = useState(false);
 
+  // Load customer session
+  useEffect(() => {
+    fetch("/api/auth/customer/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => { if (data.session) setCustomer(data.session); })
+      .catch(() => {});
+  }, []);
+
+  // Load wishlist IDs when customer is logged in
+  useEffect(() => {
+    if (!customer) return;
+    fetch("/api/wishlist", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setWishlistIds(new Set(data.map((w: { catalogItemId: number }) => w.catalogItemId)));
+      })
+      .catch(() => {});
+  }, [customer]);
+
+  // Load store
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
     fetch(`/api/storefront/${slug}`)
-      .then((r) => {
-        if (r.status === 404) { setNotFound(true); setLoading(false); return null; }
-        return r.json();
-      })
-      .then((data) => {
-        if (!data) return;
-        setSeller(data.seller);
-        setProducts((data.products || []).filter((p: Product) => p.status === "Published"));
-        setLoading(false);
-      })
+      .then((r) => { if (r.status === 404) { setNotFound(true); setLoading(false); return null; } return r.json(); })
+      .then((data) => { if (!data) return; setSeller(data.seller); setProducts((data.products || []).filter((p: Product) => p.status === "Published")); setLoading(false); })
       .catch(() => { setNotFound(true); setLoading(false); });
   }, [slug]);
+
+  const toggleWishlist = useCallback(async (itemId: number) => {
+    if (!customer) { setLoginPrompt(true); return; }
+    const isWished = wishlistIds.has(itemId);
+    setWishlistIds((prev) => { const next = new Set(prev); if (isWished) next.delete(itemId); else next.add(itemId); return next; });
+    if (isWished) {
+      await fetch(`/api/wishlist?catalogItemId=${itemId}`, { method: "DELETE", credentials: "include" });
+    } else {
+      await fetch("/api/wishlist", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ catalogItemId: itemId }) });
+    }
+  }, [customer, wishlistIds]);
 
   const categories = useMemo(() => {
     const cats = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
@@ -225,8 +151,10 @@ export default function StorefrontPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-        <span className="ml-2 text-sm text-slate-500">{t.loading}</span>
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+          <span className="mt-3 block text-sm text-slate-500">{t.loading}</span>
+        </div>
       </div>
     );
   }
@@ -237,7 +165,7 @@ export default function StorefrontPage() {
         <AlertCircle className="h-10 w-10 text-slate-400" />
         <h1 className="mt-3 text-xl font-bold text-slate-900">{t.notFound}</h1>
         <p className="mt-1 text-sm text-slate-500">{t.notFoundHint}</p>
-        <Link href="/" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+        <Link href="/" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
           <Home className="h-4 w-4" /> {t.goHome}
         </Link>
       </div>
@@ -254,152 +182,138 @@ export default function StorefrontPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50/50">
       {/* Structured data */}
-      <StoreJsonLd
-        name={seller.name}
-        description={seller.description || ""}
-        url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`}
-        logo={seller.logoUrl || undefined}
-        image={seller.bannerUrl || undefined}
-        address={seller.address || undefined}
-        city={seller.city || undefined}
-        country={seller.country || undefined}
-      />
-      {products.map((p) => (
-        <ProductJsonLd
-          key={p.id}
-          name={p.name}
-          description={p.shortDescription || undefined}
-          image={p.imageUrl || undefined}
-          price={p.price}
-          currency={seller.currency || "USD"}
-          url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`}
-          seller={seller.name}
-        />
-      ))}
+      <StoreJsonLd name={seller.name} description={seller.description || ""} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} logo={seller.logoUrl || undefined} image={seller.bannerUrl || undefined} address={seller.address || undefined} city={seller.city || undefined} country={seller.country || undefined} />
+      {products.map((p) => <ProductJsonLd key={p.id} name={p.name} description={p.shortDescription || undefined} image={p.imageUrl || undefined} price={p.price} currency={seller.currency || "USD"} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} seller={seller.name} />)}
 
-      {/* Minimal top bar */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur">
+      {/* Top bar with customer nav */}
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
-          <Link href="/" className="text-sm font-semibold text-slate-500 hover:text-slate-700">MyShop</Link>
+          <Link href="/" className="text-sm font-bold text-slate-500 hover:text-slate-700 transition">MyShop</Link>
           <div className="flex items-center gap-1">
             {social.whatsapp && (
-              <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-emerald-600">
+              <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition">
                 <MessageCircle className="h-4 w-4" />
               </a>
             )}
             {social.instagram && (
-              <a href={social.instagram} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-pink-600">
+              <a href={social.instagram} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-pink-50 hover:text-pink-600 transition">
                 <Instagram className="h-4 w-4" />
               </a>
             )}
             {social.facebook && (
-              <a href={social.facebook} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600">
+              <a href={social.facebook} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition">
                 <Facebook className="h-4 w-4" />
               </a>
+            )}
+            <div className="mx-1 h-4 w-px bg-slate-200" />
+            {customer ? (
+              <>
+                <Link href="/customer/wishlist" className="relative rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 transition">
+                  <Heart className={`h-4 w-4 ${wishlistIds.size > 0 ? "fill-red-500 text-red-500" : ""}`} />
+                  {wishlistIds.size > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{wishlistIds.size}</span>}
+                </Link>
+                <Link href="/customer/profile" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">{customer.name.charAt(0).toUpperCase()}</div>
+                  <span className="hidden sm:inline max-w-[80px] truncate">{customer.name.split(" ")[0]}</span>
+                </Link>
+              </>
+            ) : (
+              <Link href={`/customer/login?redirect=/s/${slug}`} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+                <LogIn className="h-3.5 w-3.5" /> {t.login}
+              </Link>
             )}
           </div>
         </div>
       </header>
 
-      {/* Compact store header */}
-      <div className="mx-auto max-w-5xl px-4">
-        {/* Banner */}
-        <div className="relative mt-2 h-[100px] overflow-hidden rounded-xl sm:h-[120px]">
-          {seller.bannerUrl ? (
-            <SafeImg
-              src={seller.bannerUrl}
-              alt={`${seller.name} banner`}
-              className="h-full w-full object-cover"
-              fallback={
-                <div className={`flex h-full items-center justify-center bg-gradient-to-r ${theme.gradient}`}>
-                  <span className="text-xl font-bold text-white/80">{seller.name}</span>
-                </div>
-              }
-            />
-          ) : (
-            <div className={`flex h-full items-center justify-center bg-gradient-to-r ${theme.gradient}`}>
-              <span className="text-xl font-bold text-white/80">{seller.name}</span>
+      {/* Store header */}
+      <div className="bg-white pb-1">
+        <div className="mx-auto max-w-5xl px-4">
+          <div className="relative mt-0 h-[110px] overflow-hidden rounded-b-2xl sm:h-[140px]">
+            {seller.bannerUrl ? (
+              <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} />
+            ) : (
+              <div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}>
+                <span className="text-2xl font-bold text-white/80">{seller.name}</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          </div>
+
+          <div className="relative -mt-8 flex items-end gap-3 px-2 sm:px-4">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-lg">
+              {seller.logoUrl ? (
+                <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />} />
+              ) : (
+                <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />
+              )}
             </div>
+            <div className="min-w-0 flex-1 pb-1">
+              <h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                {seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" /> {seller.city}{seller.country ? `, ${seller.country}` : ""}</span>}
+                {seller.businessType && seller.businessType !== "Retail" && <span className="rounded-full bg-slate-100 px-2 py-0.5">{seller.businessType}</span>}
+                <span>{products.length} {t.products}</span>
+              </div>
+            </div>
+          </div>
+          {seller.description && (
+            <p className="mt-2 line-clamp-2 px-2 text-sm leading-relaxed text-slate-500 sm:px-4">{seller.description}</p>
           )}
         </div>
-
-        {/* Store info — overlaps banner */}
-        <div className="relative -mt-6 flex items-end gap-3 px-2 sm:px-4">
-          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-white shadow-sm">
-            {seller.logoUrl ? (
-              <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />} />
-            ) : (
-              <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1 pb-0.5">
-            <h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-              {seller.city && (
-                <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" /> {seller.city}</span>
-              )}
-              {seller.businessType && <span>{seller.businessType}</span>}
-              <span>{products.length} {t.products}</span>
-            </div>
-          </div>
-        </div>
-        {seller.description && (
-          <p className="mt-2 truncate px-2 text-sm text-slate-500 sm:px-4">{seller.description}</p>
-        )}
       </div>
 
-      {/* Tab bar — sticky */}
-      <div className="sticky top-12 z-20 mt-3 border-b border-slate-200 bg-white">
+      {/* Tab bar */}
+      <div className="sticky top-12 z-20 border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-5xl px-4">
           {tabs.map((tb) => (
             <button
               key={tb.id}
               onClick={() => setActiveTab(tb.id)}
-              className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-medium transition-colors sm:flex-none sm:px-5 sm:text-sm ${
+              className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-3 text-xs font-medium transition-all sm:flex-none sm:px-5 sm:text-sm ${
                 activeTab === tb.id
                   ? `${theme.tabBorder} ${theme.tab}`
                   : "border-transparent text-slate-500 hover:text-slate-700"
               }`}
             >
               <tb.icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{tb.label}</span>
-              <span className="sm:hidden">{tb.label}</span>
+              {tb.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Tab content */}
-      <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:pb-8">
+      {/* Content */}
+      <main className="mx-auto max-w-5xl px-4 pb-24 pt-5 sm:pb-8">
         {activeTab === "products" && (
-          <ProductsTab
-            products={filtered}
-            categories={categories}
-            category={category}
-            setCategory={setCategory}
-            currency={seller.currency || "USD"}
-            t={t}
-            theme={theme}
-            onProductClick={setModalProduct}
-          />
+          <ProductsTab products={filtered} categories={categories} category={category} setCategory={setCategory} currency={seller.currency || "USD"} t={t} theme={theme} onProductClick={setModalProduct} wishlistIds={wishlistIds} toggleWishlist={toggleWishlist} />
         )}
         {activeTab === "about" && <AboutTab seller={seller} t={t} />}
         {activeTab === "reviews" && <ReviewsTab sellerId={seller.id} t={t} />}
         {activeTab === "contact" && <ContactTab seller={seller} t={t} />}
       </main>
 
-      {/* Product detail modal */}
+      {/* Product modal */}
       {modalProduct && (
-        <ProductModal
-          product={modalProduct}
-          slug={seller.slug}
-          currency={seller.currency || "USD"}
-          t={t}
-          theme={theme}
-          onClose={() => setModalProduct(null)}
-        />
+        <ProductModal product={modalProduct} slug={seller.slug} currency={seller.currency || "USD"} t={t} theme={theme} onClose={() => setModalProduct(null)} customer={customer} isWished={wishlistIds.has(modalProduct.id)} toggleWishlist={toggleWishlist} />
+      )}
+
+      {/* Login prompt */}
+      {loginPrompt && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 p-4 sm:items-center" onClick={() => setLoginPrompt(false)}>
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center">
+              <Heart className="mx-auto h-10 w-10 text-red-400" />
+              <p className="mt-3 text-sm font-medium text-slate-700">{t.loginToSave}</p>
+              <div className="mt-4 flex gap-2">
+                <Link href={`/customer/login?redirect=/s/${slug}`} className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-indigo-700 transition">{t.login}</Link>
+                <button onClick={() => setLoginPrompt(false)} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">{t.close}</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -407,36 +321,22 @@ export default function StorefrontPage() {
 
 /* ── Products Tab ── */
 function ProductsTab({
-  products,
-  categories,
-  category,
-  setCategory,
-  currency,
-  t,
-  theme,
-  onProductClick,
+  products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist,
 }: {
-  products: Product[];
-  categories: string[];
-  category: string;
-  setCategory: (c: string) => void;
-  currency: string;
-  t: Record<string, string>;
-  theme: ReturnType<typeof getTheme>;
-  onProductClick: (p: Product) => void;
+  products: Product[]; categories: string[]; category: string; setCategory: (c: string) => void;
+  currency: string; t: Record<string, string>; theme: ReturnType<typeof getTheme>;
+  onProductClick: (p: Product) => void; wishlistIds: Set<number>; toggleWishlist: (id: number) => void;
 }) {
   return (
     <>
       {categories.length > 1 && (
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setCategory(cat)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                category === cat
-                  ? theme.pillActive
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition-all ${
+                category === cat ? theme.pillActive : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:shadow-sm"
               }`}
             >
               {cat === "all" ? t.allCategories : cat}
@@ -446,32 +346,43 @@ function ProductsTab({
       )}
 
       {products.length === 0 ? (
-        <div className="py-12 text-center">
-          <Package className="mx-auto h-8 w-8 text-slate-300" />
-          <p className="mt-2 text-sm font-medium text-slate-500">{t.noProducts}</p>
-          <p className="mt-0.5 text-xs text-slate-400">{t.noProductsHint}</p>
+        <div className="py-16 text-center">
+          <Package className="mx-auto h-10 w-10 text-slate-300" />
+          <p className="mt-3 text-sm font-medium text-slate-500">{t.noProducts}</p>
+          <p className="mt-1 text-xs text-slate-400">{t.noProductsHint}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {products.map((product) => (
             <article
               key={product.id}
-              className="group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:shadow-md"
+              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg hover:-translate-y-0.5"
               onClick={() => onProductClick(product)}
             >
-              {product.imageUrl ? (
-                <SafeImg src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" fallback={<PlaceholderImage className="aspect-square w-full" />} />
-              ) : (
-                <PlaceholderImage className="aspect-square w-full" />
-              )}
+              {/* Wishlist heart */}
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:scale-110"
+              >
+                <Heart className={`h-4 w-4 transition ${wishlistIds.has(product.id) ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
+              </button>
+
+              <div className="aspect-square overflow-hidden">
+                {product.imageUrl ? (
+                  <SafeImg src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" fallback={<PlaceholderImage className="h-full w-full" />} />
+                ) : (
+                  <PlaceholderImage className="h-full w-full" />
+                )}
+              </div>
               <div className="p-3">
                 <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-                <p className={`mt-1 text-sm font-bold ${theme.text}`}>{currency} {product.price}</p>
+                {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
+                <p className={`mt-1.5 text-sm font-bold ${theme.text}`}>{currency} {product.price}</p>
               </div>
               <div className="px-3 pb-3">
                 <button
                   onClick={(e) => { e.stopPropagation(); onProductClick(product); }}
-                  className={`flex w-full items-center justify-center gap-1.5 rounded-lg ${theme.btn} py-2 text-xs font-semibold text-white ${theme.btnHover}`}
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl ${theme.btn} py-2.5 text-xs font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.97]`}
                 >
                   <ShoppingBag className="h-3.5 w-3.5" />
                   {t.order}
@@ -489,25 +400,17 @@ function ProductsTab({
 function AboutTab({ seller, t }: { seller: Seller; t: Record<string, string> }) {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <h3 className="text-sm font-semibold text-slate-900">{t.aboutStore}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          {seller.description || "—"}
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">{seller.description || "—"}</p>
       </div>
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
-        <div className="grid gap-3 text-sm sm:grid-cols-2">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="grid gap-4 text-sm sm:grid-cols-2">
           {seller.businessType && (
-            <div>
-              <span className="text-xs text-slate-400">{t.businessType}</span>
-              <p className="font-medium text-slate-700">{seller.businessType}</p>
-            </div>
+            <div><span className="text-xs text-slate-400">{t.businessType}</span><p className="font-medium text-slate-700">{seller.businessType}</p></div>
           )}
-          {seller.city && (
-            <div>
-              <span className="text-xs text-slate-400">{t.location}</span>
-              <p className="font-medium text-slate-700">{seller.city}</p>
-            </div>
+          {(seller.city || seller.country) && (
+            <div><span className="text-xs text-slate-400">{t.location}</span><p className="font-medium text-slate-700">{[seller.city, seller.country].filter(Boolean).join(", ")}</p></div>
           )}
         </div>
       </div>
@@ -519,19 +422,12 @@ function AboutTab({ seller, t }: { seller: Seller; t: Record<string, string> }) 
 function ReviewsTab({ sellerId, t }: { sellerId: number; t: Record<string, string> }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [content, setContent] = useState("");
-  const [rating, setRating] = useState(5);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [name, setName] = useState(""); const [content, setContent] = useState(""); const [rating, setRating] = useState(5);
+  const [sending, setSending] = useState(false); const [sent, setSent] = useState(false); const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     fetch(`/api/comments?sellerId=${sellerId}`)
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setComments(data); })
-      .catch(() => {})
-      .finally(() => setLoaded(true));
+      .then((r) => r.json()).then((data) => { if (Array.isArray(data)) setComments(data); }).catch(() => {}).finally(() => setLoaded(true));
   }, [sellerId]);
 
   const avgRating = useMemo(() => {
@@ -551,17 +447,8 @@ function ReviewsTab({ sellerId, t }: { sellerId: number; t: Record<string, strin
     if (!name.trim() || !content.trim()) return;
     setSending(true);
     try {
-      const res = await fetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sellerId, authorName: name.trim(), content: content.trim(), rating }),
-      });
-      if (res.ok) {
-        const c = await res.json();
-        setComments((prev) => [c, ...prev]);
-        setName(""); setContent(""); setRating(5); setSent(true); setShowForm(false);
-        setTimeout(() => setSent(false), 3000);
-      }
+      const res = await fetch("/api/comments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellerId, authorName: name.trim(), content: content.trim(), rating }) });
+      if (res.ok) { const c = await res.json(); setComments((prev) => [c, ...prev]); setName(""); setContent(""); setRating(5); setSent(true); setShowForm(false); setTimeout(() => setSent(false), 3000); }
     } catch {} finally { setSending(false); }
   };
 
@@ -569,9 +456,8 @@ function ReviewsTab({ sellerId, t }: { sellerId: number; t: Record<string, strin
 
   return (
     <div className="space-y-4">
-      {/* Rating summary */}
       {comments.length > 0 && (
-        <div className="flex items-start gap-6 rounded-xl border border-slate-200 bg-white p-5">
+        <div className="flex items-start gap-6 rounded-2xl border border-slate-200 bg-white p-5">
           <div className="text-center">
             <p className="text-3xl font-bold text-slate-900">{avgRating}</p>
             <StarRating rating={Math.round(avgRating)} />
@@ -583,10 +469,7 @@ function ReviewsTab({ sellerId, t }: { sellerId: number; t: Record<string, strin
                 <span className="w-3 text-slate-500">{star}</span>
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-amber-400"
-                    style={{ width: `${(distribution[star - 1] / maxDist) * 100}%` }}
-                  />
+                  <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${(distribution[star - 1] / maxDist) * 100}%` }} />
                 </div>
                 <span className="w-4 text-right text-slate-400">{distribution[star - 1]}</span>
               </div>
@@ -595,44 +478,33 @@ function ReviewsTab({ sellerId, t }: { sellerId: number; t: Record<string, strin
         </div>
       )}
 
-      {/* Write review */}
       <div className="flex items-center justify-between">
-        {!showForm && !sent && (
-          <button onClick={() => setShowForm(true)} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
-            {t.writeReview}
-          </button>
-        )}
+        {!showForm && !sent && <button onClick={() => setShowForm(true)} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition">{t.writeReview}</button>}
         {sent && <span className="text-sm text-emerald-600">✓ {t.reviewSubmitted}</span>}
       </div>
 
       {showForm && (
-        <form onSubmit={submit} className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.yourName} required className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
-          <div>
-            <label className="text-xs font-medium text-slate-500">{t.rating}</label>
-            <StarRatingInput value={rating} onChange={setRating} />
-          </div>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.yourReview} required rows={3} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <form onSubmit={submit} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.yourName} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+          <div><label className="text-xs font-medium text-slate-500">{t.rating}</label><StarRatingInput value={rating} onChange={setRating} /></div>
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.yourReview} required rows={3} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
           <div className="flex gap-2">
-            <button type="submit" disabled={sending} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{sending ? t.submitting : t.submitReview}</button>
-            <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600">{t.close}</button>
+            <button type="submit" disabled={sending} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition">{sending ? t.submitting : t.submitReview}</button>
+            <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 transition">{t.close}</button>
           </div>
         </form>
       )}
 
-      {/* Reviews list */}
-      {loaded && comments.length === 0 && !showForm && (
-        <p className="py-8 text-center text-sm text-slate-400">{t.noReviews}</p>
-      )}
+      {loaded && comments.length === 0 && !showForm && <p className="py-12 text-center text-sm text-slate-400">{t.noReviews}</p>}
       <div className="space-y-3">
         {comments.map((c) => (
-          <div key={c.id} className="rounded-xl border border-slate-200 bg-white p-4">
+          <div key={c.id} className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-800">{c.authorName}</span>
               <span className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span>
             </div>
             {c.rating && <StarRating rating={c.rating} />}
-            <p className="mt-1 text-sm text-slate-600">{c.content}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.content}</p>
           </div>
         ))}
       </div>
@@ -645,33 +517,23 @@ function ContactTab({ seller, t }: { seller: Seller; t: Record<string, string> }
   const social = seller.socialLinks || {};
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <h3 className="text-sm font-semibold text-slate-900">{t.contactInfo}</h3>
-        {seller.city && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-            <MapPin className="h-4 w-4 text-slate-400" /> {seller.city}
-          </div>
+        {(seller.city || seller.address) && (
+          <div className="mt-3 flex items-start gap-2 text-sm text-slate-600"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" /><span>{[seller.address, seller.city, seller.country].filter(Boolean).join(", ")}</span></div>
         )}
         {social.whatsapp && (
-          <a href={social.whatsapp} target="_blank" rel="noreferrer" className="mt-3 flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700">
+          <a href={social.whatsapp} target="_blank" rel="noreferrer" className="mt-3 flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 transition">
             <MessageCircle className="h-4 w-4" /> {t.whatsapp}
           </a>
         )}
       </div>
       {(social.instagram || social.facebook) && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-slate-900">{t.socialLinks}</h3>
           <div className="mt-3 flex gap-3">
-            {social.instagram && (
-              <a href={social.instagram} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-pink-300 hover:text-pink-600">
-                <Instagram className="h-4 w-4" /> Instagram
-              </a>
-            )}
-            {social.facebook && (
-              <a href={social.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-blue-300 hover:text-blue-600">
-                <Facebook className="h-4 w-4" /> Facebook
-              </a>
-            )}
+            {social.instagram && <a href={social.instagram} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:border-pink-300 hover:text-pink-600 transition"><Instagram className="h-4 w-4" /> Instagram</a>}
+            {social.facebook && <a href={social.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:border-blue-300 hover:text-blue-600 transition"><Facebook className="h-4 w-4" /> Facebook</a>}
           </div>
         </div>
       )}
@@ -681,60 +543,38 @@ function ContactTab({ seller, t }: { seller: Seller; t: Record<string, string> }
 
 /* ── Star Components ── */
 function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Star key={i} className={`h-4 w-4 ${i <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />
-      ))}
-    </div>
-  );
+  return <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map((i) => <Star key={i} className={`h-4 w-4 ${i <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />)}</div>;
 }
-
 function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <button key={i} type="button" onClick={() => onChange(i)} className="p-0.5">
-          <Star className={`h-6 w-6 ${i <= value ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
-        </button>
-      ))}
-    </div>
-  );
+  return <div className="flex gap-1">{[1, 2, 3, 4, 5].map((i) => <button key={i} type="button" onClick={() => onChange(i)} className="p-0.5"><Star className={`h-6 w-6 transition ${i <= value ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-amber-300"}`} /></button>)}</div>;
 }
 
-/* ── Product Modal (centered, with mini-tabs) ── */
+/* ── Product Modal ── */
 function ProductModal({
-  product,
-  slug,
-  currency,
-  t,
-  theme,
-  onClose,
+  product, slug, currency, t, theme, onClose, customer, isWished, toggleWishlist,
 }: {
-  product: Product;
-  slug: string;
-  currency: string;
-  t: Record<string, string>;
-  theme: ReturnType<typeof getTheme>;
-  onClose: () => void;
+  product: Product; slug: string; currency: string; t: Record<string, string>;
+  theme: ReturnType<typeof getTheme>; onClose: () => void; customer: CustomerInfo;
+  isWished: boolean; toggleWishlist: (id: number) => void;
 }) {
   const [tab, setTab] = useState<"details" | "reviews" | "order">("details");
-
   const images = getProductImages(product);
   const [activeImg, setActiveImg] = useState(0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-white shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
+      <div className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] overflow-hidden rounded-t-3xl sm:rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
           <h2 className="truncate text-base font-bold text-slate-900">{product.name}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => toggleWishlist(product.id)} className="rounded-lg p-2 transition hover:bg-red-50">
+              <Heart className={`h-5 w-5 transition ${isWished ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
+            </button>
+            <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 transition">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Mini tabs */}
@@ -744,61 +584,46 @@ function ProductModal({
             { id: "reviews" as const, label: t.reviews },
             { id: "order" as const, label: t.orderTab },
           ]).map((tb) => (
-            <button
-              key={tb.id}
-              onClick={() => setTab(tb.id)}
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                tab === tb.id ? `border-b-2 ${theme.tabBorder} ${theme.tab}` : "text-slate-500"
-              }`}
-            >
-              {tb.label}
-            </button>
+            <button key={tb.id} onClick={() => setTab(tb.id)} className={`flex-1 py-2.5 text-xs font-medium transition-all ${tab === tb.id ? `border-b-2 ${theme.tabBorder} ${theme.tab}` : "text-slate-500"}`}>{tb.label}</button>
           ))}
         </div>
 
-        {/* Tab content */}
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(85vh - 110px)" }}>
+        <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(92vh - 110px)" }}>
           {tab === "details" && (
             <div className="p-5">
+              {/* Image gallery */}
               {images.length > 0 ? (
-                <>
-                  <SafeImg src={images[activeImg]} alt={product.name} className="aspect-video w-full rounded-lg object-cover" fallback={<PlaceholderImage className="aspect-video w-full rounded-lg" />} />
+                <div className="relative">
+                  <SafeImg src={images[activeImg]} alt={product.name} className="aspect-[4/3] w-full rounded-xl object-cover" fallback={<PlaceholderImage className="aspect-[4/3] w-full rounded-xl" />} />
                   {images.length > 1 && (
-                    <div className="mt-2 flex gap-2 overflow-x-auto">
-                      {images.map((url, i) => (
-                        <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 overflow-hidden rounded-lg border-2 ${i === activeImg ? "border-indigo-500" : "border-transparent"}`}>
-                          <SafeImg src={url} alt="" className="h-12 w-12 object-cover" fallback={<PlaceholderImage className="h-12 w-12" />} />
-                        </button>
-                      ))}
-                    </div>
+                    <>
+                      <button onClick={() => setActiveImg((i) => (i - 1 + images.length) % images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-md backdrop-blur transition hover:bg-white"><ChevronLeft className="h-4 w-4" /></button>
+                      <button onClick={() => setActiveImg((i) => (i + 1) % images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-md backdrop-blur transition hover:bg-white"><ChevronRight className="h-4 w-4" /></button>
+                      <div className="mt-2 flex gap-2 overflow-x-auto">
+                        {images.map((url, i) => (
+                          <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 overflow-hidden rounded-lg border-2 transition ${i === activeImg ? "border-indigo-500 shadow-sm" : "border-transparent opacity-70 hover:opacity-100"}`}>
+                            <SafeImg src={url} alt="" className="h-14 w-14 object-cover" fallback={<PlaceholderImage className="h-14 w-14" />} />
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
-                </>
+                </div>
               ) : (
-                <PlaceholderImage className="aspect-video w-full rounded-lg" />
+                <PlaceholderImage className="aspect-[4/3] w-full rounded-xl" />
               )}
-              <p className={`mt-3 text-lg font-bold ${theme.text}`}>{currency} {product.price}</p>
-              {product.category && <p className="mt-1 text-xs text-slate-400">{product.category}</p>}
-              {product.shortDescription && <p className="mt-2 text-sm text-slate-600">{product.shortDescription}</p>}
-              <button
-                onClick={() => setTab("order")}
-                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-2.5 text-sm font-semibold text-white ${theme.btnHover}`}
-              >
+              <div className="mt-4 flex items-center justify-between">
+                <p className={`text-xl font-bold ${theme.text}`}>{currency} {product.price}</p>
+                {product.category && <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{product.category}</span>}
+              </div>
+              {product.shortDescription && <p className="mt-3 text-sm leading-relaxed text-slate-600">{product.shortDescription}</p>}
+              <button onClick={() => setTab("order")} className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-3 text-sm font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.98]`}>
                 <ShoppingBag className="h-4 w-4" /> {t.addToOrder}
               </button>
             </div>
           )}
-
-          {tab === "reviews" && (
-            <div className="p-5">
-              <ProductReviews itemId={product.id} t={t} />
-            </div>
-          )}
-
-          {tab === "order" && (
-            <div className="p-5">
-              <OrderForm product={product} slug={slug} currency={currency} t={t} theme={theme} onClose={onClose} />
-            </div>
-          )}
+          {tab === "reviews" && <div className="p-5"><ProductReviews itemId={product.id} t={t} /></div>}
+          {tab === "order" && <div className="p-5"><OrderForm product={product} slug={slug} currency={currency} t={t} theme={theme} onClose={onClose} customer={customer} /></div>}
         </div>
       </div>
     </div>
@@ -809,17 +634,11 @@ function ProductModal({
 function ProductReviews({ itemId, t }: { itemId: number; t: Record<string, string> }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [content, setContent] = useState("");
-  const [rating, setRating] = useState(5);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [name, setName] = useState(""); const [content, setContent] = useState(""); const [rating, setRating] = useState(5);
+  const [sending, setSending] = useState(false); const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/comments?itemId=${itemId}`)
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setComments(data); })
-      .catch(() => {});
+    fetch(`/api/comments?itemId=${itemId}`).then((r) => r.json()).then((data) => { if (Array.isArray(data)) setComments(data); }).catch(() => {});
   }, [itemId]);
 
   const submit = async (e: React.FormEvent) => {
@@ -827,17 +646,8 @@ function ProductReviews({ itemId, t }: { itemId: number; t: Record<string, strin
     if (!name.trim() || !content.trim()) return;
     setSending(true);
     try {
-      const res = await fetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ catalogItemId: itemId, authorName: name.trim(), content: content.trim(), rating }),
-      });
-      if (res.ok) {
-        const c = await res.json();
-        setComments((prev) => [c, ...prev]);
-        setName(""); setContent(""); setRating(5); setSent(true); setShowForm(false);
-        setTimeout(() => setSent(false), 3000);
-      }
+      const res = await fetch("/api/comments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ catalogItemId: itemId, authorName: name.trim(), content: content.trim(), rating }) });
+      if (res.ok) { const c = await res.json(); setComments((prev) => [c, ...prev]); setName(""); setContent(""); setRating(5); setSent(true); setShowForm(false); setTimeout(() => setSent(false), 3000); }
     } catch {} finally { setSending(false); }
   };
 
@@ -845,34 +655,25 @@ function ProductReviews({ itemId, t }: { itemId: number; t: Record<string, strin
     <>
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-slate-700">{t.reviews} ({comments.length})</span>
-        {!showForm && !sent && (
-          <button onClick={() => setShowForm(true)} className="text-xs font-medium text-indigo-600">{t.writeReview}</button>
-        )}
+        {!showForm && !sent && <button onClick={() => setShowForm(true)} className="text-xs font-medium text-indigo-600 hover:text-indigo-700">{t.writeReview}</button>}
         {sent && <span className="text-xs text-emerald-600">✓ {t.reviewSubmitted}</span>}
       </div>
-
       {showForm && (
-        <form onSubmit={submit} className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.yourName} required className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none" />
+        <form onSubmit={submit} className="mt-3 space-y-2 rounded-xl bg-slate-50 p-4">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.yourName} required className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none" />
           <StarRatingInput value={rating} onChange={setRating} />
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.yourReview} required rows={2} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none" />
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.yourReview} required rows={2} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none" />
           <div className="flex gap-2">
-            <button type="submit" disabled={sending} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{sending ? t.submitting : t.submitReview}</button>
-            <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600">{t.close}</button>
+            <button type="submit" disabled={sending} className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{sending ? t.submitting : t.submitReview}</button>
+            <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs text-slate-600">{t.close}</button>
           </div>
         </form>
       )}
-
-      {comments.length === 0 && !showForm && (
-        <p className="mt-4 text-center text-sm text-slate-400">{t.noReviews}</p>
-      )}
+      {comments.length === 0 && !showForm && <p className="mt-6 text-center text-sm text-slate-400">{t.noReviews}</p>}
       <div className="mt-3 space-y-2">
         {comments.map((c) => (
-          <div key={c.id} className="rounded-lg bg-slate-50 p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-800">{c.authorName}</span>
-              <span className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span>
-            </div>
+          <div key={c.id} className="rounded-xl bg-slate-50 p-3">
+            <div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-800">{c.authorName}</span><span className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span></div>
             {c.rating && <StarRating rating={c.rating} />}
             <p className="mt-1 text-sm text-slate-600">{c.content}</p>
           </div>
@@ -884,22 +685,13 @@ function ProductReviews({ itemId, t }: { itemId: number; t: Record<string, strin
 
 /* ── Order Form ── */
 function OrderForm({
-  product,
-  slug,
-  currency,
-  t,
-  theme,
-  onClose,
+  product, slug, currency, t, theme, onClose, customer,
 }: {
-  product: Product;
-  slug: string;
-  currency: string;
-  t: Record<string, string>;
-  theme: ReturnType<typeof getTheme>;
-  onClose: () => void;
+  product: Product; slug: string; currency: string; t: Record<string, string>;
+  theme: ReturnType<typeof getTheme>; onClose: () => void; customer: CustomerInfo;
 }) {
-  const [name, setName] = useState("");
-  const [contact, setContact] = useState("");
+  const [name, setName] = useState(customer?.name || "");
+  const [contact, setContact] = useState(customer?.email || "");
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [sending, setSending] = useState(false);
@@ -910,8 +702,7 @@ function OrderForm({
     setSending(true);
     try {
       const res = await fetch(`/api/storefront/${slug}/order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId: product.id, customerName: name.trim(), customerContact: contact.trim(), quantity, message: notes.trim() }),
       });
       const data = await res.json();
@@ -921,46 +712,44 @@ function OrderForm({
 
   if (result) {
     return (
-      <div className="text-center">
-        <CheckCircle className="mx-auto h-10 w-10 text-emerald-500" />
-        <p className="mt-2 text-base font-semibold text-slate-900">{t.orderSuccess}</p>
-        <p className="mt-1 text-sm text-slate-600">{t.orderRef}: <span className="font-mono font-semibold">{result.reference}</span></p>
+      <div className="text-center py-4">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+          <CheckCircle className="h-7 w-7 text-emerald-600" />
+        </div>
+        <p className="mt-3 text-base font-semibold text-slate-900">{t.orderSuccess}</p>
+        <p className="mt-1 text-sm text-slate-600">{t.orderRef}: <span className="font-mono font-bold">{result.reference}</span></p>
         <p className="mt-0.5 text-xs text-slate-500">{t.orderSuccessHint}</p>
-        <button onClick={onClose} className="mt-4 w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white">{t.close}</button>
+        <button onClick={onClose} className="mt-5 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">{t.close}</button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-        {product.imageUrl ? (
-          <SafeImg src={product.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" fallback={<PlaceholderImage className="h-10 w-10 rounded-lg" />} />
-        ) : (
-          <PlaceholderImage className="h-10 w-10 rounded-lg" />
-        )}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+        {product.imageUrl ? <SafeImg src={product.imageUrl} alt="" className="h-12 w-12 rounded-lg object-cover" fallback={<PlaceholderImage className="h-12 w-12 rounded-lg" />} /> : <PlaceholderImage className="h-12 w-12 rounded-lg" />}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
-          <p className={`text-xs font-semibold ${theme.text}`}>{currency} {product.price}</p>
+          <p className={`text-xs font-bold ${theme.text}`}>{currency} {product.price}</p>
         </div>
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderName}</label>
-        <input required value={name} onChange={(e) => setName(e.target.value)} placeholder={t.orderNamePh} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <input required value={name} onChange={(e) => setName(e.target.value)} placeholder={t.orderNamePh} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderContact}</label>
-        <input required value={contact} onChange={(e) => setContact(e.target.value)} placeholder={t.orderContactPh} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <input required value={contact} onChange={(e) => setContact(e.target.value)} placeholder={t.orderContactPh} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderQty}</label>
-        <input type="number" min={1} max={99} value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="mt-1 w-20 rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <input type="number" min={1} max={99} value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="mt-1 w-20 rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderNotes}</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.orderNotesPh} rows={2} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.orderNotesPh} rows={2} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
       </div>
-      <button type="submit" disabled={sending} className={`flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-2.5 text-sm font-semibold text-white ${theme.btnHover} disabled:opacity-50`}>
+      <button type="submit" disabled={sending} className={`flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-3 text-sm font-semibold text-white ${theme.btnHover} disabled:opacity-50 transition-all active:scale-[0.98]`}>
         <Send className="h-4 w-4" /> {sending ? t.orderSending : t.orderSubmit}
       </button>
     </form>
@@ -970,12 +759,7 @@ function OrderForm({
 /* ── Helpers ── */
 function getProductImages(product: Product): string[] {
   const urls: string[] = [];
-  if (product.imageUrls) {
-    try {
-      const parsed = JSON.parse(product.imageUrls);
-      if (Array.isArray(parsed)) urls.push(...parsed.filter(Boolean));
-    } catch {}
-  }
+  if (product.imageUrls) { try { const parsed = JSON.parse(product.imageUrls); if (Array.isArray(parsed)) urls.push(...parsed.filter(Boolean)); } catch {} }
   if (urls.length === 0 && product.imageUrl) urls.push(product.imageUrl);
   return urls;
 }

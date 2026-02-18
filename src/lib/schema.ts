@@ -46,6 +46,9 @@ export const catalogItems = pgTable("catalog_items", {
   imageUrls: text("image_urls").default(""),
   shortDescription: text("short_description").default(""),
   category: varchar("category", { length: 128 }).default(""),
+  stockQuantity: integer("stock_quantity").default(-1),
+  trackInventory: boolean("track_inventory").default(false),
+  lowStockThreshold: integer("low_stock_threshold").default(5),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -70,5 +73,25 @@ export const orders = pgTable("orders", {
   status: varchar("status", { length: 32 }).notNull().default("new"),
   notes: text("notes").default(""),
   statusHistory: jsonb("status_history").$type<Array<{ status: string; at: string; note?: string }>>().default([]),
+  customerId: integer("customer_id").references(() => customers.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 256 }).notNull(),
+  email: varchar("email", { length: 256 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  phone: varchar("phone", { length: 64 }).default(""),
+  address: text("address").default(""),
+  city: varchar("city", { length: 256 }).default(""),
+  country: varchar("country", { length: 64 }).default(""),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const wishlists = pgTable("wishlists", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+  catalogItemId: integer("catalog_item_id").notNull().references(() => catalogItems.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
 });
