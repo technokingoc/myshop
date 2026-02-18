@@ -8,10 +8,11 @@ import {
   Store, MapPin, MessageCircle, Instagram, Facebook, AlertCircle, Loader2,
   ShoppingBag, X, Send, CheckCircle, Home, Package, Star, MessageSquare,
   Phone, Info, Heart, User, LogIn, ChevronLeft, ChevronRight, Share2, Copy, Check,
-  Tag, Grid2X2, Grid3X3, LayoutGrid, BadgeCheck, Sparkles, TrendingUp,
+  Tag, Grid2X2, Grid3X3, LayoutGrid, BadgeCheck, Sparkles, TrendingUp, Clock, Truck, CalendarDays, Users,
 } from "lucide-react";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
 import { getTheme } from "@/lib/theme-colors";
+import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
 import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
 
 /* ── Safe image wrapper ── */
@@ -28,6 +29,8 @@ type Seller = {
   socialLinks: { whatsapp?: string; instagram?: string; facebook?: string };
   themeColor: string; address: string; country: string;
   businessHours: Record<string, { open: string; close: string }>;
+  storeTemplate: string;
+  createdAt?: string;
 };
 type Product = {
   id: number; sellerId: number; name: string; type: string; category: string;
@@ -66,6 +69,9 @@ const dict = {
     discount: "Discount", total: "Total", originalPrice: "Original price",
     invalidCoupon: "Invalid coupon", couponApplied: "Coupon applied!",
     removeCoupon: "Remove",
+    menu: "Menu", services: "Services", memberSince: "Member since",
+    openNow: "Open now", closed: "Closed", delivery: "Delivery",
+    follow: "Follow", shareStore: "Share store",
   },
   pt: {
     loading: "A carregar loja...", notFound: "Loja não encontrada",
@@ -96,6 +102,9 @@ const dict = {
     discount: "Desconto", total: "Total", originalPrice: "Preço original",
     invalidCoupon: "Cupom inválido", couponApplied: "Cupom aplicado!",
     removeCoupon: "Remover",
+    menu: "Menu", services: "Serviços", memberSince: "Membro desde",
+    openNow: "Aberto agora", closed: "Fechado", delivery: "Entrega",
+    follow: "Seguir", shareStore: "Partilhar loja",
   },
 };
 
@@ -219,13 +228,19 @@ export default function StorefrontPage() {
   }
 
   const theme = getTheme(seller.themeColor || "indigo");
+  const template = getTemplate(seller.storeTemplate || "classic");
   const social = seller.socialLinks || {};
+  const bType = (seller.businessType || "").toLowerCase();
+  const isFood = bType.includes("restaurant") || bType.includes("food") || bType.includes("café") || bType.includes("cafe");
+  const isService = bType.includes("service") || bType.includes("salon") || bType.includes("repair") || bType.includes("consult");
+  const productsLabel = isFood ? t.menu : isService ? t.services : t.tabProducts;
   const tabs = [
-    { id: "products" as const, label: t.tabProducts, icon: Package },
+    { id: "products" as const, label: productsLabel, icon: Package },
     { id: "about" as const, label: t.tabAbout, icon: Info },
     { id: "reviews" as const, label: t.tabReviews, icon: MessageSquare },
     { id: "contact" as const, label: t.tabContact, icon: Phone },
   ];
+  const memberYear = seller.createdAt ? new Date(seller.createdAt).getFullYear() : null;
 
   return (
     <div className="min-h-screen bg-slate-50/50">
@@ -277,9 +292,10 @@ export default function StorefrontPage() {
         </div>
       </header>
 
-      {/* Store header */}
+      {/* Store header — compact redesign */}
       <div className="bg-white pb-1">
         <div className="mx-auto max-w-5xl px-4">
+          {/* Banner — max 140px */}
           <div className="relative mt-0 h-[110px] overflow-hidden rounded-b-2xl sm:h-[140px]">
             {seller.bannerUrl ? (
               <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} />
@@ -288,11 +304,12 @@ export default function StorefrontPage() {
                 <span className="text-2xl font-bold text-white/80">{seller.name}</span>
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
           </div>
 
+          {/* Store info bar — avatar overlapping banner */}
           <div className="relative -mt-8 flex items-end gap-3 px-2 sm:px-4">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-lg">
+            <div className={`${template.avatarSize} shrink-0 overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-lg`}>
               {seller.logoUrl ? (
                 <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />} />
               ) : (
@@ -303,28 +320,47 @@ export default function StorefrontPage() {
               <div className="flex items-center gap-2">
                 <h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>
                 {isVerified && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600" title={t.verified}>
-                    <BadgeCheck className="h-3.5 w-3.5" /> {t.verified}
-                  </span>
+                  <span title={t.verified}><BadgeCheck className="h-4 w-4 shrink-0 text-blue-500" /></span>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-slate-500">
                 {ratingInfo.count > 0 && (
                   <span className="flex items-center gap-1">
-                    <StarRating rating={Math.round(ratingInfo.avg)} size="h-3 w-3" />
-                    <span className="font-medium text-slate-700">{ratingInfo.avg}</span>
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-slate-700">{ratingInfo.avg}</span>
                     <span>({ratingInfo.count})</span>
                   </span>
                 )}
-                {seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" /> {seller.city}{seller.country ? `, ${seller.country}` : ""}</span>}
-                {seller.businessType && seller.businessType !== "Retail" && <span className="rounded-full bg-slate-100 px-2 py-0.5">{seller.businessType}</span>}
-                <span>{products.length} {t.products}</span>
+                {seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}
+                {seller.businessType && seller.businessType !== "Retail" && (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium">{seller.businessType}</span>
+                )}
               </div>
             </div>
+            {/* Action buttons — compact */}
+            <div className="hidden sm:flex items-center gap-1 pb-1">
+              {social.whatsapp && (
+                <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition" title="WhatsApp">
+                  <MessageCircle className="h-4 w-4" />
+                </a>
+              )}
+              <button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" title={t.shareStore}>
+                <Share2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-          {seller.description && (
-            <p className="mt-2 line-clamp-2 px-2 text-sm leading-relaxed text-slate-500 sm:px-4">{seller.description}</p>
-          )}
+
+          {/* Stats mini-bar */}
+          <div className="mt-2 flex items-center gap-3 px-2 text-xs text-slate-400 sm:px-4">
+            <span>{products.length} {t.products}</span>
+            <span>·</span>
+            <span>{storeComments.length} {t.reviews}</span>
+            {memberYear && <><span>·</span><span>{t.memberSince} {memberYear}</span></>}
+            {/* Business-type specific hints */}
+            {isFood && seller.businessHours && Object.keys(seller.businessHours).length > 0 && (
+              <><span>·</span><span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{t.openNow}</span></>
+            )}
+          </div>
         </div>
       </div>
 
@@ -356,6 +392,7 @@ export default function StorefrontPage() {
             currency={seller.currency || "USD"} t={t} theme={theme} onProductClick={setModalProduct}
             wishlistIds={wishlistIds} toggleWishlist={toggleWishlist}
             gridCols={gridCols} setGridCols={setGridCols}
+            template={template}
           />
         )}
         {activeTab === "about" && <AboutTab seller={seller} t={t} />}
@@ -416,12 +453,13 @@ function PriceDisplay({ price, compareAtPrice, currency, theme, size = "sm" }: {
 
 /* ── Products Tab ── */
 function ProductsTab({
-  products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist, gridCols, setGridCols,
+  products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist, gridCols, setGridCols, template,
 }: {
   products: Product[]; categories: { name: string; count: number }[]; category: string; setCategory: (c: string) => void;
   currency: string; t: Record<string, string>; theme: ReturnType<typeof getTheme>;
   onProductClick: (p: Product) => void; wishlistIds: Set<number>; toggleWishlist: (id: number) => void;
   gridCols: number; setGridCols: (n: number) => void;
+  template: StoreTemplate;
 }) {
   const isNew = (p: Product) => {
     if (!p.createdAt) return false;
@@ -429,11 +467,15 @@ function ProductsTab({
     return diff < 7 * 24 * 60 * 60 * 1000;
   };
 
-  const gridClass = gridCols === 2
-    ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
-    : gridCols === 3
-      ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-5"
-      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+  // Template-aware grid classes
+  const templateGrid = template.layout === "list"
+    ? "grid grid-cols-1 lg:grid-cols-2 gap-2"
+    : template.layout === "single"
+      ? "flex flex-col gap-6"
+      : gridCols === 2
+        ? `grid grid-cols-${template.gridCols.mobile} sm:grid-cols-${template.gridCols.sm} lg:grid-cols-${template.gridCols.lg} ${template.gap}`
+        : `grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 ${template.gap}`;
+  const gridClass = templateGrid;
 
   return (
     <>
@@ -471,57 +513,96 @@ function ProductsTab({
           <p className="mt-1 text-xs text-slate-400">{t.noProductsHint}</p>
         </div>
       ) : (
-        <div className={`grid gap-3 ${gridClass}`}>
+        <div className={gridClass}>
           {products.map((product) => (
-            <article
-              key={product.id}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg hover:-translate-y-0.5"
-              onClick={() => onProductClick(product)}
-            >
-              {/* Badges */}
-              <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
-                {isNew(product) && (
-                  <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">{t.newBadge}</span>
-                )}
-              </div>
-
-              {/* Wishlist heart */}
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
-                className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:scale-110"
-              >
-                <Heart className={`h-4 w-4 transition ${wishlistIds.has(product.id) ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
-              </button>
-
-              {/* Quick view overlay (desktop) */}
-              <div className="absolute inset-0 z-[5] hidden items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100 sm:flex">
-                <span className="rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-slate-800 shadow-lg backdrop-blur">{t.quickView}</span>
-              </div>
-
-              <div className="aspect-square overflow-hidden">
-                {product.imageUrl ? (
-                  <SafeImg src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" fallback={<PlaceholderImage className="h-full w-full" />} />
-                ) : (
-                  <PlaceholderImage className="h-full w-full" />
-                )}
-              </div>
-              <div className="p-2.5 sm:p-3">
-                <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-                {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
-                <div className="mt-1.5">
-                  <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
+            template.layout === "list" ? (
+              /* List layout — horizontal card */
+              <article key={product.id} className="group relative flex cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-md" onClick={() => onProductClick(product)}>
+                <div className="h-24 w-24 shrink-0 overflow-hidden sm:h-28 sm:w-28">
+                  {product.imageUrl ? (
+                    <SafeImg src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" fallback={<PlaceholderImage className="h-full w-full" />} />
+                  ) : (
+                    <PlaceholderImage className="h-full w-full" />
+                  )}
                 </div>
-              </div>
-              <div className="px-2.5 pb-2.5 sm:px-3 sm:pb-3">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onProductClick(product); }}
-                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl ${theme.btn} py-2 sm:py-2.5 text-xs font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.97]`}
-                >
-                  <ShoppingBag className="h-3.5 w-3.5" />
-                  {t.order}
+                <div className="flex flex-1 flex-col justify-between p-3">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={`${template.titleSize} font-semibold text-slate-900 line-clamp-1`}>{product.name}</p>
+                      <button onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }} className="shrink-0">
+                        <Heart className={`h-4 w-4 ${wishlistIds.has(product.id) ? "fill-red-500 text-red-500" : "text-slate-300"}`} />
+                      </button>
+                    </div>
+                    {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
+                    <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`rounded-lg ${theme.btn} px-3 py-1.5 text-xs font-semibold text-white ${theme.btnHover}`}>
+                      {t.order}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ) : template.layout === "single" ? (
+              /* Single/Minimal layout — full width showcase */
+              <article key={product.id} className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg" onClick={() => onProductClick(product)}>
+                <div className="absolute right-3 top-3 z-10 flex gap-2">
+                  {isNew(product) && <span className="rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white">{t.newBadge}</span>}
+                  <button onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }} className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow backdrop-blur">
+                    <Heart className={`h-5 w-5 ${wishlistIds.has(product.id) ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
+                  </button>
+                </div>
+                <div className={`${template.aspectRatio} overflow-hidden`}>
+                  {product.imageUrl ? (
+                    <SafeImg src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" fallback={<PlaceholderImage className="h-full w-full" />} />
+                  ) : (
+                    <PlaceholderImage className="h-full w-full" />
+                  )}
+                </div>
+                <div className={template.padding}>
+                  <div className="flex items-center justify-between">
+                    <p className={`${template.titleSize} font-bold text-slate-900`}>{product.name}</p>
+                    <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} size="lg" />
+                  </div>
+                  {product.shortDescription && <p className="mt-1 text-sm text-slate-500 line-clamp-2">{product.shortDescription}</p>}
+                  <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-3 text-sm font-semibold text-white ${theme.btnHover} transition-all`}>
+                    <ShoppingBag className="h-4 w-4" /> {t.order}
+                  </button>
+                </div>
+              </article>
+            ) : (
+              /* Grid layout — classic/boutique card */
+              <article key={product.id} className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg hover:-translate-y-0.5" onClick={() => onProductClick(product)}>
+                <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
+                  {isNew(product) && <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">{t.newBadge}</span>}
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }} className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:scale-110">
+                  <Heart className={`h-4 w-4 transition ${wishlistIds.has(product.id) ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
                 </button>
-              </div>
-            </article>
+                <div className="absolute inset-0 z-[5] hidden items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100 sm:flex">
+                  <span className="rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-slate-800 shadow-lg backdrop-blur">{t.quickView}</span>
+                </div>
+                <div className={`${template.aspectRatio} overflow-hidden`}>
+                  {product.imageUrl ? (
+                    <SafeImg src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" fallback={<PlaceholderImage className="h-full w-full" />} />
+                  ) : (
+                    <PlaceholderImage className="h-full w-full" />
+                  )}
+                </div>
+                <div className={template.padding}>
+                  <p className={`truncate ${template.titleSize} font-semibold text-slate-900`}>{product.name}</p>
+                  {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
+                  <div className="mt-1.5">
+                    <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
+                  </div>
+                </div>
+                <div className={`px-2.5 pb-2.5 sm:px-3 sm:pb-3`}>
+                  <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`flex w-full items-center justify-center gap-1.5 rounded-xl ${theme.btn} py-2 sm:py-2.5 text-xs font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.97]`}>
+                    <ShoppingBag className="h-3.5 w-3.5" /> {t.order}
+                  </button>
+                </div>
+              </article>
+            )
           ))}
         </div>
       )}

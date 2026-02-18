@@ -27,6 +27,7 @@ export const sellers = pgTable("sellers", {
   businessHours: jsonb("business_hours").$type<Record<string, { open: string; close: string }>>().default({}),
   address: text("address").default(""),
   country: varchar("country", { length: 64 }).default(""),
+  storeTemplate: varchar("store_template", { length: 32 }).default("classic"),
 });
 
 export const platformSettings = pgTable("platform_settings", {
@@ -103,6 +104,30 @@ export const coupons = pgTable("coupons", {
   usedCount: integer("used_count").default(0),
   validFrom: timestamp("valid_from").defaultNow(),
   validUntil: timestamp("valid_until"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  nameEn: varchar("name_en", { length: 128 }).notNull(),
+  namePt: varchar("name_pt", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  icon: varchar("icon", { length: 64 }).default(""),
+  parentId: integer("parent_id"),
+  sortOrder: integer("sort_order").default(0),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
+  nameEn: varchar("name_en", { length: 128 }).notNull(),
+  namePt: varchar("name_pt", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  country: varchar("country", { length: 64 }).default("Mozambique"),
+  region: varchar("region", { length: 128 }).default(""),
+  sortOrder: integer("sort_order").default(0),
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });

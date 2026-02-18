@@ -70,6 +70,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
             businessHours: body.businessHours ?? existing.businessHours,
             address: body.address ?? existing.address,
             country: body.country ?? existing.country,
+            storeTemplate: body.storeTemplate ?? existing.storeTemplate,
             updatedAt: new Date(),
           })
           .where(eq(sellers.id, existing.id))

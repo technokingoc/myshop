@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/language";
-import { Save, Bell, Crown, Palette, Clock, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Save, Bell, Crown, Palette, Clock, MapPin, ChevronDown, ChevronUp, LayoutTemplate } from "lucide-react";
+import { storeTemplates } from "@/lib/store-templates";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
@@ -67,6 +68,8 @@ const settingsDict = {
     country: "Country",
     selectCountry: "Select country",
     customization: "Store Customization",
+    storeTemplate: "Store Template",
+    storeTemplateDesc: "Choose how your products are displayed",
     sections: {
       identity: "Store Identity",
       customization: "Store Customization",
@@ -118,6 +121,7 @@ export default function SettingsPage() {
   const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("");
+  const [storeTemplate, setStoreTemplate] = useState("classic");
 
   // Collapsible sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -160,6 +164,7 @@ export default function SettingsPage() {
             setBusinessHours(s.businessHours || {});
             setAddress(s.address || "");
             setCountry(s.country || "");
+            setStoreTemplate(s.storeTemplate || "classic");
             try {
               const statsRes = await fetch("/api/dashboard/stats", { credentials: "include" });
               if (statsRes.ok) {
@@ -235,6 +240,7 @@ export default function SettingsPage() {
           businessHours,
           address,
           country,
+          storeTemplate,
         }),
       }, 3, "settings:save");
     } catch {
@@ -318,6 +324,58 @@ export default function SettingsPage() {
                 >
                   <span className={`inline-block h-5 w-5 rounded-full ${c.bg}`} />
                   {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Store Template */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-1">
+              <LayoutTemplate className="h-4 w-4 text-slate-500" />
+              <label className="text-sm font-medium text-slate-700">{lang === "pt" ? "Modelo da Loja" : "Store Template"}</label>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">{lang === "pt" ? "Escolha como os seus produtos são apresentados" : "Choose how your products are displayed"}</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {Object.values(storeTemplates).map((tmpl) => (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  onClick={() => setStoreTemplate(tmpl.id)}
+                  className={`rounded-xl border-2 p-3 text-left transition ${
+                    storeTemplate === tmpl.id
+                      ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  {/* Mini preview */}
+                  <div className="mb-2 flex h-16 items-end gap-1 rounded-lg bg-slate-100 p-2">
+                    {tmpl.layout === "grid" && (
+                      <div className="flex flex-1 flex-wrap gap-1">
+                        {[1,2,3,4].slice(0, tmpl.gridCols.mobile === 1 ? 2 : tmpl.gridCols.mobile + 1).map((i) => (
+                          <div key={i} className={`rounded bg-slate-300 ${tmpl.id === "boutique" ? "h-8 w-8" : "h-6 w-6"}`} />
+                        ))}
+                      </div>
+                    )}
+                    {tmpl.layout === "list" && (
+                      <div className="flex flex-1 flex-col gap-1">
+                        {[1,2,3].map((i) => (
+                          <div key={i} className="flex gap-1">
+                            <div className="h-3 w-3 rounded bg-slate-300" />
+                            <div className="h-3 flex-1 rounded bg-slate-200" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {tmpl.layout === "single" && (
+                      <div className="flex flex-1 flex-col gap-1">
+                        <div className="h-8 w-full rounded bg-slate-300" />
+                        <div className="h-2 w-3/4 rounded bg-slate-200" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800">{lang === "pt" ? tmpl.namePt : tmpl.nameEn}</p>
+                  <p className="mt-0.5 text-[10px] leading-tight text-slate-500">{lang === "pt" ? tmpl.descPt : tmpl.descEn}</p>
                 </button>
               ))}
             </div>

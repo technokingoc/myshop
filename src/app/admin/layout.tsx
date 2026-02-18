@@ -17,6 +17,8 @@ import {
   LogOut,
   Home,
   Shield,
+  FolderTree,
+  MapPin,
 } from "lucide-react";
 import { clearSession, fetchSession, type AuthSession } from "@/lib/auth";
 
@@ -27,6 +29,8 @@ const dict = {
     sellers: "Sellers",
     orders: "Orders",
     products: "Products",
+    categories: "Categories",
+    locations: "Locations",
     reviews: "Reviews",
     settings: "Settings",
     logout: "Logout",
@@ -40,6 +44,8 @@ const dict = {
     sellers: "Vendedores",
     orders: "Pedidos",
     products: "Produtos",
+    categories: "Categorias",
+    locations: "Localizações",
     reviews: "Avaliações",
     settings: "Configurações",
     logout: "Sair",
@@ -54,6 +60,8 @@ const navItems = [
   { key: "sellers", href: "/admin/sellers", icon: Users },
   { key: "orders", href: "/admin/orders", icon: ShoppingCart },
   { key: "products", href: "/admin/products", icon: Package },
+  { key: "categories", href: "/admin/categories", icon: FolderTree },
+  { key: "locations", href: "/admin/locations", icon: MapPin },
   { key: "reviews", href: "/admin/reviews", icon: MessageSquare },
   { key: "settings", href: "/admin/settings", icon: Settings },
 ] as const;
@@ -177,7 +185,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Mobile bottom nav */}
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
-          <ul className="grid grid-cols-6">
+          <ul className="grid grid-cols-8">
             {navItems.map((item) => {
               const active = item.key === activePage;
               const label = t[item.key as keyof typeof t] || item.key;

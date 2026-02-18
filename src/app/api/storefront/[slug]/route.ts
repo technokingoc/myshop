@@ -42,6 +42,7 @@ export async function GET(
         businessHours: seller.businessHours || {},
         address: seller.address || "",
         country: seller.country || "",
+        storeTemplate: seller.storeTemplate || "classic",
       },
       products,
     });
