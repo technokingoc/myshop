@@ -86,79 +86,7 @@ function sanitizeSlug(raw: string) {
     .replace(/-+/g, "-");
 }
 
-/* ── Dropdown for desktop nav ── */
-function NavDropdown({
-  label,
-  items,
-  activePage,
-}: {
-  label: string;
-  items: { label: string; icon: React.ComponentType<{ className?: string }>; href: string; key: string }[];
-  activePage: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>(null);
-
-  const hasActive = items.some((i) => i.key === activePage);
-
-  const enter = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setOpen(true), 80);
-  }, []);
-  const leave = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setOpen(false), 150);
-  }, []);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative" onMouseEnter={enter} onMouseLeave={leave}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-          hasActive
-            ? "bg-slate-100 text-slate-900"
-            : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
-        }`}
-      >
-        {label}
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[11rem] rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg shadow-slate-200/60">
-          {items.map((item) => {
-            const active = item.key === activePage;
-            return (
-              <Link
-                key={item.key}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-indigo-50/80 text-slate-900"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <item.icon className={`h-4 w-4 ${active ? "text-indigo-600" : "text-slate-400"}`} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Compact mobile nav item ── */
+/* ── Compact mobile sidebar nav item ── */
 function NavItem({
   item,
   activePage,
@@ -185,6 +113,73 @@ function NavItem({
       </span>
       <span>{item.label}</span>
     </Link>
+  );
+}
+
+/* ── Desktop dropdown component ── */
+function NavDropdown({
+  label,
+  items,
+  activePage,
+}: {
+  label: string;
+  items: { label: string; icon: React.ComponentType<{ className?: string }>; href: string; key: string }[];
+  activePage: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isActive = items.some((i) => i.key === activePage);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) close();
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open, close]);
+
+  // Close on route change
+  const pathname = usePathname();
+  useEffect(() => { close(); }, [pathname, close]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+          isActive
+            ? "bg-slate-100 text-slate-900"
+            : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
+        }`}
+      >
+        {label}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1.5 min-w-[12rem] rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg shadow-slate-200/60">
+          {items.map((item) => {
+            const active = item.key === activePage;
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={`flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-indigo-50/80 text-slate-900"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                <item.icon className={`h-4 w-4 ${active ? "text-indigo-600" : "text-slate-400"}`} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -294,7 +289,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
 
-              <p className="ui-caption mb-2 px-1 text-[10px]">{t.storeGroup}</p>
+              <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t.storeGroup}</p>
               <ul className="space-y-1">
                 {storeItems.map((item) => (
                   <li key={item.key}>
@@ -304,7 +299,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </ul>
 
               <div className="mt-5 border-t border-slate-200 pt-4">
-                <p className="ui-caption mb-2 px-1 text-[10px]">{t.accountGroup}</p>
+                <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t.accountGroup}</p>
                 <ul className="space-y-1">
                   {accountItems.map((item) => (
                     <li key={item.key}>
@@ -318,6 +313,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         )}
 
         <main className="relative z-10 pb-24 lg:pb-8">
+          {/* ── Header ── */}
           <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
             <div className="mx-auto flex h-16 w-full max-w-[90rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
               <div className="flex min-w-0 items-center gap-3 lg:gap-4">
@@ -331,15 +327,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </Link>
 
                 {/* Desktop nav with dropdowns */}
-                <nav className="hidden items-center gap-1 lg:flex" aria-label="Seller navigation">
+                <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Seller navigation">
                   {/* Dashboard — direct link */}
                   <Link
                     href="/dashboard"
                     aria-current={activePage === "dashboard" ? "page" : undefined}
                     className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                      activePage === "dashboard"
-                        ? "bg-slate-100 text-slate-900"
-                        : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
+                      activePage === "dashboard" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
                     }`}
                   >
                     {t.dashboard}
@@ -414,6 +408,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
           <div className="mx-auto w-full max-w-[90rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
 
+          {/* ── Mobile bottom nav ── */}
           <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
             <ul className="grid grid-cols-5">
               {[...storeItems.slice(0, 3), ...accountItems].map((item) => {
