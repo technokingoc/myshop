@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     const [currentMetrics] = await db
       .select({
         orderCount: sql<number>`count(*)`,
-        revenue: sql<string>`coalesce(sum(ci.price), 0)`,
+        revenue: sql<string>`coalesce(sum(${catalogItems.price}), 0)`,
       })
       .from(orders)
       .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     const [prevMetrics] = await db
       .select({
         orderCount: sql<number>`count(*)`,
-        revenue: sql<string>`coalesce(sum(ci.price), 0)`,
+        revenue: sql<string>`coalesce(sum(${catalogItems.price}), 0)`,
       })
       .from(orders)
       .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       .select({
         date: sql<string>`to_char(${orders.createdAt}, 'YYYY-MM-DD')`,
         count: sql<number>`count(*)`,
-        revenue: sql<string>`coalesce(sum(ci.price), 0)`,
+        revenue: sql<string>`coalesce(sum(${catalogItems.price}), 0)`,
       })
       .from(orders)
       .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
         name: catalogItems.name,
         price: catalogItems.price,
         orderCount: sql<number>`count(*)`,
-        revenue: sql<string>`coalesce(sum(ci.price), 0)`,
+        revenue: sql<string>`coalesce(sum(${catalogItems.price}), 0)`,
       })
       .from(orders)
       .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
       .select({
         status: orders.status,
         count: sql<number>`count(*)`,
-        revenue: sql<string>`coalesce(sum(ci.price), 0)`,
+        revenue: sql<string>`coalesce(sum(${catalogItems.price}), 0)`,
       })
       .from(orders)
       .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
