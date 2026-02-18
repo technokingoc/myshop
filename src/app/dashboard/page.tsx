@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { DbMigrationGuard } from "@/components/db-migration-guard";
-import { BarChart3, Package, ShoppingCart, ExternalLink, Store, TrendingUp, Clock, Users, CheckSquare } from "lucide-react";
+import { BarChart3, Package, ShoppingCart, ExternalLink, Store, TrendingUp, Clock, Users, CheckSquare, Database, ShieldAlert } from "lucide-react";
 
 type Seller = { id: number; slug: string; name: string; ownerName?: string };
 type CatalogItem = { id: number; status: "Draft" | "Published" };
-type DbHealth = { ok: boolean; connected: boolean; missingTables: string[]; errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY" };
+type DbHealth = { ok: boolean; connected: boolean; missingTables: string[]; errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY"; suggestion?: string; checkedAt?: string };
 
 type SetupData = {
   storeName: string;
@@ -55,6 +55,11 @@ const dict = {
     checklistStore: "Store profile completed",
     checklistCatalog: "At least one published catalog item",
     checklistPayment: "Payment link configured",
+    dbPanelTitle: "Database diagnostics",
+    dbHealthy: "All critical tables are available.",
+    dbIssue: "There is a database readiness issue affecting operations.",
+    dbMissing: "Missing tables",
+    dbSuggestion: "Suggested action",
   },
   pt: {
     welcome: "Bem-vindo de volta",
@@ -85,6 +90,11 @@ const dict = {
     checklistStore: "Perfil da loja concluído",
     checklistCatalog: "Pelo menos um item do catálogo publicado",
     checklistPayment: "Link de pagamento configurado",
+    dbPanelTitle: "Diagnóstico da base de dados",
+    dbHealthy: "Todas as tabelas críticas estão disponíveis.",
+    dbIssue: "Existe um problema de prontidão da base de dados que afeta operações.",
+    dbMissing: "Tabelas em falta",
+    dbSuggestion: "Ação sugerida",
   },
 };
 
@@ -201,6 +211,21 @@ export default function DashboardPage() {
           ))}
         </ul>
       </section>
+      {dbHealth && (
+        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="flex items-center gap-2 font-semibold text-slate-900"><Database className="h-4 w-4" />{t.dbPanelTitle}</h2>
+          <div className={`mt-3 rounded-lg border p-3 text-sm ${dbHealth.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+            <p className="flex items-center gap-2 font-medium">{dbHealth.ok ? <CheckSquare className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}{dbHealth.ok ? t.dbHealthy : t.dbIssue}</p>
+            {!dbHealth.ok && (
+              <>
+                <p className="mt-2"><span className="font-semibold">{t.dbMissing}:</span> {dbHealth.missingTables.join(", ") || "-"}</p>
+                <p className="mt-1"><span className="font-semibold">{t.dbSuggestion}:</span> {dbHealth.suggestion || "-"}</p>
+              </>
+            )}
+            {dbHealth.checkedAt && <p className="mt-2 text-xs opacity-80">{new Date(dbHealth.checkedAt).toLocaleString()}</p>}
+          </div>
+        </section>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-5"><Package className="h-5 w-5 text-indigo-600" /><h3 className="mt-3 font-semibold text-slate-900">{t.catalogMgmt}</h3><p className="mt-1 text-sm text-slate-600">{t.catalogDesc}</p><a href="/#catalog" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white">{t.manageCatalog}</a></div>
         <div className="rounded-xl border border-slate-200 bg-white p-5"><Store className="h-5 w-5 text-emerald-600" /><h3 className="mt-3 font-semibold text-slate-900">{t.storefront}</h3><p className="mt-1 text-sm text-slate-600">{t.storefrontDesc}</p><div className="mt-4 flex flex-wrap gap-2"><a href={storefrontUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white"><ExternalLink className="h-3.5 w-3.5" />{t.viewStorefront}</a><button onClick={copyStorefrontLink} className="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700">{linkCopied ? t.linkCopied : t.copyLink}</button></div></div>

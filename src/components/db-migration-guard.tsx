@@ -9,6 +9,7 @@ type DbHealth = {
   connected: boolean;
   missingTables: string[];
   errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY";
+  suggestion?: string;
 };
 
 const dict = {
@@ -52,7 +53,7 @@ export function DbMigrationGuard({ health, onRetry }: { health: DbHealth | null;
           ) : (
             <>
               <p className="mt-1 text-sm">{t.tablesMissing} <span className="font-medium">{health.missingTables.join(", ") || "-"}</span></p>
-              <code className="mt-2 block rounded border border-amber-200 bg-white px-2 py-1 text-xs">{t.help}</code>
+              <code className="mt-2 block rounded border border-amber-200 bg-white px-2 py-1 text-xs">{health.suggestion || t.help}</code>
             </>
           )}
         </div>

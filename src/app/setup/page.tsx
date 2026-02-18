@@ -130,6 +130,10 @@ const dictionary = {
     stepNames: ["Store identity", "Business details", "Social channels"],
     progressLabel: "Progress",
     requiredField: "This field is required",
+    validationSummary: "Please review the highlighted fields before continuing.",
+    helperStoreName: "Use your public business name for customer trust.",
+    helperCurrency: "Use the currency you charge most often.",
+    helperWhatsapp: "Paste full link (example: https://wa.me/258...).",
 
     catalogTitle: "Catalog management",
     catalogSubtitle: "Mock CRUD with add/edit/delete persisted locally.",
@@ -233,6 +237,10 @@ const dictionary = {
     stepNames: ["Identidade da loja", "Dados do negócio", "Canais sociais"],
     progressLabel: "Progresso",
     requiredField: "Este campo é obrigatório",
+    validationSummary: "Revise os campos destacados antes de continuar.",
+    helperStoreName: "Use o nome público do seu negócio para maior confiança.",
+    helperCurrency: "Use a moeda em que cobra com mais frequência.",
+    helperWhatsapp: "Cole o link completo (exemplo: https://wa.me/258...).",
 
     catalogTitle: "Gestão de catálogo",
     catalogSubtitle: "CRUD mock com adicionar/editar/apagar persistido localmente.",
@@ -415,6 +423,22 @@ export default function Home() {
   }, [step, done, setup, sellerId]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem("myshop_setup_history_v1");
+    if (!raw) return;
+    try {
+      const prev = JSON.parse(raw) as Partial<SetupData>;
+      setSetup((curr) => ({
+        ...curr,
+        currency: curr.currency || prev.currency || "USD",
+        city: curr.city || prev.city || "",
+        instagram: curr.instagram || prev.instagram || "",
+        facebook: curr.facebook || prev.facebook || "",
+      }));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE.catalog, JSON.stringify(catalog));
   }, [catalog]);
 
@@ -576,6 +600,16 @@ export default function Home() {
       // fallback to local-only mode
     }
 
+    localStorage.setItem(
+      "myshop_setup_history_v1",
+      JSON.stringify({
+        currency: setup.currency,
+        city: setup.city,
+        instagram: setup.instagram,
+        facebook: setup.facebook,
+      }),
+    );
+
     setDone(true);
   };
 
@@ -693,15 +727,31 @@ export default function Home() {
             </a>
           </div>
 
+          {Object.keys(setupErrors).length > 0 && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+              <p className="font-semibold">{t.validationSummary}</p>
+              <ul className="mt-1 list-inside list-disc">
+                {Object.entries(setupErrors)
+                  .filter(([, value]) => Boolean(value))
+                  .map(([key, value]) => (
+                    <li key={key}>{t.labels[key as keyof typeof t.labels]}: {value}</li>
+                  ))}
+              </ul>
+            </div>
+          )}
+
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {step === 1 && (
               <>
-                <Input
-                  label={t.labels.storeName}
-                  value={setup.storeName}
-                  error={setupErrors.storeName}
-                  onChange={(v) => updateSetup("storeName", v)}
-                />
+                <div>
+                  <Input
+                    label={t.labels.storeName}
+                    value={setup.storeName}
+                    error={setupErrors.storeName}
+                    onChange={(v) => updateSetup("storeName", v)}
+                  />
+                  <p className="mt-1 text-xs text-slate-500">{t.helperStoreName}</p>
+                </div>
                 <div className="grid gap-1 text-sm">
                   <Input
                     label={t.labels.storefrontSlug}
@@ -722,13 +772,19 @@ export default function Home() {
                   error={setupErrors.businessType}
                   onChange={(v) => updateSetup("businessType", v)}
                 />
-                <Input label={t.labels.currency} value={setup.currency} error={setupErrors.currency} onChange={(v) => updateSetup("currency", v)} />
+                <div>
+                  <Input label={t.labels.currency} value={setup.currency} error={setupErrors.currency} onChange={(v) => updateSetup("currency", v)} />
+                  <p className="mt-1 text-xs text-slate-500">{t.helperCurrency}</p>
+                </div>
                 <Input label={t.labels.city} value={setup.city} error={setupErrors.city} onChange={(v) => updateSetup("city", v)} />
               </>
             )}
             {step === 3 && (
               <>
-                <Input label={t.labels.whatsapp} value={setup.whatsapp} error={setupErrors.whatsapp} onChange={(v) => updateSetup("whatsapp", v)} />
+                <div>
+                  <Input label={t.labels.whatsapp} value={setup.whatsapp} error={setupErrors.whatsapp} onChange={(v) => updateSetup("whatsapp", v)} />
+                  <p className="mt-1 text-xs text-slate-500">{t.helperWhatsapp}</p>
+                </div>
                 <Input label={t.labels.instagram} value={setup.instagram} onChange={(v) => updateSetup("instagram", v)} />
                 <Input label={t.labels.facebook} value={setup.facebook} onChange={(v) => updateSetup("facebook", v)} />
               </>

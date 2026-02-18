@@ -8,11 +8,18 @@ export async function GET() {
     ready: !readiness.missingTables.includes(name),
   }));
 
+  const suggestion = !readiness.connected
+    ? "Check DATABASE_URL and Neon connectivity, then retry."
+    : readiness.missingTables.length > 0
+      ? `Run migration for missing tables: ${readiness.missingTables.join(", ")}`
+      : "Database healthy.";
+
   return NextResponse.json(
     {
       ...readiness,
       migrationRequired: !readiness.ok,
       tableChecks,
+      suggestion,
       checkedAt: new Date().toISOString(),
     },
     { status: readiness.ok ? 200 : 503 },
