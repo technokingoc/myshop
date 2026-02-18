@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/language";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 import { useToast } from "@/components/toast-provider";
 import { Plus, Search, PackageOpen, Trash2, Pencil, CheckSquare, Square, Eye, EyeOff } from "lucide-react";
+import { PlaceholderImage } from "@/components/placeholder-image";
 
 type SetupData = { storefrontSlug?: string };
 type SetupPersisted = { data?: SetupData; sellerId?: number };
@@ -411,9 +412,16 @@ export default function DashboardCatalogPage() {
                       return n;
                     })}>{isSelected ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-400" />}</button>
                   </div>
-                  <div className="col-span-4 min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-                    <p className="truncate text-xs text-slate-500">{item.category || "—"} {item.shortDescription ? `• ${item.shortDescription}` : ""}</p>
+                  <div className="col-span-4 flex min-w-0 items-center gap-2.5">
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <PlaceholderImage className="h-9 w-9 shrink-0 rounded-lg" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+                      <p className="truncate text-xs text-slate-500">{item.category || "—"} {item.shortDescription ? `• ${item.shortDescription}` : ""}</p>
+                    </div>
                   </div>
                   <div className="col-span-2 text-sm text-slate-700">{item.type === "Service" ? t.service : t.product}</div>
                   <div className="col-span-2 text-sm font-medium text-slate-800">{item.price || "0"}</div>

@@ -21,6 +21,7 @@ import {
   Package,
   Image as ImageIcon,
 } from "lucide-react";
+import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
 
 /* ── Types ── */
 type Seller = {
@@ -211,9 +212,7 @@ export default function StorefrontPage() {
           {seller.logoUrl ? (
             <img src={seller.logoUrl} alt={seller.name} className="h-14 w-14 rounded-full object-cover" />
           ) : (
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-100">
-              <Store className="h-6 w-6 text-indigo-600" />
-            </div>
+            <AvatarPlaceholder name={seller.name} className="h-14 w-14 text-xl" />
           )}
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-bold text-slate-900">{seller.name}</h1>
@@ -336,9 +335,7 @@ function ProductCard({
         {product.imageUrl ? (
           <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" />
         ) : (
-          <div className="flex aspect-square w-full items-center justify-center bg-slate-100">
-            <ImageIcon className="h-8 w-8 text-slate-300" />
-          </div>
+          <PlaceholderImage className="aspect-square w-full rounded-t-xl" />
         )}
         <div className="p-3">
           <p className="text-sm font-semibold text-slate-900 line-clamp-1">{product.name}</p>
@@ -390,8 +387,10 @@ function ProductDetailDrawer({
           </button>
         </div>
 
-        {product.imageUrl && (
+        {product.imageUrl ? (
           <img src={product.imageUrl} alt={product.name} className="mt-3 aspect-video w-full rounded-lg object-cover" />
+        ) : (
+          <PlaceholderImage className="mt-3 aspect-video w-full rounded-lg" />
         )}
 
         <p className="mt-3 text-xl font-bold text-indigo-600">
@@ -498,9 +497,7 @@ function OrderModal({
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200">
-                  <Package className="h-4 w-4 text-slate-400" />
-                </div>
+                <PlaceholderImage className="h-10 w-10 rounded-lg" />
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
