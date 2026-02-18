@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import Link from "next/link";
+import { ImageUpload } from "@/components/image-upload";
 
 const dict = {
   en: {
@@ -17,6 +18,7 @@ const dict = {
     slug: "Store URL slug",
     slugPh: "Ex: nanda-beauty",
     slugHint: "Lowercase letters, numbers and dashes only. This becomes your store URL.",
+    logo: "Store logo (optional)",
     ownerName: "Your name",
     ownerNamePh: "Ex: Fernanda Silva",
     email: "Email",
@@ -59,6 +61,7 @@ const dict = {
     slug: "URL da loja",
     slugPh: "Ex: nanda-beauty",
     slugHint: "Use apenas minúsculas, números e hífen. Este será o URL da sua loja.",
+    logo: "Logo da loja (opcional)",
     ownerName: "Seu nome",
     ownerNamePh: "Ex: Fernanda Silva",
     email: "Email",
@@ -109,6 +112,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [logoUrl, setLogoUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -161,6 +165,7 @@ export default function RegisterPage() {
           ownerName,
           email,
           password,
+          logoUrl: logoUrl || undefined,
         }),
       });
 
@@ -236,6 +241,12 @@ export default function RegisterPage() {
                 {effectiveSlug && !errors.slug && (
                   <p className="mt-1 text-xs text-slate-500">→ /s/{effectiveSlug}</p>
                 )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-700">{t.logo}</label>
+                <div className="mt-1">
+                  <ImageUpload currentUrl={logoUrl} onUrlChange={setLogoUrl} />
+                </div>
               </div>
             </>
           )}

@@ -6,6 +6,7 @@ import { fetchJsonWithRetry } from "@/lib/api-client";
 import { useToast } from "@/components/toast-provider";
 import { Plus, Search, PackageOpen, Trash2, Pencil, CheckSquare, Square, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
+import { ImageUpload } from "@/components/image-upload";
 
 type CatalogItem = {
   id: number;
@@ -537,22 +538,19 @@ export default function DashboardCatalogPage() {
                   className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                 />
               </div>
-              {/* Main image URL + preview */}
+              {/* Main image upload */}
               <div className="sm:col-span-2">
                 <label className="text-sm font-medium text-slate-700">{t.imageUrl}</label>
-                <div className="mt-1 flex gap-2 items-start">
-                  <input
-                    value={form.imageUrl}
-                    onChange={(e) => setForm((p) => ({ ...p, imageUrl: e.target.value }))}
-                    className="h-11 flex-1 rounded-xl border border-slate-300 px-3 text-sm"
-                    placeholder="https://..."
+                <div className="mt-1">
+                  <ImageUpload
+                    currentUrl={form.imageUrl}
+                    onUrlChange={(url) => setForm((p) => ({ ...p, imageUrl: url }))}
                   />
-                  <ImagePreview url={form.imageUrl} size="h-11 w-11" />
                 </div>
               </div>
               {/* Additional images */}
               <div className="sm:col-span-2">
-                <MultiImageUrlField
+                <MultiImageUploadField
                   label={t.imageUrls}
                   value={form.imageUrls}
                   onChange={(v) => setForm((p) => ({ ...p, imageUrls: v }))}
@@ -582,7 +580,7 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
   );
 }
 
-function MultiImageUrlField({
+function MultiImageUploadField({
   label, value, onChange, addLabel, removeLabel,
 }: {
   label: string; value: string; onChange: (v: string) => void; addLabel: string; removeLabel: string;
@@ -598,17 +596,13 @@ function MultiImageUrlField({
   return (
     <div>
       <label className="text-sm font-medium text-slate-700">{label}</label>
-      <div className="mt-1 space-y-2">
+      <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {urls.map((url, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <input value={url} onChange={(e) => set(i, e.target.value)} placeholder={`Image ${i + 1}`} className="h-10 flex-1 rounded-xl border border-slate-300 px-3 text-sm" />
-            <ImagePreview url={url} size="h-10 w-10" />
-            <button type="button" onClick={() => remove(i)} className="rounded-lg border border-rose-200 px-2 py-1.5 text-xs text-rose-600 hover:bg-rose-50">{removeLabel}</button>
-          </div>
+          <ImageUpload key={i} currentUrl={url} onUrlChange={(v) => set(i, v)} />
         ))}
         {urls.length < 5 && (
-          <button type="button" onClick={add} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50">
-            <Plus className="h-3 w-3" /> {addLabel}
+          <button type="button" onClick={add} className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 transition">
+            <Plus className="h-5 w-5" /> <span className="text-xs">{addLabel}</span>
           </button>
         )}
       </div>

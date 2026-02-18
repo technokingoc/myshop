@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/language";
 import { Save } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
 import { fetchJsonWithRetry } from "@/lib/api-client";
@@ -155,10 +156,16 @@ export default function SettingsPage() {
             <Field label={t.currency} value={form.currency} field="currency" update={update} />
             <Field label={t.city} value={form.city} field="city" update={update} />
             <div className="sm:col-span-2">
-              <Field label={t.logoUrl} value={form.logoUrl || ""} field="logoUrl" update={update} placeholder={t.logoUrlPh} />
+              <label className="text-sm font-medium text-slate-700">{t.logoUrl}</label>
+              <div className="mt-1">
+                <ImageUpload currentUrl={form.logoUrl || ""} onUrlChange={(url) => update("logoUrl", url)} />
+              </div>
             </div>
             <div className="sm:col-span-2">
-              <Field label={t.bannerUrl} value={form.bannerUrl || ""} field="bannerUrl" update={update} placeholder={t.bannerUrlPh} />
+              <label className="text-sm font-medium text-slate-700">{t.bannerUrl}</label>
+              <div className="mt-1">
+                <ImageUpload currentUrl={form.bannerUrl || ""} onUrlChange={(url) => update("bannerUrl", url)} />
+              </div>
             </div>
           </div>
         </section>
