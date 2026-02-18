@@ -3,133 +3,75 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language";
-import {
-  Store,
-  ShoppingBag,
-  Share2,
-  Zap,
-  ArrowRight,
-  Check,
-  Sparkles,
-} from "lucide-react";
+import { Store, Share2, Zap, ArrowRight, Check, Sparkles } from "lucide-react";
 
 const dict = {
   en: {
     heroBadge: "Built for informal sellers & micro businesses",
-    heroTitle: "Your professional storefront, live in minutes",
+    heroTitle: "A premium storefront presence, ready in minutes",
     heroSub:
-      "MyShop helps small sellers create trusted online storefronts, organize products, and share social ordering links — no technical skills required.",
+      "MyShop helps small sellers build trusted online storefronts, organize products, and capture order intent with a clean, professional customer experience.",
     heroCta: "Get started free",
     heroSecondary: "See pricing",
-
     vpTitle: "Everything you need to sell online",
-    vpSub: "Simple tools designed for small businesses and independent sellers.",
-    vp1Title: "Beautiful storefront",
-    vp1Desc:
-      "Create a professional product catalog with images, descriptions, and pricing. Share your unique link with customers.",
-    vp2Title: "Social selling",
-    vp2Desc:
-      "Connect WhatsApp, Instagram, and Facebook so customers can reach you on the channels they already use.",
-    vp3Title: "Quick setup",
-    vp3Desc:
-      "Three simple steps to configure your store. No coding, no hosting, no complexity. Just your products and your brand.",
-
+    vpSub: "Simple tools with professional execution.",
+    vp1Title: "Premium storefront",
+    vp1Desc: "Launch a clean product catalog with images, descriptions, pricing and clear ordering actions.",
+    vp2Title: "Social-first conversion",
+    vp2Desc: "Connect WhatsApp, Instagram and Facebook so buyers can contact you instantly.",
+    vp3Title: "Fast onboarding",
+    vp3Desc: "Set up your store in guided steps without technical complexity.",
     pricingTitle: "Simple, transparent pricing",
-    pricingSub: "Start free, upgrade when you're ready.",
+    pricingSub: "Start free. Upgrade only when growth demands it.",
     free: "Free",
     freePrice: "$0",
     freePeriod: "forever",
-    freeBullets: [
-      "1 storefront",
-      "Up to 10 products",
-      "Social CTA buttons",
-      "Shareable link",
-    ],
+    freeBullets: ["1 storefront", "Up to 10 products", "Social CTA buttons", "Shareable link"],
     starter: "Starter",
     starterPrice: "$9",
     starterPeriod: "/ month",
-    starterBullets: [
-      "1 storefront with custom slug",
-      "Up to 50 products/services",
-      "Social CTA buttons",
-      "PayPal payment link",
-      "Priority support",
-    ],
+    starterBullets: ["Up to 50 products/services", "Custom slug", "PayPal link", "Priority support"],
     starterBadge: "Popular",
     pro: "Pro",
     proPrice: "$29",
     proPeriod: "/ month",
-    proBullets: [
-      "Unlimited storefronts",
-      "Unlimited products/services",
-      "Custom domain support",
-      "Analytics dashboard",
-      "PayPal + future payment methods",
-      "Dedicated support",
-    ],
-    viewAll: "View all plan details",
-
+    proBullets: ["Unlimited storefronts", "Unlimited products/services", "Custom domain", "Analytics + dedicated support"],
     ctaTitle: "Ready to start selling?",
-    ctaSub: "Join thousands of small sellers who trust MyShop to power their online presence.",
+    ctaSub: "Join sellers who want a cleaner, more trusted online presence.",
     ctaBtn: "Create your store",
   },
   pt: {
     heroBadge: "Feito para vendedores informais e micro negócios",
-    heroTitle: "A sua loja profissional, online em minutos",
+    heroTitle: "Uma presença premium para a sua loja, pronta em minutos",
     heroSub:
-      "O MyShop ajuda pequenos vendedores a criar vitrines online confiáveis, organizar produtos e partilhar links sociais — sem precisar de conhecimentos técnicos.",
+      "O MyShop ajuda pequenos vendedores a criar vitrines online confiáveis, organizar produtos e captar intenções de compra com uma experiência profissional.",
     heroCta: "Começar grátis",
     heroSecondary: "Ver preços",
-
     vpTitle: "Tudo o que precisa para vender online",
-    vpSub: "Ferramentas simples pensadas para pequenos negócios e vendedores independentes.",
-    vp1Title: "Vitrine profissional",
-    vp1Desc:
-      "Crie um catálogo profissional com imagens, descrições e preços. Partilhe o seu link único com os clientes.",
-    vp2Title: "Vendas sociais",
-    vp2Desc:
-      "Conecte WhatsApp, Instagram e Facebook para que os clientes o contactem nos canais que já usam.",
-    vp3Title: "Configuração rápida",
-    vp3Desc:
-      "Três passos simples para configurar a sua loja. Sem código, sem hosting, sem complexidade. Apenas os seus produtos e a sua marca.",
-
+    vpSub: "Ferramentas simples com execução profissional.",
+    vp1Title: "Vitrine premium",
+    vp1Desc: "Lance um catálogo limpo com imagens, descrições, preços e ações claras de pedido.",
+    vp2Title: "Conversão social",
+    vp2Desc: "Conecte WhatsApp, Instagram e Facebook para contacto imediato dos clientes.",
+    vp3Title: "Onboarding rápido",
+    vp3Desc: "Configure a sua loja em passos guiados sem complexidade técnica.",
     pricingTitle: "Preços simples e transparentes",
-    pricingSub: "Comece grátis, faça upgrade quando estiver pronto.",
+    pricingSub: "Comece grátis. Faça upgrade apenas quando crescer.",
     free: "Grátis",
     freePrice: "$0",
     freePeriod: "para sempre",
-    freeBullets: [
-      "1 vitrine",
-      "Até 10 produtos",
-      "Botões CTA sociais",
-      "Link partilhável",
-    ],
+    freeBullets: ["1 vitrine", "Até 10 produtos", "Botões CTA sociais", "Link partilhável"],
     starter: "Inicial",
     starterPrice: "$9",
     starterPeriod: "/ mês",
-    starterBullets: [
-      "1 vitrine com slug personalizado",
-      "Até 50 produtos/serviços",
-      "Botões CTA sociais",
-      "Link de pagamento PayPal",
-      "Suporte prioritário",
-    ],
+    starterBullets: ["Até 50 produtos/serviços", "Slug personalizado", "Link PayPal", "Suporte prioritário"],
     starterBadge: "Popular",
     pro: "Pro",
     proPrice: "$29",
     proPeriod: "/ mês",
-    proBullets: [
-      "Vitrines ilimitadas",
-      "Produtos/serviços ilimitados",
-      "Suporte a domínio próprio",
-      "Painel de analytics",
-      "PayPal + métodos futuros",
-      "Suporte dedicado",
-    ],
-    viewAll: "Ver todos os detalhes dos planos",
-
+    proBullets: ["Vitrines ilimitadas", "Produtos/serviços ilimitados", "Domínio próprio", "Analytics + suporte dedicado"],
     ctaTitle: "Pronto para começar a vender?",
-    ctaSub: "Junte-se a milhares de pequenos vendedores que confiam no MyShop para a sua presença online.",
+    ctaSub: "Junte-se a vendedores que querem uma presença online mais confiável.",
     ctaBtn: "Criar a sua loja",
   },
 };
@@ -145,160 +87,79 @@ export default function LandingPage() {
   ];
 
   const plans = [
-    {
-      name: t.free,
-      price: t.freePrice,
-      period: t.freePeriod,
-      bullets: t.freeBullets,
-      badge: null,
-      accent: false,
-    },
-    {
-      name: t.starter,
-      price: t.starterPrice,
-      period: t.starterPeriod,
-      bullets: t.starterBullets,
-      badge: t.starterBadge,
-      accent: true,
-    },
-    {
-      name: t.pro,
-      price: t.proPrice,
-      period: t.proPeriod,
-      bullets: t.proBullets,
-      badge: null,
-      accent: false,
-    },
+    { name: t.free, price: t.freePrice, period: t.freePeriod, bullets: t.freeBullets, badge: null, accent: false },
+    { name: t.starter, price: t.starterPrice, period: t.starterPeriod, bullets: t.starterBullets, badge: t.starterBadge, accent: true },
+    { name: t.pro, price: t.proPrice, period: t.proPeriod, bullets: t.proBullets, badge: null, accent: false },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Hero */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-12 sm:px-6 sm:pt-20 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 inline-block rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 sm:text-sm">
-            <Sparkles className="mr-1.5 inline h-3.5 w-3.5" />
-            {t.heroBadge}
-          </p>
-          <h1 className="text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-            {t.heroTitle}
-          </h1>
-          <p className="mt-5 text-base text-slate-600 sm:text-lg">
-            {t.heroSub}
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/setup"
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 font-semibold text-white transition hover:bg-slate-800"
-            >
-              {t.heroCta}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-medium transition hover:bg-slate-50"
-            >
-              {t.heroSecondary}
-            </Link>
+    <div className="min-h-screen text-slate-900">
+      <section className="ui-section">
+        <div className="ui-container">
+          <div className="ui-panel mx-auto max-w-5xl px-6 py-14 text-center sm:px-10 sm:py-20">
+            <p className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+              <Sparkles className="h-3.5 w-3.5" />
+              {t.heroBadge}
+            </p>
+            <h1 className="ui-h1 mx-auto max-w-4xl">{t.heroTitle}</h1>
+            <p className="ui-lead mx-auto mt-6 max-w-2xl">{t.heroSub}</p>
+            <div className="mt-9 flex flex-wrap justify-center gap-3">
+              <Link href="/setup" className="ui-btn ui-btn-primary">{t.heroCta}<ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/pricing" className="ui-btn ui-btn-secondary">{t.heroSecondary}</Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Value Props */}
-      <section className="border-t border-slate-200 bg-white py-16">
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <section className="ui-section pt-0">
+        <div className="ui-container">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-bold sm:text-3xl">{t.vpTitle}</h2>
-            <p className="mt-2 text-slate-600">{t.vpSub}</p>
+            <h2 className="ui-h2">{t.vpTitle}</h2>
+            <p className="ui-lead mt-3">{t.vpSub}</p>
           </div>
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
             {valueProps.map((vp) => (
-              <div
-                key={vp.title}
-                className="rounded-2xl border border-slate-200 bg-slate-50 p-6"
-              >
-                <div className="mb-4 inline-flex rounded-xl border border-slate-200 bg-white p-3">
-                  <vp.icon className="h-5 w-5 text-slate-700" />
-                </div>
-                <h3 className="font-semibold">{vp.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{vp.desc}</p>
-              </div>
+              <article key={vp.title} className="ui-card p-6">
+                <div className="mb-4 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-3"><vp.icon className="h-5 w-5 text-slate-700" /></div>
+                <h3 className="text-base font-semibold text-slate-900">{vp.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{vp.desc}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Preview */}
-      <section className="py-16">
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <section className="ui-section pt-0">
+        <div className="ui-container">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-bold sm:text-3xl">{t.pricingTitle}</h2>
-            <p className="mt-2 text-slate-600">{t.pricingSub}</p>
+            <h2 className="ui-h2">{t.pricingTitle}</h2>
+            <p className="ui-lead mt-3">{t.pricingSub}</p>
           </div>
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
             {plans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl border p-6 ${
-                  plan.accent
-                    ? "border-slate-900 bg-white shadow-md"
-                    : "border-slate-200 bg-white"
-                }`}
-              >
-                {plan.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 px-3 py-0.5 text-xs font-semibold text-white">
-                    {plan.badge}
-                  </span>
-                )}
-                <h3 className="font-semibold">{plan.name}</h3>
-                <p className="mt-2">
-                  <span className="text-3xl font-bold">{plan.price}</span>
-                  <span className="ml-1 text-sm text-slate-500">{plan.period}</span>
-                </p>
-                <ul className="mt-5 space-y-2">
+              <article key={plan.name} className={`relative rounded-2xl border p-6 ${plan.accent ? "border-indigo-200 bg-indigo-50/50" : "border-slate-200 bg-white"}`}>
+                {plan.badge && <span className="absolute -top-3 left-6 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">{plan.badge}</span>}
+                <h3 className="font-semibold text-slate-900">{plan.name}</h3>
+                <p className="mt-2"><span className="text-3xl font-semibold text-slate-900">{plan.price}</span><span className="ml-1 text-sm text-slate-500">{plan.period}</span></p>
+                <ul className="mt-5 space-y-2.5">
                   {plan.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm text-slate-600">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
-                      {b}
-                    </li>
+                    <li key={b} className="flex items-start gap-2 text-sm text-slate-600"><Check className="mt-0.5 h-4 w-4 text-emerald-600" />{b}</li>
                   ))}
                 </ul>
-                <Link
-                  href="/setup"
-                  className={`mt-6 block w-full rounded-lg px-4 py-2 text-center text-sm font-semibold transition ${
-                    plan.accent
-                      ? "bg-slate-900 text-white hover:bg-slate-800"
-                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  {t.heroCta}
-                </Link>
-              </div>
+                <Link href="/setup" className={`mt-6 inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold ${plan.accent ? "bg-slate-900 text-white" : "border border-slate-300 text-slate-700"}`}>{t.heroCta}</Link>
+              </article>
             ))}
-          </div>
-          <div className="mt-6 text-center">
-            <Link
-              href="/pricing"
-              className="text-sm font-medium text-indigo-600 underline underline-offset-2"
-            >
-              {t.viewAll} →
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="border-t border-slate-200 bg-white py-16">
-        <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
-          <h2 className="text-2xl font-bold sm:text-3xl">{t.ctaTitle}</h2>
-          <p className="mt-3 text-slate-600">{t.ctaSub}</p>
-          <Link
-            href="/setup"
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
-          >
-            {t.ctaBtn}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+      <section className="ui-section pt-0">
+        <div className="ui-container">
+          <div className="ui-panel mx-auto max-w-4xl px-6 py-12 text-center sm:px-10">
+            <h2 className="ui-h2">{t.ctaTitle}</h2>
+            <p className="ui-lead mx-auto mt-3 max-w-2xl">{t.ctaSub}</p>
+            <Link href="/setup" className="ui-btn ui-btn-primary mt-8">{t.ctaBtn}<ArrowRight className="h-4 w-4" /></Link>
+          </div>
         </div>
       </section>
     </div>

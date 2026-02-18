@@ -5,96 +5,146 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { DbMigrationGuard } from "@/components/db-migration-guard";
-import { BarChart3, Package, ShoppingCart, ExternalLink, Store, TrendingUp, Clock, Users, CheckSquare, Database, ShieldAlert } from "lucide-react";
+import {
+  Package,
+  ShoppingCart,
+  ExternalLink,
+  Store,
+  TrendingUp,
+  Clock,
+  Users,
+  CheckSquare,
+  Database,
+  ShieldAlert,
+  ArrowRight,
+  TriangleAlert,
+  X,
+  Compass,
+  Sparkles,
+  BookOpen,
+} from "lucide-react";
 
 type Seller = { id: number; slug: string; name: string; ownerName?: string };
 type CatalogItem = { id: number; status: "Draft" | "Published" };
-type DbHealth = { ok: boolean; connected: boolean; missingTables: string[]; errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY"; suggestion?: string; checkedAt?: string };
+type DbHealth = {
+  ok: boolean;
+  connected: boolean;
+  missingTables: string[];
+  errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY";
+  suggestion?: string;
+  checkedAt?: string;
+};
 
 type SetupData = {
   storeName: string;
   storefrontSlug: string;
   ownerName?: string;
-  businessType?: string;
-  currency?: string;
-  city?: string;
-  whatsapp?: string;
-  instagram?: string;
-  facebook?: string;
   paymentLink?: string;
 };
 type SetupPersisted = { step: number; done: boolean; data: SetupData };
 
 const dict = {
   en: {
-    welcome: "Welcome back",
-    storeStats: "Store overview",
+    hello: "Hello",
+    subtitle: "Here's a clean view of your store operations and next best actions.",
     totalProducts: "Total products",
     publishedItems: "Published",
     draftItems: "Drafts",
     totalViews: "Page views",
-    recentOrders: "Recent orders",
-    noOrders: "No orders yet. Share your storefront to start receiving order intents.",
-    catalogMgmt: "Catalog management",
-    catalogDesc: "Add, edit, or remove products and services from your store.",
-    manageCatalog: "Manage catalog",
-    storefront: "Your storefront",
-    storefrontDesc: "View and share your public store page with customers.",
-    viewStorefront: "View storefront",
-    copyLink: "Copy link",
-    settings: "Settings",
-    settingsDesc: "Update your store identity, business details, and social channels.",
-    editSettings: "Edit settings",
     notSetup: "Store not configured",
     notSetupHint: "Complete the store setup first.",
     goSetup: "Go to setup",
     linkCopied: "Link copied!",
-    checklistTitle: "Seller onboarding checklist",
+    pendingTitle: "Pending setup tasks",
+    pendingSubtitle: "Finish these to unlock a complete storefront experience.",
     checklistDone: "Done",
     checklistTodo: "Pending",
     checklistStore: "Store profile completed",
     checklistCatalog: "At least one published catalog item",
     checklistPayment: "Payment link configured",
+    thingsToDo: "Things to do",
+    quickTour: "Take a quick tour",
+    quickTourHint: "Explore key areas and keep your storefront sharp.",
+    openOrders: "Open orders",
+    openCatalog: "Open catalog",
+    openSettings: "Open settings",
+    viewStorefront: "View storefront",
+    copyLink: "Copy link",
+    discoverTitle: "Discover features",
+    discoverSub: "Lightweight improvements that make your seller workflow smoother.",
     dbPanelTitle: "Database diagnostics",
     dbHealthy: "All critical tables are available.",
     dbIssue: "There is a database readiness issue affecting operations.",
     dbMissing: "Missing tables",
     dbSuggestion: "Suggested action",
+    cards: {
+      analytics: {
+        title: "Track performance",
+        desc: "Review trends and spot what customers engage with the most.",
+        cta: "Go to analytics",
+      },
+      trust: {
+        title: "Improve trust signals",
+        desc: "Add better product descriptions and images to improve conversion.",
+        cta: "Update catalog",
+      },
+      response: {
+        title: "Respond faster",
+        desc: "Keep response times low by checking notifications and order notes daily.",
+        cta: "Open orders",
+      },
+    },
   },
   pt: {
-    welcome: "Bem-vindo de volta",
-    storeStats: "Visão geral da loja",
+    hello: "Olá",
+    subtitle: "Aqui está uma visão limpa das operações da sua loja e próximos passos.",
     totalProducts: "Total de produtos",
     publishedItems: "Publicados",
     draftItems: "Rascunhos",
     totalViews: "Visualizações",
-    recentOrders: "Pedidos recentes",
-    noOrders: "Nenhum pedido ainda. Partilhe a sua loja para começar a receber intenções de compra.",
-    catalogMgmt: "Gestão de catálogo",
-    catalogDesc: "Adicione, edite ou remova produtos e serviços da sua loja.",
-    manageCatalog: "Gerir catálogo",
-    storefront: "A sua loja",
-    storefrontDesc: "Veja e partilhe a página pública da sua loja com clientes.",
-    viewStorefront: "Ver loja",
-    copyLink: "Copiar link",
-    settings: "Configurações",
-    settingsDesc: "Atualize a identidade da loja, dados do negócio e canais sociais.",
-    editSettings: "Editar configurações",
     notSetup: "Loja não configurada",
     notSetupHint: "Conclua a configuração da loja primeiro.",
     goSetup: "Ir para configuração",
     linkCopied: "Link copiado!",
-    checklistTitle: "Checklist de onboarding do vendedor",
+    pendingTitle: "Tarefas pendentes de configuração",
+    pendingSubtitle: "Conclua estas tarefas para desbloquear uma experiência completa da loja.",
     checklistDone: "Concluído",
     checklistTodo: "Pendente",
     checklistStore: "Perfil da loja concluído",
     checklistCatalog: "Pelo menos um item do catálogo publicado",
     checklistPayment: "Link de pagamento configurado",
+    thingsToDo: "Coisas para fazer",
+    quickTour: "Faça um tour rápido",
+    quickTourHint: "Explore as áreas principais e mantenha a sua loja afiada.",
+    openOrders: "Abrir pedidos",
+    openCatalog: "Abrir catálogo",
+    openSettings: "Abrir configurações",
+    viewStorefront: "Ver loja",
+    copyLink: "Copiar link",
+    discoverTitle: "Descobrir funcionalidades",
+    discoverSub: "Melhorias leves que tornam o fluxo do vendedor mais eficiente.",
     dbPanelTitle: "Diagnóstico da base de dados",
     dbHealthy: "Todas as tabelas críticas estão disponíveis.",
     dbIssue: "Existe um problema de prontidão da base de dados que afeta operações.",
     dbMissing: "Tabelas em falta",
     dbSuggestion: "Ação sugerida",
+    cards: {
+      analytics: {
+        title: "Acompanhar desempenho",
+        desc: "Veja tendências e identifique o que os clientes mais procuram.",
+        cta: "Ir para análises",
+      },
+      trust: {
+        title: "Melhorar sinais de confiança",
+        desc: "Adicione melhores descrições e imagens para aumentar conversão.",
+        cta: "Atualizar catálogo",
+      },
+      response: {
+        title: "Responder mais rápido",
+        desc: "Mantenha tempos de resposta baixos verificando notificações diariamente.",
+        cta: "Abrir pedidos",
+      },
+    },
   },
 };
 
@@ -109,6 +159,7 @@ export default function DashboardPage() {
   const [ordersCount, setOrdersCount] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const [dbHealth, setDbHealth] = useState<DbHealth | null>(null);
+  const [dismissed, setDismissed] = useState<string[]>([]);
 
   const fetchDashboardData = async () => {
     const rawSetup = localStorage.getItem("myshop_setup_v2");
@@ -163,27 +214,27 @@ export default function DashboardPage() {
         <Store className="mx-auto h-12 w-12 text-slate-400" />
         <h1 className="mt-4 text-2xl font-bold text-slate-900">{t.notSetup}</h1>
         <p className="mt-2 text-slate-600">{t.notSetupHint}</p>
-        <button onClick={() => router.push("/")} className="mt-6 rounded-xl bg-slate-900 px-5 py-2.5 font-semibold text-white">{t.goSetup}</button>
+        <button onClick={() => router.push("/")} className="ui-btn ui-btn-primary mt-6">
+          {t.goSetup}
+        </button>
       </main>
     );
   }
 
   const slug = seller?.slug || setup.data.storefrontSlug || "myshop-demo";
-  const storeName = seller?.name || setup.data.storeName;
-  const owner = seller?.ownerName || "Seller";
+  const owner = seller?.ownerName || setup.data.ownerName || "Seller";
   const storefrontUrl = `/s/${slug}`;
   const fullUrl = `https://myshop-amber.vercel.app${storefrontUrl}`;
   const published = catalog.filter((i) => i.status === "Published").length;
   const drafts = catalog.filter((i) => i.status === "Draft").length;
 
-  const hasStoreProfile = Boolean(setup?.done && setup?.data?.storeName && setup?.data?.storefrontSlug);
-  const hasPaymentLink = Boolean(setup?.data?.paymentLink);
-
   const checklist = [
-    { key: "store", label: t.checklistStore, done: hasStoreProfile },
+    { key: "store", label: t.checklistStore, done: Boolean(setup?.data?.storeName && setup?.data?.storefrontSlug) },
     { key: "catalog", label: t.checklistCatalog, done: published > 0 },
-    { key: "payment", label: t.checklistPayment, done: hasPaymentLink },
+    { key: "payment", label: t.checklistPayment, done: Boolean(setup?.data?.paymentLink) },
   ];
+
+  const pendingCount = checklist.filter((i) => !i.done).length;
 
   const copyStorefrontLink = () => {
     navigator.clipboard.writeText(fullUrl).then(() => {
@@ -192,49 +243,119 @@ export default function DashboardPage() {
     });
   };
 
+  const discoveryCards = [
+    { key: "analytics", icon: TrendingUp, ...t.cards.analytics, href: "/dashboard/analytics" },
+    { key: "trust", icon: Sparkles, ...t.cards.trust, href: "/dashboard/catalog" },
+    { key: "response", icon: BookOpen, ...t.cards.response, href: "/dashboard/orders" },
+  ].filter((card) => !dismissed.includes(card.key));
+
   return (
     <DashboardShell activePage="dashboard">
       <DbMigrationGuard health={dbHealth} onRetry={fetchDashboardData} />
-      <div className="mb-6"><h1 className="text-2xl font-bold text-slate-900">{t.welcome}, {owner}</h1><p className="mt-1 text-sm text-slate-600">{storeName} — @{slug}</p></div>
-      <section className="mb-8"><h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700"><BarChart3 className="h-4 w-4" />{t.storeStats}</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-4"><StatCard icon={Package} label={t.totalProducts} value={String(catalog.length)} /><StatCard icon={TrendingUp} label={t.publishedItems} value={String(published)} /><StatCard icon={Clock} label={t.draftItems} value={String(drafts)} /><StatCard icon={Users} label={t.totalViews} value="—" muted /></div></section>
-      <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5"><h2 className="flex items-center gap-2 font-semibold text-slate-900"><ShoppingCart className="h-4 w-4" />{t.recentOrders}</h2><p className="mt-3 text-sm text-slate-500">{ordersCount > 0 ? `${ordersCount} ${lang === "pt" ? "pedidos" : "orders"}` : t.noOrders}</p></section>
-      <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="flex items-center gap-2 font-semibold text-slate-900"><CheckSquare className="h-4 w-4" />{t.checklistTitle}</h2>
-        <ul className="mt-3 space-y-2">
-          {checklist.map((item) => (
-            <li key={item.key} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
-              <span className="text-slate-700">{item.label}</span>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${item.done ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                {item.done ? t.checklistDone : t.checklistTodo}
-              </span>
-            </li>
-          ))}
-        </ul>
+
+      <section className="mb-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{t.hello}, {owner} 👋</h1>
+        <p className="mt-2 text-sm text-slate-600">{t.subtitle}</p>
       </section>
+
+      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={Package} label={t.totalProducts} value={String(catalog.length)} />
+        <StatCard icon={TrendingUp} label={t.publishedItems} value={String(published)} />
+        <StatCard icon={Clock} label={t.draftItems} value={String(drafts)} />
+        <StatCard icon={Users} label={t.totalViews} value="—" muted />
+      </section>
+
+      <section className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+        <div className="flex items-start gap-3">
+          <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-700" />
+          <div>
+            <p className="text-sm font-semibold text-amber-900">{t.pendingTitle} ({pendingCount})</p>
+            <p className="mt-1 text-sm text-amber-800">{t.pendingSubtitle}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8 grid gap-4 lg:grid-cols-5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 lg:col-span-3">
+          <h2 className="text-base font-semibold text-slate-900">{t.thingsToDo}</h2>
+          <ul className="mt-4 space-y-2">
+            {checklist.map((item) => (
+              <li key={item.key} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm">
+                <span className="text-slate-700">{item.label}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${item.done ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                  {item.done ? t.checklistDone : t.checklistTodo}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-5 lg:col-span-2">
+          <h2 className="text-base font-semibold text-slate-900">{t.quickTour}</h2>
+          <p className="mt-1 text-sm text-slate-600">{t.quickTourHint}</p>
+          <div className="mt-4 grid gap-2">
+            <a href="/dashboard/orders" className="ui-btn ui-btn-secondary justify-between">{t.openOrders}<ArrowRight className="h-4 w-4" /></a>
+            <a href="/dashboard/catalog" className="ui-btn ui-btn-secondary justify-between">{t.openCatalog}<ArrowRight className="h-4 w-4" /></a>
+            <a href="/dashboard/settings" className="ui-btn ui-btn-secondary justify-between">{t.openSettings}<ArrowRight className="h-4 w-4" /></a>
+            <a href={storefrontUrl} target="_blank" rel="noreferrer" className="ui-btn ui-btn-secondary justify-between">{t.viewStorefront}<ExternalLink className="h-4 w-4" /></a>
+            <button onClick={copyStorefrontLink} className="ui-btn ui-btn-ghost justify-between">{linkCopied ? t.linkCopied : t.copyLink}<Compass className="h-4 w-4" /></button>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-base font-semibold text-slate-900">{t.discoverTitle}</h2>
+        <p className="mt-1 text-sm text-slate-600">{t.discoverSub}</p>
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          {discoveryCards.map((card) => (
+            <article key={card.key} className="rounded-xl border border-slate-200 bg-white p-5">
+              <div className="flex items-start justify-between gap-2">
+                <card.icon className="h-5 w-5 text-blue-600" />
+                <button onClick={() => setDismissed((prev) => [...prev, card.key])} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Dismiss card">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">{card.title}</h3>
+              <p className="mt-1 text-sm text-slate-600">{card.desc}</p>
+              <a href={card.href} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800">
+                {card.cta}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {dbHealth && (
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="flex items-center gap-2 font-semibold text-slate-900"><Database className="h-4 w-4" />{t.dbPanelTitle}</h2>
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+            <Database className="h-4 w-4" />
+            {t.dbPanelTitle}
+          </h2>
           <div className={`mt-3 rounded-lg border p-3 text-sm ${dbHealth.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
-            <p className="flex items-center gap-2 font-medium">{dbHealth.ok ? <CheckSquare className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}{dbHealth.ok ? t.dbHealthy : t.dbIssue}</p>
+            <p className="flex items-center gap-2 font-medium">
+              {dbHealth.ok ? <CheckSquare className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
+              {dbHealth.ok ? t.dbHealthy : t.dbIssue}
+            </p>
             {!dbHealth.ok && (
               <>
                 <p className="mt-2"><span className="font-semibold">{t.dbMissing}:</span> {dbHealth.missingTables.join(", ") || "-"}</p>
                 <p className="mt-1"><span className="font-semibold">{t.dbSuggestion}:</span> {dbHealth.suggestion || "-"}</p>
               </>
             )}
-            {dbHealth.checkedAt && <p className="mt-2 text-xs opacity-80">{new Date(dbHealth.checkedAt).toLocaleString()}</p>}
           </div>
         </section>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5"><Package className="h-5 w-5 text-indigo-600" /><h3 className="mt-3 font-semibold text-slate-900">{t.catalogMgmt}</h3><p className="mt-1 text-sm text-slate-600">{t.catalogDesc}</p><a href="/dashboard/catalog" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white">{t.manageCatalog}</a></div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5"><Store className="h-5 w-5 text-emerald-600" /><h3 className="mt-3 font-semibold text-slate-900">{t.storefront}</h3><p className="mt-1 text-sm text-slate-600">{t.storefrontDesc}</p><div className="mt-4 flex flex-wrap gap-2"><a href={storefrontUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white"><ExternalLink className="h-3.5 w-3.5" />{t.viewStorefront}</a><button onClick={copyStorefrontLink} className="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700">{linkCopied ? t.linkCopied : t.copyLink}</button></div></div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5"><Store className="h-5 w-5 text-slate-500" /><h3 className="mt-3 font-semibold text-slate-900">{t.settings}</h3><p className="mt-1 text-sm text-slate-600">{t.settingsDesc}</p><a href="/dashboard/settings" className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700">{t.editSettings}</a></div>
-      </div>
     </DashboardShell>
   );
 }
 
 function StatCard({ icon: Icon, label, value, muted }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; muted?: boolean }) {
-  return <div className="rounded-xl border border-slate-200 bg-white p-4"><Icon className="h-4 w-4 text-slate-400" /><p className={`mt-2 text-2xl font-bold ${muted ? "text-slate-400" : "text-slate-900"}`}>{value}</p><p className="mt-0.5 text-xs text-slate-500">{label}</p></div>;
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <Icon className="h-4 w-4 text-slate-400" />
+      <p className={`mt-2 text-2xl font-semibold ${muted ? "text-slate-400" : "text-slate-900"}`}>{value}</p>
+      <p className="mt-0.5 text-xs text-slate-500">{label}</p>
+    </div>
+  );
 }
