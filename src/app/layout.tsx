@@ -17,18 +17,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "MyShop — Create Your Online Store",
+    default: "MyShop — Create Your Online Store in Minutes",
     template: "%s | MyShop",
   },
   description:
     "Build a professional storefront in minutes. Designed for small businesses and informal sellers in Mozambique and beyond.",
-  keywords: ["online store", "storefront", "small business", "e-commerce", "Mozambique"],
+  keywords: ["online store", "storefront", "small business", "e-commerce", "Mozambique", "loja online"],
   openGraph: {
-    title: "MyShop — Create Your Online Store",
+    title: "MyShop — Create Your Online Store in Minutes",
     description: "Build a professional storefront in minutes. Designed for small businesses and informal sellers.",
     type: "website",
     locale: "en_US",
+    siteName: "MyShop",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "MyShop — Create Your Online Store in Minutes",
+    description: "Build a professional storefront in minutes.",
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://myshop.co.mz"),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -25,12 +25,14 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
+import { getTheme } from "@/lib/theme-colors";
+import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
 
 /* ── Safe image wrapper ── */
 function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; alt?: string; className?: string; fallback?: React.ReactNode }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) return fallback ? <>{fallback}</> : null;
-  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />;
+  return <img src={src} alt={alt} className={className} loading="lazy" onError={() => setFailed(true)} />;
 }
 
 /* ── Types ── */
@@ -46,6 +48,10 @@ type Seller = {
   logoUrl: string;
   bannerUrl: string;
   socialLinks: { whatsapp?: string; instagram?: string; facebook?: string };
+  themeColor: string;
+  address: string;
+  country: string;
+  businessHours: Record<string, { open: string; close: string }>;
 };
 
 type Product = {
@@ -238,6 +244,7 @@ export default function StorefrontPage() {
     );
   }
 
+  const theme = getTheme(seller.themeColor || "indigo");
   const social = seller.socialLinks || {};
   const tabs = [
     { id: "products" as const, label: t.tabProducts, icon: Package },
@@ -248,6 +255,30 @@ export default function StorefrontPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Structured data */}
+      <StoreJsonLd
+        name={seller.name}
+        description={seller.description || ""}
+        url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`}
+        logo={seller.logoUrl || undefined}
+        image={seller.bannerUrl || undefined}
+        address={seller.address || undefined}
+        city={seller.city || undefined}
+        country={seller.country || undefined}
+      />
+      {products.map((p) => (
+        <ProductJsonLd
+          key={p.id}
+          name={p.name}
+          description={p.shortDescription || undefined}
+          image={p.imageUrl || undefined}
+          price={p.price}
+          currency={seller.currency || "USD"}
+          url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`}
+          seller={seller.name}
+        />
+      ))}
+
       {/* Minimal top bar */}
       <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
@@ -282,13 +313,13 @@ export default function StorefrontPage() {
               alt={`${seller.name} banner`}
               className="h-full w-full object-cover"
               fallback={
-                <div className="flex h-full items-center justify-center bg-gradient-to-r from-indigo-500 to-slate-400">
+                <div className={`flex h-full items-center justify-center bg-gradient-to-r ${theme.gradient}`}>
                   <span className="text-xl font-bold text-white/80">{seller.name}</span>
                 </div>
               }
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-r from-indigo-500 to-slate-400">
+            <div className={`flex h-full items-center justify-center bg-gradient-to-r ${theme.gradient}`}>
               <span className="text-xl font-bold text-white/80">{seller.name}</span>
             </div>
           )}
@@ -328,7 +359,7 @@ export default function StorefrontPage() {
               onClick={() => setActiveTab(tb.id)}
               className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-medium transition-colors sm:flex-none sm:px-5 sm:text-sm ${
                 activeTab === tb.id
-                  ? "border-indigo-600 text-indigo-600"
+                  ? `${theme.tabBorder} ${theme.tab}`
                   : "border-transparent text-slate-500 hover:text-slate-700"
               }`}
             >
@@ -350,6 +381,7 @@ export default function StorefrontPage() {
             setCategory={setCategory}
             currency={seller.currency || "USD"}
             t={t}
+            theme={theme}
             onProductClick={setModalProduct}
           />
         )}
@@ -365,6 +397,7 @@ export default function StorefrontPage() {
           slug={seller.slug}
           currency={seller.currency || "USD"}
           t={t}
+          theme={theme}
           onClose={() => setModalProduct(null)}
         />
       )}
@@ -380,6 +413,7 @@ function ProductsTab({
   setCategory,
   currency,
   t,
+  theme,
   onProductClick,
 }: {
   products: Product[];
@@ -388,6 +422,7 @@ function ProductsTab({
   setCategory: (c: string) => void;
   currency: string;
   t: Record<string, string>;
+  theme: ReturnType<typeof getTheme>;
   onProductClick: (p: Product) => void;
 }) {
   return (
@@ -400,7 +435,7 @@ function ProductsTab({
               onClick={() => setCategory(cat)}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                 category === cat
-                  ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                  ? theme.pillActive
                   : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
               }`}
             >
@@ -431,12 +466,12 @@ function ProductsTab({
               )}
               <div className="p-3">
                 <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-                <p className="mt-1 text-sm font-bold text-indigo-600">{currency} {product.price}</p>
+                <p className={`mt-1 text-sm font-bold ${theme.text}`}>{currency} {product.price}</p>
               </div>
               <div className="px-3 pb-3">
                 <button
                   onClick={(e) => { e.stopPropagation(); onProductClick(product); }}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-lg ${theme.btn} py-2 text-xs font-semibold text-white ${theme.btnHover}`}
                 >
                   <ShoppingBag className="h-3.5 w-3.5" />
                   {t.order}
@@ -673,12 +708,14 @@ function ProductModal({
   slug,
   currency,
   t,
+  theme,
   onClose,
 }: {
   product: Product;
   slug: string;
   currency: string;
   t: Record<string, string>;
+  theme: ReturnType<typeof getTheme>;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"details" | "reviews" | "order">("details");
@@ -711,7 +748,7 @@ function ProductModal({
               key={tb.id}
               onClick={() => setTab(tb.id)}
               className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                tab === tb.id ? "border-b-2 border-indigo-600 text-indigo-600" : "text-slate-500"
+                tab === tb.id ? `border-b-2 ${theme.tabBorder} ${theme.tab}` : "text-slate-500"
               }`}
             >
               {tb.label}
@@ -739,12 +776,12 @@ function ProductModal({
               ) : (
                 <PlaceholderImage className="aspect-video w-full rounded-lg" />
               )}
-              <p className="mt-3 text-lg font-bold text-indigo-600">{currency} {product.price}</p>
+              <p className={`mt-3 text-lg font-bold ${theme.text}`}>{currency} {product.price}</p>
               {product.category && <p className="mt-1 text-xs text-slate-400">{product.category}</p>}
               {product.shortDescription && <p className="mt-2 text-sm text-slate-600">{product.shortDescription}</p>}
               <button
                 onClick={() => setTab("order")}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-2.5 text-sm font-semibold text-white ${theme.btnHover}`}
               >
                 <ShoppingBag className="h-4 w-4" /> {t.addToOrder}
               </button>
@@ -759,7 +796,7 @@ function ProductModal({
 
           {tab === "order" && (
             <div className="p-5">
-              <OrderForm product={product} slug={slug} currency={currency} t={t} onClose={onClose} />
+              <OrderForm product={product} slug={slug} currency={currency} t={t} theme={theme} onClose={onClose} />
             </div>
           )}
         </div>
@@ -851,12 +888,14 @@ function OrderForm({
   slug,
   currency,
   t,
+  theme,
   onClose,
 }: {
   product: Product;
   slug: string;
   currency: string;
   t: Record<string, string>;
+  theme: ReturnType<typeof getTheme>;
   onClose: () => void;
 }) {
   const [name, setName] = useState("");
@@ -902,7 +941,7 @@ function OrderForm({
         )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
-          <p className="text-xs font-semibold text-indigo-600">{currency} {product.price}</p>
+          <p className={`text-xs font-semibold ${theme.text}`}>{currency} {product.price}</p>
         </div>
       </div>
       <div>
@@ -921,7 +960,7 @@ function OrderForm({
         <label className="text-xs font-medium text-slate-500">{t.orderNotes}</label>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.orderNotesPh} rows={2} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
       </div>
-      <button type="submit" disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+      <button type="submit" disabled={sending} className={`flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-2.5 text-sm font-semibold text-white ${theme.btnHover} disabled:opacity-50`}>
         <Send className="h-4 w-4" /> {sending ? t.orderSending : t.orderSubmit}
       </button>
     </form>

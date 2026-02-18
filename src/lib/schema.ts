@@ -23,6 +23,10 @@ export const sellers = pgTable("sellers", {
   plan: varchar("plan", { length: 32 }).default("free"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   emailNotifications: boolean("email_notifications").default(true),
+  themeColor: varchar("theme_color", { length: 32 }).default("indigo"),
+  businessHours: jsonb("business_hours").$type<Record<string, { open: string; close: string }>>().default({}),
+  address: text("address").default(""),
+  country: varchar("country", { length: 64 }).default(""),
 });
 
 export const platformSettings = pgTable("platform_settings", {

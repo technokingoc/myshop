@@ -243,7 +243,7 @@ function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, s
       {/* Banner */}
       <div className="relative h-20 bg-gradient-to-br from-indigo-100 to-slate-100">
         {store.bannerUrl && (
-          <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" />
+          <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
         )}
       </div>
       {/* Content */}
@@ -251,7 +251,7 @@ function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, s
         <div className="flex items-start gap-2">
           <div className="-mt-5 h-10 w-10 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-indigo-50 shadow-sm">
             {store.logoUrl ? (
-              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm font-bold text-indigo-400">
                 {store.name.charAt(0)}

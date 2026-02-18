@@ -2,13 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/language";
-import { Save, Bell, Crown } from "lucide-react";
+import { Save, Bell, Crown, Palette, Clock, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 
 const STORAGE_SETUP = "myshop_setup_v2";
+
+const THEME_COLORS = [
+  { id: "indigo", label: "Indigo", bg: "bg-indigo-500", ring: "ring-indigo-300" },
+  { id: "emerald", label: "Emerald", bg: "bg-emerald-500", ring: "ring-emerald-300" },
+  { id: "rose", label: "Rose", bg: "bg-rose-500", ring: "ring-rose-300" },
+  { id: "amber", label: "Amber", bg: "bg-amber-500", ring: "ring-amber-300" },
+  { id: "violet", label: "Violet", bg: "bg-violet-500", ring: "ring-violet-300" },
+  { id: "slate", label: "Slate", bg: "bg-slate-500", ring: "ring-slate-300" },
+];
+
+const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const DAY_LABELS: Record<string, Record<string, string>> = {
+  en: { monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday", thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday" },
+  pt: { monday: "Segunda", tuesday: "Terça", wednesday: "Quarta", thursday: "Quinta", friday: "Sexta", saturday: "Sábado", sunday: "Domingo" },
+};
+
+const COUNTRIES = [
+  "Mozambique", "South Africa", "Tanzania", "Malawi", "Zimbabwe",
+  "Zambia", "Eswatini", "Kenya", "Angola", "Portugal", "Brazil", "Other",
+];
 
 type SetupData = {
   storeName: string;
@@ -28,9 +48,63 @@ type SetupData = {
 
 type SetupPersisted = { step: number; done: boolean; data: SetupData };
 
+type BusinessHours = Record<string, { open: string; close: string }>;
+
+const settingsDict = {
+  en: {
+    themeColor: "Store Theme Color",
+    themeColorDesc: "Choose an accent color for your storefront",
+    storeDescription: "Store Description",
+    charCount: "characters",
+    businessHours: "Business Hours",
+    businessHoursDesc: "Set your opening hours (leave empty if always open)",
+    open: "Open",
+    close: "Close",
+    closed: "Closed",
+    location: "Location Details",
+    address: "Address",
+    addressPh: "Street address...",
+    country: "Country",
+    selectCountry: "Select country",
+    customization: "Store Customization",
+    sections: {
+      identity: "Store Identity",
+      customization: "Store Customization",
+      social: "Social Links",
+      notifications: "Notifications",
+      plan: "Plan & Usage",
+    },
+  },
+  pt: {
+    themeColor: "Cor do Tema da Loja",
+    themeColorDesc: "Escolha uma cor de destaque para a sua loja",
+    storeDescription: "Descrição da Loja",
+    charCount: "caracteres",
+    businessHours: "Horário de Funcionamento",
+    businessHoursDesc: "Defina os horários de abertura (deixe vazio se sempre aberto)",
+    open: "Abre",
+    close: "Fecha",
+    closed: "Fechado",
+    location: "Detalhes de Localização",
+    address: "Endereço",
+    addressPh: "Endereço da rua...",
+    country: "País",
+    selectCountry: "Selecionar país",
+    customization: "Personalização da Loja",
+    sections: {
+      identity: "Identidade da Loja",
+      customization: "Personalização da Loja",
+      social: "Links Sociais",
+      notifications: "Notificações",
+      plan: "Plano & Uso",
+    },
+  },
+};
+
 export default function SettingsPage() {
   const { lang } = useLanguage();
   const t = getDict(lang).settings;
+  const ts = settingsDict[lang];
   const toastText = getDict(lang).toast;
   const toast = useToast();
   const [setup, setSetup] = useState<SetupPersisted | null>(null);
@@ -39,14 +113,24 @@ export default function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [planInfo, setPlanInfo] = useState<{ plan: string; productCount: number; orderCount: number } | null>(null);
 
+  // New fields
+  const [themeColor, setThemeColor] = useState("indigo");
+  const [businessHours, setBusinessHours] = useState<BusinessHours>({});
+  const [address, setAddress] = useState("");
+  const [country, setCountry] = useState("");
+
+  // Collapsible sections
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    identity: true, customization: true, social: false, notifications: false, plan: false,
+  });
+
+  const toggleSection = (key: string) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+
   useEffect(() => {
     const load = async () => {
       try {
         const raw = localStorage.getItem(STORAGE_SETUP);
-        if (!raw) {
-          setHydrated(true);
-          return;
-        }
+        if (!raw) { setHydrated(true); return; }
 
         const parsed = JSON.parse(raw) as SetupPersisted;
         const slug = parsed?.data?.storefrontSlug;
@@ -72,7 +156,10 @@ export default function SettingsPage() {
             setSetup({ ...parsed, data: merged });
             setForm(merged);
             if (s.emailNotifications !== undefined) setEmailNotifications(s.emailNotifications);
-            // Fetch plan info
+            setThemeColor(s.themeColor || "indigo");
+            setBusinessHours(s.businessHours || {});
+            setAddress(s.address || "");
+            setCountry(s.country || "");
             try {
               const statsRes = await fetch("/api/dashboard/stats", { credentials: "include" });
               if (statsRes.ok) {
@@ -90,7 +177,6 @@ export default function SettingsPage() {
       } catch {}
       setHydrated(true);
     };
-
     load();
   }, []);
 
@@ -113,9 +199,15 @@ export default function SettingsPage() {
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
+  const updateHours = (day: string, field: "open" | "close", value: string) => {
+    setBusinessHours((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }));
+  };
+
   const handleSave = async () => {
     if (!form) return;
-
     const updated: SetupPersisted = { ...setup, data: form };
     localStorage.setItem(STORAGE_SETUP, JSON.stringify(updated));
 
@@ -139,6 +231,10 @@ export default function SettingsPage() {
             paymentLink: form.paymentLink,
           },
           emailNotifications,
+          themeColor,
+          businessHours,
+          address,
+          country,
         }),
       }, 3, "settings:save");
     } catch {
@@ -149,21 +245,36 @@ export default function SettingsPage() {
     toast.success(toastText.saved);
   };
 
+  const descLen = (form.description || "").length;
+
   return (
-      <>
+    <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
       </div>
 
-      <div className="space-y-6">
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-4 font-semibold text-slate-900">{t.storeIdentity}</h2>
+      <div className="space-y-4">
+        {/* Store Identity */}
+        <CollapsibleSection
+          title={ts.sections.identity}
+          open={openSections.identity}
+          toggle={() => toggleSection("identity")}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.storeName} value={form.storeName} field="storeName" update={update} />
             <Field label={t.ownerName} value={form.ownerName} field="ownerName" update={update} />
             <div className="sm:col-span-2">
-              <Field label={t.description} value={form.description || ""} field="description" update={update} placeholder={t.descriptionPh} textarea />
+              <label className="text-sm font-medium text-slate-700">{ts.storeDescription}</label>
+              <textarea
+                value={form.description || ""}
+                onChange={(e) => update("description", e.target.value)}
+                placeholder={t.descriptionPh}
+                rows={5}
+                maxLength={1000}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+              <p className="mt-1 text-xs text-slate-400">{descLen}/1000 {ts.charCount}</p>
             </div>
             <Field label={t.currency} value={form.currency} field="currency" update={update} />
             <Field label={t.city} value={form.city} field="city" update={update} />
@@ -180,20 +291,123 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-4 font-semibold text-slate-900">{t.socialLinks}</h2>
+        {/* Store Customization */}
+        <CollapsibleSection
+          title={ts.sections.customization}
+          icon={<Palette className="h-4 w-4" />}
+          open={openSections.customization}
+          toggle={() => toggleSection("customization")}
+        >
+          {/* Theme Color */}
+          <div className="mb-5">
+            <label className="text-sm font-medium text-slate-700">{ts.themeColor}</label>
+            <p className="text-xs text-slate-500">{ts.themeColorDesc}</p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {THEME_COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setThemeColor(c.id)}
+                  className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm font-medium transition ${
+                    themeColor === c.id
+                      ? `border-slate-900 ${c.ring} ring-2`
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <span className={`inline-block h-5 w-5 rounded-full ${c.bg}`} />
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Business Hours */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-slate-500" />
+              <label className="text-sm font-medium text-slate-700">{ts.businessHours}</label>
+            </div>
+            <p className="text-xs text-slate-500 mb-2">{ts.businessHoursDesc}</p>
+            <div className="space-y-2">
+              {DAYS.map((day) => (
+                <div key={day} className="flex items-center gap-2 text-sm">
+                  <span className="w-20 font-medium text-slate-600">{DAY_LABELS[lang][day]}</span>
+                  <input
+                    type="time"
+                    value={businessHours[day]?.open || ""}
+                    onChange={(e) => updateHours(day, "open", e.target.value)}
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-indigo-300 focus:outline-none"
+                    placeholder={ts.open}
+                  />
+                  <span className="text-slate-400">—</span>
+                  <input
+                    type="time"
+                    value={businessHours[day]?.close || ""}
+                    onChange={(e) => updateHours(day, "close", e.target.value)}
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-indigo-300 focus:outline-none"
+                    placeholder={ts.close}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Location Details */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <MapPin className="h-4 w-4 text-slate-500" />
+              <label className="text-sm font-medium text-slate-700">{ts.location}</label>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-slate-500">{ts.address}</label>
+                <input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder={ts.addressPh}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500">{ts.country}</label>
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                >
+                  <option value="">{ts.selectCountry}</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* Social Links */}
+        <CollapsibleSection
+          title={ts.sections.social}
+          open={openSections.social}
+          toggle={() => toggleSection("social")}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.whatsapp} value={form.whatsapp} field="whatsapp" update={update} />
             <Field label={t.instagram} value={form.instagram} field="instagram" update={update} />
             <Field label={t.facebook} value={form.facebook} field="facebook" update={update} />
             <Field label={t.paymentLink} value={form.paymentLink} field="paymentLink" update={update} />
           </div>
-        </section>
+        </CollapsibleSection>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-4 font-semibold text-slate-900 flex items-center gap-2"><Bell className="h-4 w-4" />{(t as Record<string, string>).notifications || "Notifications"}</h2>
+        {/* Notifications */}
+        <CollapsibleSection
+          title={ts.sections.notifications}
+          icon={<Bell className="h-4 w-4" />}
+          open={openSections.notifications}
+          toggle={() => toggleSection("notifications")}
+        >
           <label className="flex items-center gap-3 cursor-pointer">
             <div className="relative">
               <input
@@ -210,14 +424,16 @@ export default function SettingsPage() {
               <p className="text-xs text-slate-500">{(t as Record<string, string>).emailNotificationsDesc || "Receive an email when a customer places a new order."}</p>
             </div>
           </label>
-        </section>
+        </CollapsibleSection>
 
+        {/* Plan & Usage */}
         {planInfo && (
-          <section className="rounded-xl border border-slate-200 bg-white p-5">
-            <h2 className="mb-4 font-semibold text-slate-900 flex items-center gap-2">
-              <Crown className="h-4 w-4" />
-              {lang === "pt" ? "Plano & Uso" : "Plan & Usage"}
-            </h2>
+          <CollapsibleSection
+            title={ts.sections.plan}
+            icon={<Crown className="h-4 w-4" />}
+            open={openSections.plan}
+            toggle={() => toggleSection("plan")}
+          >
             <div className="flex items-center gap-3 mb-4">
               <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold ${
                 planInfo.plan === "business" ? "bg-violet-100 text-violet-700" : planInfo.plan === "pro" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
@@ -236,20 +452,9 @@ export default function SettingsPage() {
                 <p className="text-lg font-bold text-slate-800">
                   {planInfo.productCount}
                   <span className="text-sm font-normal text-slate-400">
-                    {" / "}
-                    {planInfo.plan === "free" ? "10" : planInfo.plan === "pro" ? "100" : "∞"}
+                    {" / "}{planInfo.plan === "free" ? "10" : planInfo.plan === "pro" ? "100" : "∞"}
                   </span>
                 </p>
-                {planInfo.plan === "free" && (
-                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-200">
-                    <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, (planInfo.productCount / 10) * 100)}%` }} />
-                  </div>
-                )}
-                {planInfo.plan === "pro" && (
-                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-200">
-                    <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, (planInfo.productCount / 100) * 100)}%` }} />
-                  </div>
-                )}
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <p className="text-xs text-slate-500">{lang === "pt" ? "Pedidos (total)" : "Orders (total)"}</p>
@@ -261,17 +466,48 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-2">
           <button onClick={handleSave} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
             <Save className="h-4 w-4" />
             {t.save}
           </button>
         </div>
       </div>
-      </>
+    </>
+  );
+}
+
+function CollapsibleSection({
+  title,
+  icon,
+  open,
+  toggle,
+  children,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  open: boolean;
+  toggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white">
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex w-full items-center justify-between p-5"
+      >
+        <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+          {icon}
+          {title}
+        </h2>
+        {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+      </button>
+      {open && <div className="border-t border-slate-100 px-5 pb-5 pt-4">{children}</div>}
+    </section>
   );
 }
 
@@ -281,34 +517,22 @@ function Field({
   field,
   update,
   placeholder,
-  textarea,
 }: {
   label: string;
   value: string;
   field: keyof SetupData;
   update: (key: keyof SetupData, value: string) => void;
   placeholder?: string;
-  textarea?: boolean;
 }) {
   return (
     <div>
       <label className="text-sm font-medium text-slate-700">{label}</label>
-      {textarea ? (
-        <textarea
-          value={value || ""}
-          onChange={(e) => update(field, e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-        />
-      ) : (
-        <input
-          value={value || ""}
-          onChange={(e) => update(field, e.target.value)}
-          placeholder={placeholder}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-        />
-      )}
+      <input
+        value={value || ""}
+        onChange={(e) => update(field, e.target.value)}
+        placeholder={placeholder}
+        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+      />
     </div>
   );
 }

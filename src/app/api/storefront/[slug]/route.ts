@@ -38,6 +38,10 @@ export async function GET(
         bannerUrl: seller.bannerUrl,
         socialLinks: seller.socialLinks,
         plan: seller.plan || "free",
+        themeColor: seller.themeColor || "indigo",
+        businessHours: seller.businessHours || {},
+        address: seller.address || "",
+        country: seller.country || "",
       },
       products,
     });

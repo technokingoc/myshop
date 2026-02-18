@@ -49,9 +49,13 @@ export async function GET() {
       .orderBy(desc(orders.createdAt))
       .limit(5);
 
-    // Get seller plan
+    // Get seller details for plan + onboarding
     const [sellerRow] = await db
-      .select({ plan: sellers.plan })
+      .select({
+        plan: sellers.plan,
+        logoUrl: sellers.logoUrl,
+        bannerUrl: sellers.bannerUrl,
+      })
       .from(sellers)
       .where(eq(sellers.id, sellerId));
 
@@ -62,6 +66,8 @@ export async function GET() {
       publishedCount: Number(productResult?.published ?? 0),
       storeViews: 0, // placeholder
       plan: sellerRow?.plan || "free",
+      hasLogo: Boolean(sellerRow?.logoUrl),
+      hasBanner: Boolean(sellerRow?.bannerUrl),
       recentOrders,
     });
   } catch (error) {

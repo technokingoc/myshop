@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language";
 import { fetchSession, type AuthSession } from "@/lib/auth";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import {
   ShoppingCart,
   DollarSign,
@@ -27,6 +28,8 @@ type DashboardStats = {
   publishedCount: number;
   storeViews: number;
   plan: string;
+  hasLogo: boolean;
+  hasBanner: boolean;
   recentOrders: {
     id: number;
     customerName: string;
@@ -174,6 +177,8 @@ export default function DashboardPage() {
     publishedCount: 0,
     storeViews: 0,
     plan: "free",
+    hasLogo: false,
+    hasBanner: false,
     recentOrders: [],
   };
 
@@ -192,8 +197,23 @@ export default function DashboardPage() {
     return s;
   };
 
+  const showOnboarding = !data.hasLogo || !data.hasBanner || data.publishedCount === 0 || data.orderCount === 0;
+
   return (
     <>
+      {/* Onboarding Checklist */}
+      {showOnboarding && (
+        <OnboardingChecklist
+          data={{
+            hasLogo: Boolean(data.hasLogo),
+            hasBanner: Boolean(data.hasBanner),
+            productCount: data.productCount,
+            publishedCount: data.publishedCount,
+            orderCount: data.orderCount,
+          }}
+        />
+      )}
+
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3">

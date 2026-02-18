@@ -36,7 +36,7 @@ export function StoreCard({ store }: StoreCardProps) {
       {/* Banner */}
       <div className="relative h-24 bg-gradient-to-br from-indigo-100 to-slate-100">
         {store.bannerUrl && (
-          <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" />
+          <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
         )}
         {store.businessType && (
           <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-slate-600 backdrop-blur">
@@ -50,7 +50,7 @@ export function StoreCard({ store }: StoreCardProps) {
         <div className="flex items-start gap-2.5">
           <div className="-mt-6 h-11 w-11 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-indigo-50 shadow-sm">
             {store.logoUrl ? (
-              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm font-bold text-indigo-400">
                 {store.name.charAt(0)}

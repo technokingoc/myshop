@@ -361,7 +361,7 @@ function ProductSearchCard({ product, t }: { product: ProductData; t: Record<str
       className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition-shadow hover:shadow-md"
     >
       {product.imageUrl ? (
-        <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" />
+        <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" loading="lazy" />
       ) : (
         <div className="flex aspect-square w-full items-center justify-center bg-slate-100">
           <ShoppingBag className="h-8 w-8 text-slate-300" />
