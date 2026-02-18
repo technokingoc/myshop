@@ -57,11 +57,13 @@ type SetupPersisted = {
   step: number;
   done: boolean;
   data: SetupData;
+  sellerId?: number;
 };
 
 const STORAGE = {
   setup: "myshop_setup_v2",
   catalog: "myshop_catalog_v2",
+  sellerId: "myshop_seller_id",
 };
 
 const defaultSetup: SetupData = {
@@ -364,7 +366,35 @@ export default function Home() {
     }
   });
 
+  const [sellerId, setSellerId] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem(STORAGE.sellerId);
+    return raw ? Number(raw) : null;
+  });
   const [catalogForm, setCatalogForm] = useState(blankCatalogForm);
+
+  useEffect(() => {
+    if (!sellerId) return;
+    fetch(`/api/catalog?sellerId=${sellerId}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => {
+        if (Array.isArray(rows) && rows.length > 0) {
+          setCatalog(
+            rows.map((row) => ({
+              id: row.id,
+              name: row.name,
+              type: row.type,
+              category: row.category || "",
+              shortDescription: row.shortDescription || "",
+              imageUrl: row.imageUrl || "",
+              price: String(row.price ?? ""),
+              status: row.status,
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+  }, [sellerId]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
@@ -379,13 +409,15 @@ export default function Home() {
         step,
         done,
         data: setup,
+        sellerId: sellerId ?? undefined,
       } satisfies SetupPersisted),
     );
-  }, [step, done, setup]);
+  }, [step, done, setup, sellerId]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE.catalog, JSON.stringify(catalog));
   }, [catalog]);
+
 
   const t = useMemo(() => dictionary[lang], [lang]);
 
@@ -407,15 +439,46 @@ export default function Home() {
     setCatalogForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const submitCatalog = () => {
+  const submitCatalog = async () => {
     if (!catalogForm.name.trim() || !catalogForm.price.trim()) return;
 
-    if (editingId !== null) {
-      setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm } : item)));
-      setEditingId(null);
+    if (sellerId) {
+      try {
+        if (editingId !== null) {
+          const res = await fetch("/api/catalog", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: editingId, ...catalogForm }),
+          });
+          const row = await res.json();
+          setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm, id: row.id ?? editingId } : item)));
+          setEditingId(null);
+        } else {
+          const res = await fetch("/api/catalog", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sellerId, ...catalogForm }),
+          });
+          const row = await res.json();
+          setCatalog((prev) => [...prev, { id: row.id ?? (prev.length ? Math.max(...prev.map((i) => i.id)) + 1 : 1), ...catalogForm }]);
+        }
+      } catch {
+        if (editingId !== null) {
+          setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm } : item)));
+          setEditingId(null);
+        } else {
+          const nextId = catalog.length ? Math.max(...catalog.map((i) => i.id)) + 1 : 1;
+          setCatalog((prev) => [...prev, { id: nextId, ...catalogForm }]);
+        }
+      }
     } else {
-      const nextId = catalog.length ? Math.max(...catalog.map((i) => i.id)) + 1 : 1;
-      setCatalog((prev) => [...prev, { id: nextId, ...catalogForm }]);
+      if (editingId !== null) {
+        setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm } : item)));
+        setEditingId(null);
+      } else {
+        const nextId = catalog.length ? Math.max(...catalog.map((i) => i.id)) + 1 : 1;
+        setCatalog((prev) => [...prev, { id: nextId, ...catalogForm }]);
+      }
     }
 
     setCatalogForm(blankCatalogForm);
@@ -467,8 +530,52 @@ export default function Home() {
     setStep((s) => Math.min(3, s + 1));
   };
 
-  const onFinish = () => {
+  const onFinish = async () => {
     if (!validateStep(3)) return;
+
+    const slug = setup.storefrontSlug || sanitizeSlug(setup.storeName) || "myshop-demo";
+    try {
+      const payload = {
+        slug,
+        name: setup.storeName,
+        ownerName: setup.ownerName,
+        businessType: setup.businessType,
+        currency: setup.currency,
+        city: setup.city,
+        socialLinks: {
+          whatsapp: setup.whatsapp,
+          instagram: setup.instagram,
+          facebook: setup.facebook,
+        },
+      };
+
+      let seller: { id: number } | null = null;
+      const existingRes = await fetch(`/api/sellers/${slug}`);
+      if (existingRes.ok) {
+        await fetch(`/api/sellers/${slug}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const refreshed = await fetch(`/api/sellers/${slug}`);
+        seller = await refreshed.json();
+      } else {
+        const createRes = await fetch("/api/sellers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        seller = await createRes.json();
+      }
+
+      if (seller?.id) {
+        setSellerId(seller.id);
+        localStorage.setItem(STORAGE.sellerId, String(seller.id));
+      }
+    } catch {
+      // fallback to local-only mode
+    }
+
     setDone(true);
   };
 
@@ -747,7 +854,15 @@ export default function Home() {
                       {t.editBtn}
                     </button>
                     <button
-                      onClick={() => { if (window.confirm(t.deleteConfirm)) setCatalog((prev) => prev.filter((i) => i.id !== item.id)); }}
+                      onClick={async () => {
+                        if (!window.confirm(t.deleteConfirm)) return;
+                        if (sellerId) {
+                          try {
+                            await fetch(`/api/catalog?id=${item.id}`, { method: "DELETE" });
+                          } catch {}
+                        }
+                        setCatalog((prev) => prev.filter((i) => i.id !== item.id));
+                      }}
                       className="inline-flex items-center gap-1 rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
                     >
                       <Trash2 className="h-3 w-3" />

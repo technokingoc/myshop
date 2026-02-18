@@ -1,58 +1,106 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
-import { OrderForm } from "@/components/order-form";
+import { OrderFormDB } from "@/components/order-form-db";
 import {
   Store,
   MapPin,
   MessageCircle,
   Instagram,
   Facebook,
-  ShoppingBag,
-  Briefcase,
-  Star,
-  Clock,
-  BarChart3,
   AlertCircle,
   Send,
+  Loader2,
 } from "lucide-react";
 
-type CatalogItem = {
+type Seller = {
   id: number;
+  slug: string;
   name: string;
-  type: "Product" | "Service";
-  category: string;
-  shortDescription: string;
-  imageUrl: string;
-  price: string;
-  status: "Draft" | "Published";
-};
-
-type SetupData = {
-  storeName: string;
-  storefrontSlug: string;
+  description: string;
   ownerName: string;
   businessType: string;
   currency: string;
   city: string;
-  whatsapp: string;
-  instagram: string;
-  facebook: string;
+  logoUrl: string;
+  socialLinks: { whatsapp?: string; instagram?: string; facebook?: string };
 };
 
-type SetupPersisted = { step: number; done: boolean; data: SetupData };
-
-const STORAGE = {
-  setup: "myshop_setup_v2",
-  catalog: "myshop_catalog_v2",
+type CatalogItem = {
+  id: number;
+  sellerId: number;
+  name: string;
+  type: string;
+  category: string;
+  shortDescription: string;
+  imageUrl: string;
+  price: string;
+  status: string;
 };
+
+type LocalSetup = {
+  done?: boolean;
+  data?: {
+    storeName?: string;
+    storefrontSlug?: string;
+    ownerName?: string;
+    businessType?: string;
+    currency?: string;
+    city?: string;
+    whatsapp?: string;
+    instagram?: string;
+    facebook?: string;
+    description?: string;
+    logoUrl?: string;
+  };
+};
+
+function loadLocalStorefront(slug: string): { seller: Seller | null; catalog: CatalogItem[] } {
+  if (typeof window === "undefined") return { seller: null, catalog: [] };
+
+  try {
+    const rawSetup = localStorage.getItem("myshop_setup_v2");
+    const rawCatalog = localStorage.getItem("myshop_catalog_v2");
+    if (!rawSetup) return { seller: null, catalog: [] };
+
+    const setup = JSON.parse(rawSetup) as LocalSetup;
+    const data = setup?.data;
+    if (!data) return { seller: null, catalog: [] };
+
+    const localSlug = (data.storefrontSlug || "").trim();
+    if (!localSlug || localSlug !== slug) return { seller: null, catalog: [] };
+
+    const seller: Seller = {
+      id: Number(localStorage.getItem("myshop_seller_id") || 0) || 0,
+      slug: localSlug,
+      name: data.storeName || "MyShop Store",
+      description: data.description || "",
+      ownerName: data.ownerName || "",
+      businessType: data.businessType || "Retail",
+      currency: data.currency || "USD",
+      city: data.city || "",
+      logoUrl: data.logoUrl || "",
+      socialLinks: {
+        whatsapp: data.whatsapp || "",
+        instagram: data.instagram || "",
+        facebook: data.facebook || "",
+      },
+    };
+
+    const localCatalog = rawCatalog ? (JSON.parse(rawCatalog) as CatalogItem[]) : [];
+    return { seller, catalog: Array.isArray(localCatalog) ? localCatalog : [] };
+  } catch {
+    return { seller: null, catalog: [] };
+  }
+}
 
 const text = {
   en: {
     missing: "Store not found",
-    hint: "Complete setup on the home page first, then revisit this URL.",
+    hint: "This store doesn't exist or hasn't been set up yet.",
+    loading: "Loading store...",
     products: "Products",
     services: "Services",
     social: "Social links",
@@ -64,7 +112,8 @@ const text = {
   },
   pt: {
     missing: "Loja não encontrada",
-    hint: "Conclua a configuração na página inicial e volte a este URL.",
+    hint: "Esta loja não existe ou ainda não foi configurada.",
+    loading: "A carregar loja...",
     products: "Produtos",
     services: "Serviços",
     social: "Links sociais",
@@ -79,37 +128,65 @@ const text = {
 export default function StorefrontPage() {
   const { lang } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
-  const [setup] = useState<SetupData | null>(() => {
-    if (typeof window === "undefined") return null;
-    const rawSetup = localStorage.getItem(STORAGE.setup);
-    if (!rawSetup) return null;
-    try {
-      const parsed = JSON.parse(rawSetup) as SetupPersisted;
-      return parsed.data;
-    } catch {
-      return null;
-    }
-  });
-
-  const [catalog] = useState<CatalogItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    const rawCatalog = localStorage.getItem(STORAGE.catalog);
-    if (!rawCatalog) return [];
-    try {
-      const parsed = JSON.parse(rawCatalog) as CatalogItem[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
-
   const t = text[lang];
-  const normalizedSlug = useMemo(() => sanitizeSlug(slug ?? ""), [slug]);
-  const setupSlug = useMemo(() => sanitizeSlug(setup?.storefrontSlug || setup?.storeName || ""), [setup]);
 
-  // In the local-storage MVP, the storefront preview works only in the same browser.
-  // We skip slug matching — any valid setup data enables the preview.
-  if (!setup) {
+  const [seller, setSeller] = useState<Seller | null>(null);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [orderItem, setOrderItem] = useState<{ id: number | null; name: string } | null>(null);
+
+  useEffect(() => {
+    if (!slug) return;
+    setLoading(true);
+    setNotFound(false);
+
+    Promise.all([
+      fetch(`/api/sellers/${slug}`).then((r) => (r.ok ? r.json() : null)),
+      fetch(`/api/catalog?sellerSlug=${slug}`).then((r) => (r.ok ? r.json() : [])),
+    ])
+      .then(([dbSeller, dbCatalog]) => {
+        if (dbSeller && !dbSeller.error) {
+          setSeller(dbSeller);
+          if (Array.isArray(dbCatalog) && dbCatalog.length > 0) {
+            setCatalog(dbCatalog);
+          } else {
+            const local = loadLocalStorefront(slug);
+            setCatalog(Array.isArray(local.catalog) ? local.catalog : []);
+          }
+          return;
+        }
+
+        const local = loadLocalStorefront(slug);
+        if (local.seller) {
+          setSeller(local.seller);
+          setCatalog(local.catalog);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .catch(() => {
+        const local = loadLocalStorefront(slug);
+        if (local.seller) {
+          setSeller(local.seller);
+          setCatalog(local.catalog);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <main className="mx-auto w-full max-w-6xl px-4 py-16 text-center">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-400" />
+        <p className="mt-3 text-slate-500">{t.loading}</p>
+      </main>
+    );
+  }
+
+  if (notFound || !seller) {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -121,16 +198,17 @@ export default function StorefrontPage() {
     );
   }
 
-  const publishedProducts = catalog.filter((item) => item.status === "Published" && item.type === "Product");
-  const publishedServices = catalog.filter((item) => item.status === "Published" && item.type === "Service");
-
-  const [orderItem, setOrderItem] = useState<{ id: number | null; name: string } | null>(null);
+  const social = seller.socialLinks || {};
+  const publishedProducts = catalog.filter((i) => i.status === "Published" && i.type === "Product");
+  const publishedServices = catalog.filter((i) => i.status === "Published" && i.type === "Service");
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       {orderItem && (
-        <OrderForm
-          storeName={setup.storeName}
+        <OrderFormDB
+          sellerSlug={seller.slug}
+          sellerId={seller.id}
+          storeName={seller.name}
           itemId={orderItem.id}
           itemName={orderItem.name}
           onClose={() => setOrderItem(null)}
@@ -139,13 +217,18 @@ export default function StorefrontPage() {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-3">
-          <Store className="h-7 w-7 text-indigo-600" />
-          <h1 className="text-3xl font-bold text-slate-900">{setup.storeName || "MyShop"}</h1>
+          {seller.logoUrl ? (
+            <img src={seller.logoUrl} alt={seller.name} className="h-10 w-10 rounded-full object-cover" />
+          ) : (
+            <Store className="h-7 w-7 text-indigo-600" />
+          )}
+          <h1 className="text-3xl font-bold text-slate-900">{seller.name}</h1>
         </div>
-        <p className="mt-1 text-slate-600">@{setupSlug}</p>
+        <p className="mt-1 text-slate-600">@{seller.slug}</p>
+        {seller.description && <p className="mt-2 text-slate-700">{seller.description}</p>}
         <p className="mt-2 flex items-center gap-1.5 text-slate-700">
           <MapPin className="h-4 w-4 text-slate-400" />
-          {setup.ownerName || "Owner"} · {setup.businessType || "Business"} · {setup.city || "Maputo"}
+          {seller.ownerName || "Owner"} · {seller.businessType || "Business"} · {seller.city || "—"}
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -159,9 +242,9 @@ export default function StorefrontPage() {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <SocialLink label="WhatsApp" href={setup.whatsapp} icon={MessageCircle} />
-          <SocialLink label="Instagram" href={setup.instagram} icon={Instagram} />
-          <SocialLink label="Facebook" href={setup.facebook} icon={Facebook} />
+          <SocialLink label="WhatsApp" href={social.whatsapp} icon={MessageCircle} />
+          <SocialLink label="Instagram" href={social.instagram} icon={Instagram} />
+          <SocialLink label="Facebook" href={social.facebook} icon={Facebook} />
         </div>
       </section>
 
@@ -170,7 +253,7 @@ export default function StorefrontPage() {
           title={t.products}
           emptyLabel={t.emptyProducts}
           items={publishedProducts}
-          currency={setup.currency || "USD"}
+          currency={seller.currency || "USD"}
           ctaLabel={t.order}
           onOrder={(item) => setOrderItem({ id: item.id, name: item.name })}
         />
@@ -178,19 +261,10 @@ export default function StorefrontPage() {
           title={t.services}
           emptyLabel={t.emptyServices}
           items={publishedServices}
-          currency={setup.currency || "USD"}
+          currency={seller.currency || "USD"}
           ctaLabel={t.book}
           onOrder={(item) => setOrderItem({ id: item.id, name: item.name })}
         />
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">{t.social}</h2>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <SocialLink label="WhatsApp" href={setup.whatsapp} icon={MessageCircle} />
-          <SocialLink label="Instagram" href={setup.instagram} icon={Instagram} />
-          <SocialLink label="Facebook" href={setup.facebook} icon={Facebook} />
-        </div>
       </section>
     </main>
   );
@@ -220,7 +294,9 @@ function CatalogSection({
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {items.map((item) => (
             <div key={item.id} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-              <img src={item.imageUrl} alt={item.name} className="h-36 w-full object-cover" />
+              {item.imageUrl && (
+                <img src={item.imageUrl} alt={item.name} className="h-36 w-full object-cover" />
+              )}
               <div className="p-3">
                 <p className="text-xs text-slate-500">{item.category || "General"}</p>
                 <p className="font-semibold text-slate-900">{item.name}</p>
@@ -246,7 +322,7 @@ function CatalogSection({
   );
 }
 
-function SocialLink({ label, href, icon: Icon }: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }) {
+function SocialLink({ label, href, icon: Icon }: { label: string; href?: string; icon: React.ComponentType<{ className?: string }> }) {
   if (!href) {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
@@ -255,7 +331,6 @@ function SocialLink({ label, href, icon: Icon }: { label: string; href: string; 
       </div>
     );
   }
-
   return (
     <a
       href={href}
@@ -267,13 +342,4 @@ function SocialLink({ label, href, icon: Icon }: { label: string; href: string; 
       {label}
     </a>
   );
-}
-
-function sanitizeSlug(raw: string) {
-  return raw
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
 }

@@ -4,19 +4,24 @@ import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/language";
 import { getOrders, updateOrderStatus, type OrderIntent } from "@/lib/orders";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { ShoppingCart, Inbox, CheckCircle, Phone, Clock } from "lucide-react";
+import { Inbox, CheckCircle, Phone, Clock } from "lucide-react";
+
+type DbOrder = {
+  id: number;
+  customerName: string;
+  customerContact: string;
+  message: string;
+  itemId: number | null;
+  status: "new" | "contacted" | "completed";
+  createdAt: string;
+};
 
 const dict = {
   en: {
     title: "Orders",
     subtitle: "Manage customer order requests and booking intents.",
     empty: "No orders yet. When customers submit order requests from your storefront, they'll appear here.",
-    customer: "Customer",
-    contact: "Contact",
     item: "Item",
-    message: "Message",
-    date: "Date",
-    status: "Status",
     new: "New",
     contacted: "Contacted",
     completed: "Completed",
@@ -31,12 +36,7 @@ const dict = {
     title: "Pedidos",
     subtitle: "Gerir pedidos e intenções de reserva dos clientes.",
     empty: "Ainda não há pedidos. Quando os clientes submeterem pedidos na sua loja, aparecerão aqui.",
-    customer: "Cliente",
-    contact: "Contacto",
     item: "Item",
-    message: "Mensagem",
-    date: "Data",
-    status: "Estado",
     new: "Novo",
     contacted: "Contactado",
     completed: "Concluído",
@@ -67,20 +67,62 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderIntent[]>([]);
   const [filter, setFilter] = useState<"all" | "new" | "contacted" | "completed">("all");
   const [hydrated, setHydrated] = useState(false);
+  const [sellerId, setSellerId] = useState<number | null>(null);
 
   useEffect(() => {
-    setOrders(getOrders());
-    setHydrated(true);
+    const raw = localStorage.getItem("myshop_seller_id");
+    const id = raw ? Number(raw) : null;
+    setSellerId(id);
+
+    if (!id) {
+      setOrders(getOrders());
+      setHydrated(true);
+      return;
+    }
+
+    fetch(`/api/orders?sellerId=${id}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: DbOrder[]) => {
+        if (Array.isArray(rows)) {
+          setOrders(
+            rows.map((o) => ({
+              id: String(o.id),
+              customerName: o.customerName,
+              customerContact: o.customerContact,
+              message: o.message || "",
+              itemId: o.itemId,
+              itemName: "",
+              storeName: "",
+              status: o.status,
+              createdAt: o.createdAt,
+            })),
+          );
+        } else {
+          setOrders(getOrders());
+        }
+      })
+      .catch(() => setOrders(getOrders()))
+      .finally(() => setHydrated(true));
   }, []);
 
   const filtered = useMemo(
     () => (filter === "all" ? orders : orders.filter((o) => o.status === filter)),
-    [orders, filter]
+    [orders, filter],
   );
 
-  const handleStatus = (id: string, status: OrderIntent["status"]) => {
+  const handleStatus = async (id: string, status: OrderIntent["status"]) => {
+    if (sellerId) {
+      try {
+        await fetch("/api/orders", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: Number(id), status }),
+        });
+      } catch {}
+    }
+
     updateOrderStatus(id, status);
-    setOrders(getOrders());
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
   };
 
   if (!hydrated) return null;
@@ -105,17 +147,10 @@ export default function OrdersPage() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-              filter === f.key
-                ? "bg-slate-900 text-white"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              filter === f.key ? "bg-slate-900 text-white" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             }`}
           >
             {f.label}
-            {f.key === "new" && orders.filter((o) => o.status === "new").length > 0 && (
-              <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs text-white">
-                {orders.filter((o) => o.status === "new").length}
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -146,19 +181,9 @@ export default function OrdersPage() {
                     <span className="font-medium">{t.item}:</span> {order.itemName}
                   </p>
                 )}
-                {order.message && (
-                  <p className="mt-1 text-sm text-slate-600">{order.message}</p>
-                )}
+                {order.message && <p className="mt-1 text-sm text-slate-600">{order.message}</p>}
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-400">
-                    {new Date(order.createdAt).toLocaleDateString(lang === "pt" ? "pt-MZ" : "en-US", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                  <span className="text-xs text-slate-400">{new Date(order.createdAt).toLocaleString()}</span>
                   <span className="flex-1" />
                   {order.status === "new" && (
                     <button
