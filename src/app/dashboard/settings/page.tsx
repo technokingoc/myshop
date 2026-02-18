@@ -8,6 +8,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
 import { fetchJsonWithRetry } from "@/lib/api-client";
+import { LocationSelect } from "@/components/location-select";
 
 const STORAGE_SETUP = "myshop_setup_v2";
 
@@ -283,7 +284,14 @@ export default function SettingsPage() {
               <p className="mt-1 text-xs text-slate-400">{descLen}/1000 {ts.charCount}</p>
             </div>
             <Field label={t.currency} value={form.currency} field="currency" update={update} />
-            <Field label={t.city} value={form.city} field="city" update={update} />
+            <div>
+              <label className="text-sm font-medium text-slate-700">{t.city}</label>
+              <LocationSelect
+                value={form.city}
+                onChange={(v) => update("city", v)}
+                className="mt-1"
+              />
+            </div>
             <div className="sm:col-span-2">
               <label className="text-sm font-medium text-slate-700">{t.logoUrl}</label>
               <div className="mt-1">

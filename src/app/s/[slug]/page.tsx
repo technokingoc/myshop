@@ -14,6 +14,7 @@ import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-im
 import { getTheme } from "@/lib/theme-colors";
 import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
 import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
+import { useCategories, flattenCategories } from "@/components/category-select";
 
 /* ── Safe image wrapper ── */
 function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; alt?: string; className?: string; fallback?: React.ReactNode }) {
@@ -175,14 +176,30 @@ export default function StorefrontPage() {
     }
   }, [customer, wishlistIds]);
 
+  // Fetch global categories for localized names
+  const { categories: globalCats } = useCategories();
+  const globalCatMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const flat = flattenCategories(globalCats, lang);
+    for (const c of flat) map.set(c.slug, c.label);
+    return map;
+  }, [globalCats, lang]);
+
   const categories = useMemo(() => {
     const catMap = new Map<string, number>();
     products.forEach((p) => {
       const cat = p.category || "";
       if (cat) catMap.set(cat, (catMap.get(cat) || 0) + 1);
     });
-    return [{ name: "all", count: products.length }, ...Array.from(catMap.entries()).map(([name, count]) => ({ name, count }))];
-  }, [products]);
+    return [
+      { name: "all", count: products.length },
+      ...Array.from(catMap.entries()).map(([name, count]) => ({
+        name,
+        displayName: globalCatMap.get(name) || name,
+        count,
+      })),
+    ];
+  }, [products, globalCatMap]);
 
   const filtered = useMemo(() => {
     if (category === "all") return products;
@@ -455,7 +472,7 @@ function PriceDisplay({ price, compareAtPrice, currency, theme, size = "sm" }: {
 function ProductsTab({
   products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist, gridCols, setGridCols, template,
 }: {
-  products: Product[]; categories: { name: string; count: number }[]; category: string; setCategory: (c: string) => void;
+  products: Product[]; categories: { name: string; displayName?: string; count: number }[]; category: string; setCategory: (c: string) => void;
   currency: string; t: Record<string, string>; theme: ReturnType<typeof getTheme>;
   onProductClick: (p: Product) => void; wishlistIds: Set<number>; toggleWishlist: (id: number) => void;
   gridCols: number; setGridCols: (n: number) => void;
@@ -490,7 +507,7 @@ function ProductsTab({
                 category === cat.name ? theme.pillActive : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:shadow-sm"
               }`}
             >
-              {cat.name === "all" ? t.allCategories : cat.name}
+              {cat.name === "all" ? t.allCategories : (cat.displayName || cat.name)}
               <span className="ml-1 opacity-60">({cat.count})</span>
             </button>
           ))}

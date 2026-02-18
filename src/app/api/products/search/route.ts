@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q") || "";
     const category = searchParams.get("category") || "";
+    const location = searchParams.get("location") || "";
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const sort = searchParams.get("sort") || "recent";
@@ -28,6 +29,9 @@ export async function GET(req: NextRequest) {
     }
     if (category) {
       conditions.push(eq(catalogItems.category, category));
+    }
+    if (location) {
+      conditions.push(eq(sellers.city, location));
     }
     if (minPrice) {
       conditions.push(gte(catalogItems.price, minPrice));

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import Link from "next/link";
 import { ImageUpload } from "@/components/image-upload";
+import { LocationSelect } from "@/components/location-select";
 
 const dict = {
   en: {
@@ -20,6 +21,7 @@ const dict = {
     slugHint: "Lowercase letters, numbers and dashes only. This becomes your store URL.",
     logo: "Store logo (optional)",
     ownerName: "Your name",
+    city: "City",
     ownerNamePh: "Ex: Fernanda Silva",
     email: "Email",
     emailPh: "name@domain.com",
@@ -63,6 +65,7 @@ const dict = {
     slugHint: "Use apenas minúsculas, números e hífen. Este será o URL da sua loja.",
     logo: "Logo da loja (opcional)",
     ownerName: "Seu nome",
+    city: "Cidade",
     ownerNamePh: "Ex: Fernanda Silva",
     email: "Email",
     emailPh: "nome@dominio.com",
@@ -108,6 +111,7 @@ export default function RegisterPage() {
   const [storeName, setStoreName] = useState("");
   const [slug, setSlug] = useState("");
   const [ownerName, setOwnerName] = useState("");
+  const [city, setCity] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -122,6 +126,7 @@ export default function RegisterPage() {
   const validateStep1 = () => {
     const e: Record<string, string> = {};
     if (!storeName.trim()) e.storeName = t.errors.required;
+    if (!city.trim()) e.city = t.errors.required;
     const s = effectiveSlug;
     if (!s) e.slug = t.errors.required;
     else if (!/^[a-z0-9-]+$/.test(s)) e.slug = t.errors.slugFormat;
@@ -163,6 +168,7 @@ export default function RegisterPage() {
           storeName,
           slug: effectiveSlug,
           ownerName,
+          city,
           email,
           password,
           logoUrl: logoUrl || undefined,
@@ -236,6 +242,13 @@ export default function RegisterPage() {
             <>
               <Field label={t.storeName} value={storeName} placeholder={t.storeNamePh} error={errors.storeName} onChange={setStoreName} />
               <div>
+                <label className="text-sm text-slate-700">{t.city}</label>
+                <div className="mt-1">
+                  <LocationSelect value={city} onChange={setCity} />
+                </div>
+                {errors.city && <span className="text-xs text-rose-600">{errors.city}</span>}
+              </div>
+              <div>
                 <Field label={t.slug} value={slug} placeholder={t.slugPh} error={errors.slug} onChange={(v) => setSlug(sanitizeSlug(v))} />
                 <p className="mt-1 text-xs text-slate-500">{t.slugHint}</p>
                 {effectiveSlug && !errors.slug && (
@@ -254,6 +267,15 @@ export default function RegisterPage() {
           {step === 2 && (
             <>
               <Field label={t.ownerName} value={ownerName} placeholder={t.ownerNamePh} error={errors.ownerName} onChange={setOwnerName} />
+              <div>
+                <label className="text-sm text-slate-700">{t.city}</label>
+                <LocationSelect
+                  value={city}
+                  onChange={setCity}
+                  className="mt-1"
+                  placeholder={lang === "pt" ? "Selecionar cidade" : "Select city"}
+                />
+              </div>
               <Field label={t.email} value={email} placeholder={t.emailPh} error={errors.email} onChange={setEmail} type="email" />
               <Field label={t.password} value={password} placeholder={t.passwordPh} error={errors.password} onChange={setPassword} type="password" />
               <Field label={t.confirmPassword} value={confirmPassword} placeholder={t.confirmPasswordPh} error={errors.confirmPassword} onChange={setConfirmPassword} type="password" />
@@ -267,6 +289,7 @@ export default function RegisterPage() {
                 <p className="text-xs font-semibold uppercase text-slate-500">{t.store}</p>
                 <p className="mt-1 text-sm text-slate-800">{storeName}</p>
                 <p className="text-sm text-slate-600">/s/{effectiveSlug}</p>
+                <p className="text-sm text-slate-600">{city}</p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <p className="text-xs font-semibold uppercase text-slate-500">{t.account}</p>

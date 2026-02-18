@@ -16,7 +16,24 @@ import {
   Star,
   MapPin,
   ChevronRight,
+  Shirt,
+  Smartphone,
+  Utensils,
+  Home as HomeIcon,
+  Briefcase,
+  HeartHandshake,
+  Tag,
+  type LucideIcon,
 } from "lucide-react";
+
+type CategoryData = {
+  id: number;
+  nameEn: string;
+  namePt: string;
+  slug: string;
+  icon: string | null;
+  children?: CategoryData[];
+};
 
 const dict = {
   en: {
@@ -76,13 +93,28 @@ interface StoreData {
 
 interface Stats { sellers: number; products: number; orders: number; }
 
+function resolveCategoryIcon(icon?: string | null) {
+  const key = (icon || "").toLowerCase();
+  const map: Record<string, LucideIcon> = {
+    fashion: Shirt,
+    clothing: Shirt,
+    electronics: Smartphone,
+    food: Utensils,
+    restaurant: Utensils,
+    home: HomeIcon,
+    services: Briefcase,
+    beauty: HeartHandshake,
+  };
+  return map[key] || Tag;
+}
+
 export default function HomePage() {
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
   const router = useRouter();
   const [stores, setStores] = useState<StoreData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [dbCategories, setDbCategories] = useState<CategoryData[]>([]);
   const [searchQ, setSearchQ] = useState("");
 
   useEffect(() => {
@@ -91,7 +123,6 @@ export default function HomePage() {
       .then((d) => {
         if (d) {
           setStores(d.stores || []);
-          setCategories(d.categories || []);
         }
       })
       .catch(() => {});
@@ -99,7 +130,27 @@ export default function HomePage() {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => d && setStats(d))
       .catch(() => {});
+    fetch("/api/categories")
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => { if (Array.isArray(d)) setDbCategories(d); })
+      .catch(() => {});
   }, []);
+
+  // Flatten categories for display
+  const categoryPills = useMemo(() => {
+    const result: { slug: string; label: string }[] = [];
+    for (const cat of dbCategories) {
+      const name = lang === "pt" ? cat.namePt : cat.nameEn;
+      result.push({ slug: cat.slug, label: name });
+      if (cat.children) {
+        for (const child of cat.children) {
+          const childName = lang === "pt" ? child.namePt : child.nameEn;
+          result.push({ slug: child.slug, label: childName });
+        }
+      }
+    }
+    return result;
+  }, [dbCategories, lang]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,18 +193,22 @@ export default function HomePage() {
             </div>
           </form>
 
-          {/* Category pills */}
-          {categories.length > 0 && (
+          {/* Category pills from DB */}
+          {categoryPills.length > 0 && (
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {categories.map((cat) => (
-                <Link
-                  key={cat}
-                  href={`/stores?category=${encodeURIComponent(cat)}`}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
-                >
-                  {cat}
-                </Link>
-              ))}
+              {categoryPills.map((cat) => {
+                const Icon = resolveCategoryIcon((dbCategories.find((c) => c.slug === cat.slug)?.icon) || null);
+                return (
+                  <Link
+                    key={cat.slug}
+                    href={`/stores?category=${encodeURIComponent(cat.slug)}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    <Icon className="h-3.5 w-3.5 opacity-70" />
+                    {cat.label}
+                  </Link>
+                );
+              })}
             </div>
           )}
 

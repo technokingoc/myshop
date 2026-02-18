@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { sellers, catalogItems, comments } from "@/lib/schema";
-import { eq, sql, like, ilike, desc, asc } from "drizzle-orm";
+import { eq, sql, ilike, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || "";
+    const search = searchParams.get("q") || searchParams.get("search") || "";
     const category = searchParams.get("category") || "";
+    const location = searchParams.get("location") || "";
     const sort = searchParams.get("sort") || "recent";
     const limit = Math.min(parseInt(searchParams.get("limit") || "12", 10), 50);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
@@ -19,8 +20,8 @@ export async function GET(req: NextRequest) {
     if (search) {
       conditions.push(ilike(sellers.name, `%${search}%`));
     }
-    if (category) {
-      conditions.push(eq(sellers.businessType, category));
+    if (location) {
+      conditions.push(eq(sellers.city, location));
     }
     // Exclude admin accounts from public listing
     conditions.push(sql`${sellers.role} != 'admin'`);
@@ -86,19 +87,17 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    const rows = where
-      ? await (query as any).where(where)
-      : await query;
+    const baseWhere = where ? [where] : [];
+    if (category) {
+      baseWhere.push(sql`EXISTS (SELECT 1 FROM catalog_items ci WHERE ci.seller_id = ${sellers.id} AND ci.status = 'Published' AND ci.category = ${category})`);
+    }
 
-    // Get categories
-    const categories = await db
-      .selectDistinct({ businessType: sellers.businessType })
-      .from(sellers)
-      .where(sql`${sellers.role} != 'admin'`);
+    const rows = baseWhere.length > 0
+      ? await query.where(sql`${sql.join(baseWhere, sql` AND `)}`)
+      : await query;
 
     return NextResponse.json({
       stores: rows,
-      categories: categories.map((c) => c.businessType).filter(Boolean),
     });
   } catch (error) {
     console.error("Stores API error:", error);

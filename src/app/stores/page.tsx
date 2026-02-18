@@ -7,6 +7,8 @@ import { Search, Store, Loader2, X, Star, ShoppingBag, Package } from "lucide-re
 import { useLanguage } from "@/lib/language";
 import { StoreCard } from "@/components/store-card";
 import { Footer } from "@/components/footer";
+import { useCategories, flattenCategories } from "@/components/category-select";
+import { useLocations, type LocationOption, LocationSelect } from "@/components/location-select";
 
 const dict = {
   en: {
@@ -94,16 +96,26 @@ function StoresContent() {
   const [tab, setTab] = useState<"stores" | "products">("stores");
   const [stores, setStores] = useState<StoreData[]>([]);
   const [products, setProducts] = useState<ProductData[]>([]);
-  const [storeCategories, setStoreCategories] = useState<string[]>([]);
-  const [productCategories, setProductCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
 
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [search, setSearch] = useState(searchParams.get("q") || searchParams.get("search") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [location, setLocation] = useState(searchParams.get("location") || "");
   const [sort, setSort] = useState("recent");
   const [offset, setOffset] = useState(0);
   const LIMIT = 12;
+
+  // Fetch real categories & locations from DB
+  const { categories: dbCategories } = useCategories();
+  const { locations: dbLocations } = useLocations();
+  const categoryOptions = useMemo(() => flattenCategories(dbCategories, lang), [dbCategories, lang]);
+  const locationOptions = useMemo(() => {
+    return dbLocations.map((l: LocationOption) => ({
+      slug: l.slug,
+      label: lang === "pt" ? l.namePt : l.nameEn,
+    }));
+  }, [dbLocations, lang]);
 
   const fetchStores = useCallback(
     async (reset: boolean) => {
@@ -112,6 +124,7 @@ function StoresContent() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (category) params.set("category", category);
+      if (location) params.set("location", location);
       params.set("sort", sort);
       params.set("limit", String(LIMIT));
       params.set("offset", String(o));
@@ -128,11 +141,10 @@ function StoresContent() {
           setStores((prev) => [...prev, ...newStores]);
           setOffset((prev) => prev + LIMIT);
         }
-        setStoreCategories(data.categories || []);
         setHasMore(newStores.length === LIMIT);
       } catch {} finally { setLoading(false); }
     },
-    [search, category, sort, offset]
+    [search, category, location, sort, offset]
   );
 
   const fetchProducts = useCallback(
@@ -142,6 +154,7 @@ function StoresContent() {
       const params = new URLSearchParams();
       if (search) params.set("q", search);
       if (category) params.set("category", category);
+      if (location) params.set("location", location);
       params.set("sort", sort);
       params.set("limit", String(LIMIT));
       params.set("offset", String(o));
@@ -158,18 +171,27 @@ function StoresContent() {
           setProducts((prev) => [...prev, ...newProducts]);
           setOffset((prev) => prev + LIMIT);
         }
-        setProductCategories(data.categories || []);
         setHasMore(newProducts.length === LIMIT);
       } catch {} finally { setLoading(false); }
     },
-    [search, category, sort, offset]
+    [search, category, location, sort, offset]
   );
 
   useEffect(() => {
     if (tab === "stores") fetchStores(true);
     else fetchProducts(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, category, sort, tab]);
+  }, [search, category, location, sort, tab]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (location) params.set("location", location);
+    if (search) params.set("q", search);
+    if (sort) params.set("sort", sort);
+    const qs = params.toString();
+    router.replace(qs ? `/stores?${qs}` : "/stores", { scroll: false });
+  }, [router, category, location, search, sort]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,10 +201,10 @@ function StoresContent() {
   const clearFilters = () => {
     setSearch("");
     setCategory("");
+    setLocation("");
     setSort("recent");
   };
 
-  const currentCategories = tab === "stores" ? storeCategories : productCategories;
   const storeSortOptions = ["recent", "popular", "rating"] as const;
   const productSortOptions = ["recent", "price_asc", "price_desc", "popular"] as const;
   const sortOptions = tab === "stores" ? storeSortOptions : productSortOptions;
@@ -192,7 +214,7 @@ function StoresContent() {
     return t[key] || s;
   };
 
-  const hasFilters = search || category || sort !== "recent";
+  const hasFilters = search || category || location || sort !== "recent";
 
   return (
     <div className="min-h-screen text-slate-900">
@@ -218,7 +240,7 @@ function StoresContent() {
 
           {/* Filter bar */}
           <div className="mx-auto mt-4 flex max-w-2xl items-center gap-2 overflow-x-auto pb-1">
-            {/* Category pills */}
+            {/* Category pills from DB */}
             <button
               onClick={() => setCategory("")}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -227,19 +249,33 @@ function StoresContent() {
             >
               {t.all}
             </button>
-            {currentCategories.map((cat) => (
+            {categoryOptions.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setCategory(cat === category ? "" : cat)}
+                key={cat.slug}
+                onClick={() => setCategory(cat.slug === category ? "" : cat.slug)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  category === cat ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
+                  category === cat.slug ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
                 }`}
               >
-                {cat}
+                {cat.label}
               </button>
             ))}
 
             <span className="mx-1 h-4 w-px bg-slate-200" />
+
+            {/* Location filter dropdown */}
+            {locationOptions.length > 0 && (
+              <div className="w-52 shrink-0">
+                <LocationSelect
+                  value={location}
+                  onChange={setLocation}
+                  placeholder={lang === "pt" ? "Localização" : "Location"}
+                />
+              </div>
+            )}
+
+            <span className="mx-1 h-4 w-px bg-slate-200" />
+
 
             {/* Sort */}
             {sortOptions.map((s) => (

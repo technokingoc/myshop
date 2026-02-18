@@ -7,6 +7,7 @@ import { useToast } from "@/components/toast-provider";
 import { Plus, Search, PackageOpen, Trash2, Pencil, CheckSquare, Square, Eye, EyeOff, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { ImageUpload } from "@/components/image-upload";
+import { CategorySelect } from "@/components/category-select";
 
 type CatalogItem = {
   id: number;
@@ -539,7 +540,19 @@ export default function DashboardCatalogPage() {
               {/* Compare at price */}
               <Field label={t.compareAtPrice} value={form.compareAtPrice} onChange={(v) => setForm((p) => ({ ...p, compareAtPrice: v }))} />
               {/* Category */}
-              <Field label={t.category} value={form.category} onChange={(v) => setForm((p) => ({ ...p, category: v }))} />
+              <div>
+                <label className="text-sm font-medium text-slate-700">{t.category}</label>
+                <CategorySelect
+                  value={form.category}
+                  onChange={(v) => setForm((p) => ({ ...p, category: v }))}
+                  className="mt-1"
+                />
+                {form.category && !form.category.includes("-") && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    {lang === "pt" ? "Categoria antiga em texto livre detectada. Recomendamos selecionar uma categoria global." : "Legacy free-text category detected. We recommend selecting a global category."}
+                  </p>
+                )}
+              </div>
               {/* Type */}
               <div>
                 <label className="text-sm font-medium text-slate-700">{t.type}</label>
