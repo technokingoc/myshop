@@ -17,19 +17,19 @@ type Seller = {
   currency: string;
   city: string;
   logoUrl: string;
-  socialLinks: { whatsapp?: string; instagram?: string; facebook?: string };
+  socialLinks: { whatsapp: string; instagram: string; facebook: string };
 };
 
 type CatalogItem = {
   id: number;
   sellerId: number;
   name: string;
-  type: string;
+  type: "Product" | "Service";
   category: string;
   shortDescription: string;
   imageUrl: string;
   price: string;
-  status: string;
+  status: "Draft" | "Published";
 };
 
 type LocalSetup = {
@@ -49,36 +49,123 @@ type LocalSetup = {
   };
 };
 
+const SAFE_TYPES: CatalogItem["type"][] = ["Product", "Service"];
+const SAFE_STATUS: CatalogItem["status"][] = ["Draft", "Published"];
+
+function asString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return "";
+}
+
+function asNumber(value: unknown): number {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function asSafeEnum<T extends string>(value: unknown, allowed: T[], fallback: T): T {
+  const candidate = asString(value).trim();
+  return allowed.includes(candidate as T) ? (candidate as T) : fallback;
+}
+
+function parseSocialLinks(value: unknown): Seller["socialLinks"] {
+  let parsed: unknown = value;
+
+  if (typeof value === "string") {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      parsed = null;
+    }
+  }
+
+  const obj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+
+  return {
+    whatsapp: asString(obj.whatsapp),
+    instagram: asString(obj.instagram),
+    facebook: asString(obj.facebook),
+  };
+}
+
+function normalizeSeller(input: unknown): Seller | null {
+  if (!input || typeof input !== "object") return null;
+  const row = input as Record<string, unknown>;
+
+  return {
+    id: asNumber(row.id),
+    slug: asString(row.slug).trim(),
+    name: asString(row.name),
+    description: asString(row.description),
+    ownerName: asString(row.ownerName),
+    businessType: asString(row.businessType),
+    currency: asString(row.currency),
+    city: asString(row.city),
+    logoUrl: asString(row.logoUrl),
+    socialLinks: parseSocialLinks(row.socialLinks),
+  };
+}
+
+function normalizeCatalog(input: unknown): CatalogItem[] {
+  if (!Array.isArray(input)) return [];
+  return input.map((raw) => {
+    const row = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+    return {
+      id: asNumber(row.id),
+      sellerId: asNumber(row.sellerId),
+      name: asString(row.name),
+      type: asSafeEnum(row.type, SAFE_TYPES, "Product"),
+      category: asString(row.category),
+      shortDescription: asString(row.shortDescription),
+      imageUrl: asString(row.imageUrl),
+      price: asString(row.price),
+      status: asSafeEnum(row.status, SAFE_STATUS, "Draft"),
+    };
+  });
+}
+
+function logStorefrontIssue(event: string, details: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "production") {
+    console.warn(`[storefront] ${event}`, details);
+  }
+}
+
 function loadLocalStorefront(slug: string): { seller: Seller | null; catalog: CatalogItem[] } {
   if (typeof window === "undefined") return { seller: null, catalog: [] };
-  try {
-    const rawSetup = localStorage.getItem("myshop_setup_v2");
-    const rawCatalog = localStorage.getItem("myshop_catalog_v2");
-    if (!rawSetup) return { seller: null, catalog: [] };
-    const setup = JSON.parse(rawSetup) as LocalSetup;
-    const data = setup?.data;
-    if (!data) return { seller: null, catalog: [] };
-    const localSlug = (data.storefrontSlug || "").trim();
-    if (!localSlug || localSlug !== slug) return { seller: null, catalog: [] };
 
-    return {
-      seller: {
-        id: Number(localStorage.getItem("myshop_seller_id") || 0) || 0,
-        slug: localSlug,
-        name: data.storeName || "MyShop Store",
-        description: data.description || "",
-        ownerName: data.ownerName || "",
-        businessType: data.businessType || "Retail",
-        currency: data.currency || "USD",
-        city: data.city || "",
-        logoUrl: data.logoUrl || "",
-        socialLinks: { whatsapp: data.whatsapp || "", instagram: data.instagram || "", facebook: data.facebook || "" },
-      },
-      catalog: rawCatalog ? (JSON.parse(rawCatalog) as CatalogItem[]) : [],
-    };
-  } catch {
-    return { seller: null, catalog: [] };
-  }
+  const rawSetup = localStorage.getItem("myshop_setup_v2");
+  const rawCatalog = localStorage.getItem("myshop_catalog_v2");
+  if (!rawSetup) return { seller: null, catalog: [] };
+
+  const setup = JSON.parse(rawSetup) as LocalSetup;
+  const data = setup?.data;
+  if (!data) return { seller: null, catalog: [] };
+
+  const localSlug = asString(data.storefrontSlug).trim();
+  if (!localSlug || localSlug !== slug) return { seller: null, catalog: [] };
+
+  const seller = normalizeSeller({
+    id: localStorage.getItem("myshop_seller_id") || 0,
+    slug: localSlug,
+    name: data.storeName,
+    description: data.description,
+    ownerName: data.ownerName,
+    businessType: data.businessType,
+    currency: data.currency,
+    city: data.city,
+    logoUrl: data.logoUrl,
+    socialLinks: {
+      whatsapp: data.whatsapp,
+      instagram: data.instagram,
+      facebook: data.facebook,
+    },
+  });
+
+  return {
+    seller,
+    catalog: normalizeCatalog(rawCatalog ? JSON.parse(rawCatalog) : []),
+  };
 }
 
 const text = {
@@ -103,6 +190,7 @@ const text = {
     emptyCatalogHint: "This seller has not published products or services yet. You can still contact them directly.",
     contactSeller: "Contact seller",
     dbBanner: "Temporary connection issue. Showing available fallback content.",
+    hydrationError: "We couldn't load this storefront completely. Showing safe fallback data.",
     discover: "Find items quickly",
     search: "Search products/services",
     all: "All",
@@ -135,6 +223,7 @@ const text = {
     emptyCatalogHint: "Este vendedor ainda não publicou produtos ou serviços. Ainda pode contactá-lo diretamente.",
     contactSeller: "Contactar vendedor",
     dbBanner: "Falha temporária de ligação. A mostrar conteúdo de fallback disponível.",
+    hydrationError: "Não foi possível carregar esta loja por completo. A mostrar fallback seguro.",
     discover: "Encontre itens rapidamente",
     search: "Pesquisar produtos/serviços",
     all: "Todos",
@@ -163,46 +252,79 @@ export default function StorefrontPage() {
 
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
-    setNotFound(false);
 
-    Promise.all([
-      fetchJsonWithRetry<Seller>(`/api/sellers/${slug}`),
-      fetchJsonWithRetry<CatalogItem[]>(`/api/catalog?sellerSlug=${slug}`),
-    ])
-      .then(([dbSeller, dbCatalog]) => {
-        setSeller(dbSeller);
-        setCatalog(Array.isArray(dbCatalog) ? dbCatalog : []);
-        setBanner(null);
-      })
-      .catch(() => {
-        const local = loadLocalStorefront(slug);
-        if (local.seller) {
-          setSeller(local.seller);
-          setCatalog(local.catalog || []);
-          setBanner(t.dbBanner);
-        } else {
+    const hydrateStorefront = async () => {
+      setLoading(true);
+      setNotFound(false);
+      setBanner(null);
+
+      try {
+        const [dbSeller, dbCatalog] = await Promise.all([
+          fetchJsonWithRetry<unknown>(`/api/sellers/${slug}`),
+          fetchJsonWithRetry<unknown>(`/api/catalog?sellerSlug=${slug}`),
+        ]);
+
+        const normalizedSeller = normalizeSeller(dbSeller);
+        const normalizedCatalog = normalizeCatalog(dbCatalog);
+
+        if (!normalizedSeller || !normalizedSeller.slug) {
+          throw new Error("Invalid seller payload");
+        }
+
+        setSeller(normalizedSeller);
+        setCatalog(normalizedCatalog);
+      } catch (dbError) {
+        logStorefrontIssue("db hydrate failed", {
+          slug,
+          message: dbError instanceof Error ? dbError.message : "unknown",
+        });
+
+        try {
+          const local = loadLocalStorefront(slug);
+
+          if (local.seller) {
+            setSeller(local.seller);
+            setCatalog(local.catalog);
+            setBanner(t.dbBanner);
+          } else {
+            setNotFound(true);
+          }
+        } catch (localError) {
+          logStorefrontIssue("local fallback parse failed", {
+            slug,
+            message: localError instanceof Error ? localError.message : "unknown",
+          });
+          setSeller(null);
+          setCatalog([]);
+          setBanner(t.hydrationError);
           setNotFound(true);
         }
-      })
-      .finally(() => setLoading(false));
-  }, [slug, t.dbBanner]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    hydrateStorefront();
+  }, [slug, t.dbBanner, t.hydrationError]);
 
   if (loading) return <main className="mx-auto w-full max-w-6xl px-4 py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-400" /><p className="mt-3 text-slate-500">{t.loading}</p></main>;
   if (notFound || !seller) return <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm"><AlertCircle className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-2xl font-bold text-slate-900">{t.missing}</h1><p className="mt-2 text-slate-600">{t.hint}</p></section></main>;
 
-  const social = seller.socialLinks || {};
+  const social = seller.socialLinks;
   const published = catalog.filter((i) => i.status === "Published");
   const categories = useMemo(
-    () => ["all", ...Array.from(new Set(published.map((i) => i.category?.trim()).filter(Boolean)))],
+    () => ["all", ...Array.from(new Set(published.map((i) => asString(i.category).trim()).filter(Boolean)))],
     [published],
   );
+
   const discovered = published.filter((i) => {
     if (category !== "all" && i.category !== category) return false;
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return i.name.toLowerCase().includes(q) || i.shortDescription.toLowerCase().includes(q);
+    const query = asString(search).trim().toLowerCase();
+    if (!query) return true;
+
+    return asString(i.name).toLowerCase().includes(query) || asString(i.shortDescription).toLowerCase().includes(query);
   });
+
   const publishedProducts = discovered.filter((i) => i.type === "Product");
   const publishedServices = discovered.filter((i) => i.type === "Service");
   const hasCatalog = published.length > 0;
