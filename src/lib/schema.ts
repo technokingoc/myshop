@@ -49,6 +49,7 @@ export const catalogItems = pgTable("catalog_items", {
   stockQuantity: integer("stock_quantity").default(-1),
   trackInventory: boolean("track_inventory").default(false),
   lowStockThreshold: integer("low_stock_threshold").default(5),
+  compareAtPrice: numeric("compare_at_price", { precision: 10, scale: 2 }).default("0"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -73,6 +74,8 @@ export const orders = pgTable("orders", {
   status: varchar("status", { length: 32 }).notNull().default("new"),
   notes: text("notes").default(""),
   statusHistory: jsonb("status_history").$type<Array<{ status: string; at: string; note?: string }>>().default([]),
+  couponCode: varchar("coupon_code", { length: 64 }).default(""),
+  discountAmount: numeric("discount_amount", { precision: 10, scale: 2 }).default("0"),
   customerId: integer("customer_id").references(() => customers.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -86,6 +89,21 @@ export const customers = pgTable("customers", {
   address: text("address").default(""),
   city: varchar("city", { length: 256 }).default(""),
   country: varchar("country", { length: 64 }).default(""),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const coupons = pgTable("coupons", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  code: varchar("code", { length: 64 }).notNull(),
+  type: varchar("type", { length: 16 }).notNull().default("percentage"),
+  value: numeric("value", { precision: 10, scale: 2 }).notNull(),
+  minOrderAmount: numeric("min_order_amount", { precision: 10, scale: 2 }).default("0"),
+  maxUses: integer("max_uses").default(-1),
+  usedCount: integer("used_count").default(0),
+  validFrom: timestamp("valid_from").defaultNow(),
+  validUntil: timestamp("valid_until"),
+  active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

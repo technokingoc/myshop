@@ -18,6 +18,7 @@ type CatalogItem = {
   imageUrl: string;
   imageUrls: string;
   price: string;
+  compareAtPrice: string;
   status: "Draft" | "Published";
 };
 
@@ -63,6 +64,7 @@ const dict = {
     limitReached: "Product limit reached",
     limitReachedHint: "Upgrade your plan to add more products.",
     upgradeNow: "Upgrade",
+    compareAtPrice: "Compare at price",
   },
   pt: {
     title: "Catálogo",
@@ -103,6 +105,7 @@ const dict = {
     limitReached: "Limite de produtos atingido",
     limitReachedHint: "Faça upgrade do seu plano para adicionar mais produtos.",
     upgradeNow: "Upgrade",
+    compareAtPrice: "Preço comparativo",
   },
 };
 
@@ -115,6 +118,7 @@ const initialForm: FormState = {
   imageUrl: "",
   imageUrls: "",
   price: "",
+  compareAtPrice: "",
   status: "Draft",
 };
 
@@ -243,6 +247,7 @@ export default function DashboardCatalogPage() {
       imageUrl: item.imageUrl,
       imageUrls: item.imageUrls || "",
       price: item.price,
+      compareAtPrice: item.compareAtPrice || "",
       status: item.status,
     });
     setShowForm(true);
@@ -258,7 +263,7 @@ export default function DashboardCatalogPage() {
         try {
           const updated = await fetchJsonWithRetry<CatalogItem>(
             "/api/catalog",
-            { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingId, ...form }) },
+            { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingId, ...form, compareAtPrice: form.compareAtPrice || "0" }) },
             2, "catalog:update",
           );
           persistLocal(localNext.map((i) => (i.id === editingId ? updated : i)));
@@ -274,7 +279,7 @@ export default function DashboardCatalogPage() {
           const res = await fetch("/api/catalog", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sellerId, ...form }),
+            body: JSON.stringify({ sellerId, ...form, compareAtPrice: form.compareAtPrice || "0" }),
           });
           if (res.status === 403) {
             const data = await res.json();
@@ -531,6 +536,8 @@ export default function DashboardCatalogPage() {
               <Field label={t.name} value={form.name} onChange={(v) => setForm((p) => ({ ...p, name: v }))} />
               {/* Price */}
               <Field label={t.price} value={form.price} onChange={(v) => setForm((p) => ({ ...p, price: v }))} />
+              {/* Compare at price */}
+              <Field label={t.compareAtPrice} value={form.compareAtPrice} onChange={(v) => setForm((p) => ({ ...p, compareAtPrice: v }))} />
               {/* Category */}
               <Field label={t.category} value={form.category} onChange={(v) => setForm((p) => ({ ...p, category: v }))} />
               {/* Type */}

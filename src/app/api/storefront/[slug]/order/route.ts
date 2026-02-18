@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { orders, sellers, catalogItems } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { orders, sellers, catalogItems, coupons } from "@/lib/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { sendOrderConfirmation, sendNewOrderAlert } from "@/lib/email-service";
 import { getCustomerSession } from "@/lib/customer-session";
 
@@ -13,7 +13,7 @@ export async function POST(
   try {
     const db = getDb();
     const body = await req.json();
-    const { itemId, customerName, customerContact, message, quantity } = body;
+    const { itemId, customerName, customerContact, message, quantity, couponCode, discountAmount } = body;
 
     if (!customerName || !customerContact) {
       return NextResponse.json(
@@ -49,8 +49,19 @@ export async function POST(
         message: orderMessage,
         status: "new",
         customerId,
+        couponCode: couponCode || "",
+        discountAmount: String(discountAmount || 0),
       })
       .returning();
+
+    // Increment coupon used_count if coupon was applied
+    if (couponCode) {
+      try {
+        await db.update(coupons)
+          .set({ usedCount: sql`${coupons.usedCount} + 1` })
+          .where(and(eq(coupons.sellerId, seller.id), eq(coupons.code, couponCode)));
+      } catch {}
+    }
 
     // Fetch item name for email
     let itemName = "";

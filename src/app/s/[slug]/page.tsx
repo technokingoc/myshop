@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language";
 import {
   Store, MapPin, MessageCircle, Instagram, Facebook, AlertCircle, Loader2,
   ShoppingBag, X, Send, CheckCircle, Home, Package, Star, MessageSquare,
   Phone, Info, Heart, User, LogIn, ChevronLeft, ChevronRight, Share2, Copy, Check,
+  Tag, Grid2X2, Grid3X3, LayoutGrid, BadgeCheck, Sparkles, TrendingUp,
 } from "lucide-react";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
 import { getTheme } from "@/lib/theme-colors";
@@ -28,7 +29,11 @@ type Seller = {
   themeColor: string; address: string; country: string;
   businessHours: Record<string, { open: string; close: string }>;
 };
-type Product = { id: number; sellerId: number; name: string; type: string; category: string; shortDescription: string; imageUrl: string; imageUrls: string; price: string; status: string };
+type Product = {
+  id: number; sellerId: number; name: string; type: string; category: string;
+  shortDescription: string; imageUrl: string; imageUrls: string; price: string;
+  status: string; compareAtPrice?: string; createdAt?: string;
+};
 type Comment = { id: number; catalogItemId: number | null; sellerId: number | null; authorName: string; authorEmail: string | null; content: string; rating: number | null; createdAt: string };
 type CustomerInfo = { customerId: number; name: string; email: string; phone?: string; address?: string; city?: string; country?: string } | null;
 
@@ -55,6 +60,12 @@ const dict = {
     login: "Login", myAccount: "Account", wishlist: "Wishlist",
     loginToSave: "Log in to save favorites", copied: "Copied!", share: "Share",
     prev: "Previous", next: "Next",
+    quickView: "Quick view", off: "off", verified: "Verified seller",
+    newBadge: "New", bestSeller: "Best seller",
+    haveCoupon: "Have a coupon?", applyCoupon: "Apply", couponPlaceholder: "Enter code",
+    discount: "Discount", total: "Total", originalPrice: "Original price",
+    invalidCoupon: "Invalid coupon", couponApplied: "Coupon applied!",
+    removeCoupon: "Remove",
   },
   pt: {
     loading: "A carregar loja...", notFound: "Loja não encontrada",
@@ -79,6 +90,12 @@ const dict = {
     login: "Entrar", myAccount: "Conta", wishlist: "Favoritos",
     loginToSave: "Entre para guardar favoritos", copied: "Copiado!", share: "Partilhar",
     prev: "Anterior", next: "Seguinte",
+    quickView: "Ver rápido", off: "desc.", verified: "Vendedor verificado",
+    newBadge: "Novo", bestSeller: "Mais vendido",
+    haveCoupon: "Tem um cupom?", applyCoupon: "Aplicar", couponPlaceholder: "Digite o código",
+    discount: "Desconto", total: "Total", originalPrice: "Preço original",
+    invalidCoupon: "Cupom inválido", couponApplied: "Cupom aplicado!",
+    removeCoupon: "Remover",
   },
 };
 
@@ -97,6 +114,8 @@ export default function StorefrontPage() {
   const [customer, setCustomer] = useState<CustomerInfo>(null);
   const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
   const [loginPrompt, setLoginPrompt] = useState(false);
+  const [storeComments, setStoreComments] = useState<Comment[]>([]);
+  const [gridCols, setGridCols] = useState(2); // mobile default
 
   // Load customer session
   useEffect(() => {
@@ -127,6 +146,15 @@ export default function StorefrontPage() {
       .catch(() => { setNotFound(true); setLoading(false); });
   }, [slug]);
 
+  // Load store reviews for rating summary
+  useEffect(() => {
+    if (!seller) return;
+    fetch(`/api/comments?sellerId=${seller.id}`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setStoreComments(data); })
+      .catch(() => {});
+  }, [seller]);
+
   const toggleWishlist = useCallback(async (itemId: number) => {
     if (!customer) { setLoginPrompt(true); return; }
     const isWished = wishlistIds.has(itemId);
@@ -139,14 +167,32 @@ export default function StorefrontPage() {
   }, [customer, wishlistIds]);
 
   const categories = useMemo(() => {
-    const cats = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
-    return ["all", ...cats];
+    const catMap = new Map<string, number>();
+    products.forEach((p) => {
+      const cat = p.category || "";
+      if (cat) catMap.set(cat, (catMap.get(cat) || 0) + 1);
+    });
+    return [{ name: "all", count: products.length }, ...Array.from(catMap.entries()).map(([name, count]) => ({ name, count }))];
   }, [products]);
 
   const filtered = useMemo(() => {
     if (category === "all") return products;
     return products.filter((p) => p.category === category);
   }, [products, category]);
+
+  // Rating summary
+  const ratingInfo = useMemo(() => {
+    const rated = storeComments.filter((c) => c.rating);
+    if (rated.length === 0) return { avg: 0, count: 0 };
+    const avg = Math.round((rated.reduce((s, c) => s + (c.rating || 0), 0) / rated.length) * 10) / 10;
+    return { avg, count: rated.length };
+  }, [storeComments]);
+
+  // Verified seller check: logo + banner + 3+ products
+  const isVerified = useMemo(() => {
+    if (!seller) return false;
+    return !!(seller.logoUrl && seller.bannerUrl && products.length >= 3);
+  }, [seller, products]);
 
   if (loading) {
     return (
@@ -183,14 +229,17 @@ export default function StorefrontPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50">
-      {/* Structured data */}
       <StoreJsonLd name={seller.name} description={seller.description || ""} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} logo={seller.logoUrl || undefined} image={seller.bannerUrl || undefined} address={seller.address || undefined} city={seller.city || undefined} country={seller.country || undefined} />
       {products.map((p) => <ProductJsonLd key={p.id} name={p.name} description={p.shortDescription || undefined} image={p.imageUrl || undefined} price={p.price} currency={seller.currency || "USD"} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} seller={seller.name} />)}
 
-      {/* Top bar with customer nav */}
+      {/* Top bar — breadcrumb style */}
       <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
-          <Link href="/" className="text-sm font-bold text-slate-500 hover:text-slate-700 transition">MyShop</Link>
+          <div className="flex items-center gap-1.5 text-sm">
+            <Link href="/" className="font-bold text-slate-500 hover:text-slate-700 transition">MyShop</Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="font-semibold text-slate-800 truncate max-w-[150px] sm:max-w-none">{seller.name}</span>
+          </div>
           <div className="flex items-center gap-1">
             {social.whatsapp && (
               <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition">
@@ -251,8 +300,22 @@ export default function StorefrontPage() {
               )}
             </div>
             <div className="min-w-0 flex-1 pb-1">
-              <h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>
+                {isVerified && (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600" title={t.verified}>
+                    <BadgeCheck className="h-3.5 w-3.5" /> {t.verified}
+                  </span>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                {ratingInfo.count > 0 && (
+                  <span className="flex items-center gap-1">
+                    <StarRating rating={Math.round(ratingInfo.avg)} size="h-3 w-3" />
+                    <span className="font-medium text-slate-700">{ratingInfo.avg}</span>
+                    <span>({ratingInfo.count})</span>
+                  </span>
+                )}
                 {seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" /> {seller.city}{seller.country ? `, ${seller.country}` : ""}</span>}
                 {seller.businessType && seller.businessType !== "Retail" && <span className="rounded-full bg-slate-100 px-2 py-0.5">{seller.businessType}</span>}
                 <span>{products.length} {t.products}</span>
@@ -288,7 +351,12 @@ export default function StorefrontPage() {
       {/* Content */}
       <main className="mx-auto max-w-5xl px-4 pb-24 pt-5 sm:pb-8">
         {activeTab === "products" && (
-          <ProductsTab products={filtered} categories={categories} category={category} setCategory={setCategory} currency={seller.currency || "USD"} t={t} theme={theme} onProductClick={setModalProduct} wishlistIds={wishlistIds} toggleWishlist={toggleWishlist} />
+          <ProductsTab
+            products={filtered} categories={categories} category={category} setCategory={setCategory}
+            currency={seller.currency || "USD"} t={t} theme={theme} onProductClick={setModalProduct}
+            wishlistIds={wishlistIds} toggleWishlist={toggleWishlist}
+            gridCols={gridCols} setGridCols={setGridCols}
+          />
         )}
         {activeTab === "about" && <AboutTab seller={seller} t={t} />}
         {activeTab === "reviews" && <ReviewsTab sellerId={seller.id} t={t} />}
@@ -297,7 +365,12 @@ export default function StorefrontPage() {
 
       {/* Product modal */}
       {modalProduct && (
-        <ProductModal product={modalProduct} slug={seller.slug} currency={seller.currency || "USD"} t={t} theme={theme} onClose={() => setModalProduct(null)} customer={customer} isWished={wishlistIds.has(modalProduct.id)} toggleWishlist={toggleWishlist} />
+        <ProductModal
+          product={modalProduct} sellerId={seller.id} slug={seller.slug}
+          currency={seller.currency || "USD"} t={t} theme={theme}
+          onClose={() => setModalProduct(null)} customer={customer}
+          isWished={wishlistIds.has(modalProduct.id)} toggleWishlist={toggleWishlist}
+        />
       )}
 
       {/* Login prompt */}
@@ -319,31 +392,77 @@ export default function StorefrontPage() {
   );
 }
 
+/* ── Price Display with compare_at_price ── */
+function PriceDisplay({ price, compareAtPrice, currency, theme, size = "sm" }: {
+  price: string; compareAtPrice?: string; currency: string; theme: ReturnType<typeof getTheme>; size?: "sm" | "lg";
+}) {
+  const hasDiscount = compareAtPrice && Number(compareAtPrice) > Number(price) && Number(compareAtPrice) > 0;
+  const pctOff = hasDiscount ? Math.round((1 - Number(price) / Number(compareAtPrice)) * 100) : 0;
+  const textSize = size === "lg" ? "text-xl" : "text-sm";
+  const smallSize = size === "lg" ? "text-sm" : "text-xs";
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {hasDiscount && (
+        <span className={`${smallSize} text-slate-400 line-through`}>{currency} {compareAtPrice}</span>
+      )}
+      <span className={`${textSize} font-bold ${hasDiscount ? "text-red-600" : theme.text}`}>{currency} {price}</span>
+      {hasDiscount && (
+        <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">-{pctOff}%</span>
+      )}
+    </div>
+  );
+}
+
 /* ── Products Tab ── */
 function ProductsTab({
-  products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist,
+  products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist, gridCols, setGridCols,
 }: {
-  products: Product[]; categories: string[]; category: string; setCategory: (c: string) => void;
+  products: Product[]; categories: { name: string; count: number }[]; category: string; setCategory: (c: string) => void;
   currency: string; t: Record<string, string>; theme: ReturnType<typeof getTheme>;
   onProductClick: (p: Product) => void; wishlistIds: Set<number>; toggleWishlist: (id: number) => void;
+  gridCols: number; setGridCols: (n: number) => void;
 }) {
+  const isNew = (p: Product) => {
+    if (!p.createdAt) return false;
+    const diff = Date.now() - new Date(p.createdAt).getTime();
+    return diff < 7 * 24 * 60 * 60 * 1000;
+  };
+
+  const gridClass = gridCols === 2
+    ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+    : gridCols === 3
+      ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-5"
+      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+
   return (
     <>
-      {categories.length > 1 && (
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="mb-5 flex items-center justify-between gap-2">
+        {/* Category pills with counts */}
+        <div className="flex flex-1 gap-2 overflow-x-auto pb-1 scrollbar-none">
           {categories.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition-all ${
-                category === cat ? theme.pillActive : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:shadow-sm"
+              key={cat.name}
+              onClick={() => setCategory(cat.name)}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                category === cat.name ? theme.pillActive : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:shadow-sm"
               }`}
             >
-              {cat === "all" ? t.allCategories : cat}
+              {cat.name === "all" ? t.allCategories : cat.name}
+              <span className="ml-1 opacity-60">({cat.count})</span>
             </button>
           ))}
         </div>
-      )}
+        {/* Grid density toggle */}
+        <div className="hidden sm:flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5">
+          <button onClick={() => setGridCols(2)} className={`rounded p-1.5 transition ${gridCols === 2 ? "bg-slate-100 text-slate-900" : "text-slate-400 hover:text-slate-600"}`}>
+            <Grid2X2 className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={() => setGridCols(3)} className={`rounded p-1.5 transition ${gridCols === 3 ? "bg-slate-100 text-slate-900" : "text-slate-400 hover:text-slate-600"}`}>
+            <Grid3X3 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
 
       {products.length === 0 ? (
         <div className="py-16 text-center">
@@ -352,13 +471,20 @@ function ProductsTab({
           <p className="mt-1 text-xs text-slate-400">{t.noProductsHint}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className={`grid gap-3 ${gridClass}`}>
           {products.map((product) => (
             <article
               key={product.id}
               className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg hover:-translate-y-0.5"
               onClick={() => onProductClick(product)}
             >
+              {/* Badges */}
+              <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
+                {isNew(product) && (
+                  <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">{t.newBadge}</span>
+                )}
+              </div>
+
               {/* Wishlist heart */}
               <button
                 onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
@@ -367,6 +493,11 @@ function ProductsTab({
                 <Heart className={`h-4 w-4 transition ${wishlistIds.has(product.id) ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
               </button>
 
+              {/* Quick view overlay (desktop) */}
+              <div className="absolute inset-0 z-[5] hidden items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100 sm:flex">
+                <span className="rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-slate-800 shadow-lg backdrop-blur">{t.quickView}</span>
+              </div>
+
               <div className="aspect-square overflow-hidden">
                 {product.imageUrl ? (
                   <SafeImg src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" fallback={<PlaceholderImage className="h-full w-full" />} />
@@ -374,15 +505,17 @@ function ProductsTab({
                   <PlaceholderImage className="h-full w-full" />
                 )}
               </div>
-              <div className="p-3">
+              <div className="p-2.5 sm:p-3">
                 <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
                 {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
-                <p className={`mt-1.5 text-sm font-bold ${theme.text}`}>{currency} {product.price}</p>
+                <div className="mt-1.5">
+                  <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
+                </div>
               </div>
-              <div className="px-3 pb-3">
+              <div className="px-2.5 pb-2.5 sm:px-3 sm:pb-3">
                 <button
                   onClick={(e) => { e.stopPropagation(); onProductClick(product); }}
-                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl ${theme.btn} py-2.5 text-xs font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.97]`}
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl ${theme.btn} py-2 sm:py-2.5 text-xs font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.97]`}
                 >
                   <ShoppingBag className="h-3.5 w-3.5" />
                   {t.order}
@@ -542,24 +675,36 @@ function ContactTab({ seller, t }: { seller: Seller; t: Record<string, string> }
 }
 
 /* ── Star Components ── */
-function StarRating({ rating }: { rating: number }) {
-  return <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map((i) => <Star key={i} className={`h-4 w-4 ${i <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />)}</div>;
+function StarRating({ rating, size = "h-4 w-4" }: { rating: number; size?: string }) {
+  return <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map((i) => <Star key={i} className={`${size} ${i <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />)}</div>;
 }
 function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return <div className="flex gap-1">{[1, 2, 3, 4, 5].map((i) => <button key={i} type="button" onClick={() => onChange(i)} className="p-0.5"><Star className={`h-6 w-6 transition ${i <= value ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-amber-300"}`} /></button>)}</div>;
 }
 
-/* ── Product Modal ── */
+/* ── Product Modal with coupon integration ── */
 function ProductModal({
-  product, slug, currency, t, theme, onClose, customer, isWished, toggleWishlist,
+  product, sellerId, slug, currency, t, theme, onClose, customer, isWished, toggleWishlist,
 }: {
-  product: Product; slug: string; currency: string; t: Record<string, string>;
+  product: Product; sellerId: number; slug: string; currency: string; t: Record<string, string>;
   theme: ReturnType<typeof getTheme>; onClose: () => void; customer: CustomerInfo;
   isWished: boolean; toggleWishlist: (id: number) => void;
 }) {
   const [tab, setTab] = useState<"details" | "reviews" | "order">("details");
   const images = getProductImages(product);
   const [activeImg, setActiveImg] = useState(0);
+
+  // Touch swipe for image gallery
+  const touchStartX = useRef(0);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (images.length <= 1) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff < 0) setActiveImg((i) => (i + 1) % images.length);
+      else setActiveImg((i) => (i - 1 + images.length) % images.length);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
@@ -591,14 +736,20 @@ function ProductModal({
         <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(92vh - 110px)" }}>
           {tab === "details" && (
             <div className="p-5">
-              {/* Image gallery */}
+              {/* Image gallery with swipe */}
               {images.length > 0 ? (
-                <div className="relative">
+                <div className="relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
                   <SafeImg src={images[activeImg]} alt={product.name} className="aspect-[4/3] w-full rounded-xl object-cover" fallback={<PlaceholderImage className="aspect-[4/3] w-full rounded-xl" />} />
                   {images.length > 1 && (
                     <>
                       <button onClick={() => setActiveImg((i) => (i - 1 + images.length) % images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-md backdrop-blur transition hover:bg-white"><ChevronLeft className="h-4 w-4" /></button>
                       <button onClick={() => setActiveImg((i) => (i + 1) % images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-md backdrop-blur transition hover:bg-white"><ChevronRight className="h-4 w-4" /></button>
+                      {/* Dot indicators */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                        {images.map((_, i) => (
+                          <button key={i} onClick={() => setActiveImg(i)} className={`h-1.5 rounded-full transition-all ${i === activeImg ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
+                        ))}
+                      </div>
                       <div className="mt-2 flex gap-2 overflow-x-auto">
                         {images.map((url, i) => (
                           <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 overflow-hidden rounded-lg border-2 transition ${i === activeImg ? "border-indigo-500 shadow-sm" : "border-transparent opacity-70 hover:opacity-100"}`}>
@@ -613,7 +764,7 @@ function ProductModal({
                 <PlaceholderImage className="aspect-[4/3] w-full rounded-xl" />
               )}
               <div className="mt-4 flex items-center justify-between">
-                <p className={`text-xl font-bold ${theme.text}`}>{currency} {product.price}</p>
+                <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} size="lg" />
                 {product.category && <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{product.category}</span>}
               </div>
               {product.shortDescription && <p className="mt-3 text-sm leading-relaxed text-slate-600">{product.shortDescription}</p>}
@@ -623,8 +774,21 @@ function ProductModal({
             </div>
           )}
           {tab === "reviews" && <div className="p-5"><ProductReviews itemId={product.id} t={t} /></div>}
-          {tab === "order" && <div className="p-5"><OrderForm product={product} slug={slug} currency={currency} t={t} theme={theme} onClose={onClose} customer={customer} /></div>}
+          {tab === "order" && (
+            <div className="p-5">
+              <OrderForm product={product} sellerId={sellerId} slug={slug} currency={currency} t={t} theme={theme} onClose={onClose} customer={customer} />
+            </div>
+          )}
         </div>
+
+        {/* Sticky add-to-order bar on mobile when viewing details */}
+        {tab === "details" && (
+          <div className="sticky bottom-0 border-t border-slate-100 bg-white p-3 sm:hidden">
+            <button onClick={() => setTab("order")} className={`flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-3 text-sm font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.98]`}>
+              <ShoppingBag className="h-4 w-4" /> {t.addToOrder} · {currency} {product.price}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -683,11 +847,11 @@ function ProductReviews({ itemId, t }: { itemId: number; t: Record<string, strin
   );
 }
 
-/* ── Order Form ── */
+/* ── Order Form with Coupon Integration ── */
 function OrderForm({
-  product, slug, currency, t, theme, onClose, customer,
+  product, sellerId, slug, currency, t, theme, onClose, customer,
 }: {
-  product: Product; slug: string; currency: string; t: Record<string, string>;
+  product: Product; sellerId: number; slug: string; currency: string; t: Record<string, string>;
   theme: ReturnType<typeof getTheme>; onClose: () => void; customer: CustomerInfo;
 }) {
   const [name, setName] = useState(customer?.name || "");
@@ -697,13 +861,62 @@ function OrderForm({
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ reference: string } | null>(null);
 
+  // Coupon state
+  const [showCoupon, setShowCoupon] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState<{ code: string; discount: number; type: string; value: string } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [validating, setValidating] = useState(false);
+
+  const unitPrice = Number(product.price) || 0;
+  const subtotal = unitPrice * quantity;
+  const discount = couponApplied?.discount || 0;
+  const finalTotal = Math.max(0, subtotal - discount);
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidating(true);
+    setCouponError("");
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode.trim(), sellerId, orderTotal: subtotal }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setCouponApplied({ code: data.coupon.code, discount: data.discount, type: data.coupon.type, value: data.coupon.value });
+        setCouponError("");
+      } else {
+        setCouponError(data.error || t.invalidCoupon);
+        setCouponApplied(null);
+      }
+    } catch {
+      setCouponError(t.invalidCoupon);
+    } finally { setValidating(false); }
+  };
+
+  const removeCoupon = () => {
+    setCouponApplied(null);
+    setCouponCode("");
+    setCouponError("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSending(true);
     try {
       const res = await fetch(`/api/storefront/${slug}/order`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: product.id, customerName: name.trim(), customerContact: contact.trim(), quantity, message: notes.trim() }),
+        body: JSON.stringify({
+          itemId: product.id,
+          customerName: name.trim(),
+          customerContact: contact.trim(),
+          quantity,
+          message: notes.trim(),
+          couponCode: couponApplied?.code || "",
+          discountAmount: discount,
+        }),
       });
       const data = await res.json();
       setResult({ reference: data.reference || `ORD-${data.id}` });
@@ -730,7 +943,7 @@ function OrderForm({
         {product.imageUrl ? <SafeImg src={product.imageUrl} alt="" className="h-12 w-12 rounded-lg object-cover" fallback={<PlaceholderImage className="h-12 w-12 rounded-lg" />} /> : <PlaceholderImage className="h-12 w-12 rounded-lg" />}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
-          <p className={`text-xs font-bold ${theme.text}`}>{currency} {product.price}</p>
+          <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
         </div>
       </div>
       <div>
@@ -749,6 +962,63 @@ function OrderForm({
         <label className="text-xs font-medium text-slate-500">{t.orderNotes}</label>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.orderNotesPh} rows={2} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
       </div>
+
+      {/* Coupon section */}
+      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-3">
+        {!showCoupon && !couponApplied ? (
+          <button type="button" onClick={() => setShowCoupon(true)} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition">
+            <Tag className="h-4 w-4" /> {t.haveCoupon}
+          </button>
+        ) : couponApplied ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-emerald-600" />
+              <span className="font-mono text-sm font-bold text-emerald-700">{couponApplied.code}</span>
+              <span className="text-xs text-emerald-600">
+                {couponApplied.type === "percentage" ? `-${couponApplied.value}%` : `-${currency} ${couponApplied.value}`}
+              </span>
+            </div>
+            <button type="button" onClick={removeCoupon} className="text-xs text-red-500 hover:text-red-700">{t.removeCoupon}</button>
+          </div>
+        ) : (
+          <div>
+            <div className="flex gap-2">
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder={t.couponPlaceholder}
+                className="h-10 flex-1 rounded-lg border border-slate-200 px-3 font-mono text-sm uppercase focus:border-indigo-300 focus:outline-none"
+              />
+              <button
+                type="button" onClick={applyCoupon} disabled={validating}
+                className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {validating ? "..." : t.applyCoupon}
+              </button>
+            </div>
+            {couponError && <p className="mt-1.5 text-xs text-red-500">{couponError}</p>}
+          </div>
+        )}
+      </div>
+
+      {/* Price summary */}
+      <div className="space-y-1 rounded-xl bg-slate-50 p-3 text-sm">
+        <div className="flex justify-between text-slate-600">
+          <span>{t.originalPrice}</span>
+          <span>{currency} {subtotal.toFixed(2)}</span>
+        </div>
+        {discount > 0 && (
+          <div className="flex justify-between text-emerald-600">
+            <span>{t.discount}</span>
+            <span>-{currency} {discount.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-slate-900">
+          <span>{t.total}</span>
+          <span>{currency} {finalTotal.toFixed(2)}</span>
+        </div>
+      </div>
+
       <button type="submit" disabled={sending} className={`flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-3 text-sm font-semibold text-white ${theme.btnHover} disabled:opacity-50 transition-all active:scale-[0.98]`}>
         <Send className="h-4 w-4" /> {sending ? t.orderSending : t.orderSubmit}
       </button>

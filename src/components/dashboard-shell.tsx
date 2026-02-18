@@ -17,6 +17,7 @@ import {
   BarChart3,
   Home,
   ChevronDown,
+  TicketPercent,
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -41,6 +42,7 @@ const dict = {
     settings: "Settings",
     storefront: "Storefront",
     analytics: "Analytics",
+    coupons: "Coupons",
     setup: "Setup",
     pricing: "Pricing",
     notifications: "Notifications",
@@ -62,6 +64,7 @@ const dict = {
     settings: "Configurações",
     storefront: "Loja",
     analytics: "Análises",
+    coupons: "Cupons",
     setup: "Configurar",
     pricing: "Preços",
     notifications: "Notificações",
@@ -193,6 +196,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/dashboard/catalog")) return "catalog";
     if (pathname.startsWith("/dashboard/settings")) return "settings";
     if (pathname.startsWith("/dashboard/analytics")) return "analytics";
+    if (pathname.startsWith("/dashboard/coupons")) return "coupons";
     return "dashboard";
   }, [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -255,6 +259,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     { label: t.dashboard, icon: LayoutDashboard, href: "/dashboard", key: "dashboard" },
     { label: t.orders, icon: ShoppingCart, href: "/dashboard/orders", key: "orders" },
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
+    { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
     { label: t.storefront, icon: Store, href: slug ? `/s/${slug}` : "/", key: "storefront" },
   ];
 
@@ -267,6 +272,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const storeDropdownItems = [
     { label: t.orders, icon: ShoppingCart, href: "/dashboard/orders", key: "orders" },
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
+    { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
     { label: t.storefront, icon: Store, href: slug ? `/s/${slug}` : "/", key: "storefront" },
   ];
 
