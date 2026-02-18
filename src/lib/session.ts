@@ -42,6 +42,7 @@ export type SessionPayload = {
   email: string;
   sellerSlug: string;
   storeName: string;
+  role?: string;
 };
 
 export async function createSessionCookie(data: SessionPayload) {

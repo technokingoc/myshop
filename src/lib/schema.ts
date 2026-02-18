@@ -19,7 +19,14 @@ export const sellers = pgTable("sellers", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   email: varchar("email", { length: 256 }).unique(),
   passwordHash: text("password_hash"),
+  role: varchar("role", { length: 32 }).default("seller"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const platformSettings = pgTable("platform_settings", {
+  key: varchar("key", { length: 128 }).primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const catalogItems = pgTable("catalog_items", {

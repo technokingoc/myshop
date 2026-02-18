@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
       email: seller.email!,
       sellerSlug: seller.slug,
       storeName: seller.name,
+      role: seller.role ?? "seller",
     });
 
     return NextResponse.json({

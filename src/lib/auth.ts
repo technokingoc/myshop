@@ -5,6 +5,7 @@ export type AuthSession = {
   email: string;
   sellerSlug: string;
   storeName: string;
+  role?: string;
 };
 
 // Client-side: fetch session from API

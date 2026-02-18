@@ -32,11 +32,17 @@ export function PublicHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.session) setLoggedIn(true); })
+      .then((d) => {
+        if (d?.session) {
+          setLoggedIn(true);
+          if (d.session.role === "admin") setIsAdmin(true);
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -82,12 +88,22 @@ export function PublicHeader() {
               </Link>
             ))}
             {loggedIn ? (
-              <Link
-                href="/dashboard"
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
-              >
-                {t.dashboard}
-              </Link>
+              <>
+                <Link
+                  href="/dashboard"
+                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
+                >
+                  {t.dashboard}
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+                  >
+                    Admin
+                  </Link>
+                )}
+              </>
             ) : (
               <Link
                 href="/login"
@@ -135,9 +151,16 @@ export function PublicHeader() {
               </Link>
             ))}
             {loggedIn ? (
-              <Link href="/dashboard" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                {t.dashboard}
-              </Link>
+              <>
+                <Link href="/dashboard" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  {t.dashboard}
+                </Link>
+                {isAdmin && (
+                  <Link href="/admin" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-violet-600 hover:bg-violet-50">
+                    Admin
+                  </Link>
+                )}
+              </>
             ) : (
               <>
                 <Link href="/login" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
