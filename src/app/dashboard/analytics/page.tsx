@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
       </div>
 
-      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <div className="mb-6 rounded-xl border border-amber-100 bg-amber-50/70 p-4">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-amber-600" />
           <span className="text-sm font-semibold text-amber-800">{t.comingSoon}</span>
@@ -72,10 +72,13 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-        <BarChart3 className="mx-auto h-10 w-10 text-slate-300" />
-        <p className="mt-3 text-sm text-slate-500">{t.placeholder}</p>
-      </div>
+      <section className="shell-empty mt-6 rounded-xl border border-slate-200 bg-white">
+        <div className="shell-empty-card">
+          <BarChart3 className="shell-empty-icon" />
+          <h2 className="shell-empty-title">{t.comingSoon}</h2>
+          <p className="shell-empty-subtitle">{t.placeholder}</p>
+        </div>
+      </section>
     </>
   );
 }

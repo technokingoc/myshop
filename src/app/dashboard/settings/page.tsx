@@ -84,14 +84,14 @@ export default function SettingsPage() {
 
   if (!setup?.done || !form) {
     return (
-    <>
-        <div className="text-center py-16">
-          <p className="text-slate-600">{t.notSetup}</p>
-          <a href="/setup" className="mt-4 inline-block rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white">
+      <section className="shell-empty">
+        <div className="shell-empty-card">
+          <p className="shell-empty-title">{t.notSetup}</p>
+          <a href="/setup" className="shell-empty-cta inline-block rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white">
             {t.goSetup}
           </a>
         </div>
-    </>
+      </section>
     );
   }
 

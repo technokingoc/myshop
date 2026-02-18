@@ -230,7 +230,12 @@ export default function OrdersPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center"><Inbox className="mx-auto h-10 w-10 text-slate-300" /><p className="mt-3 text-sm text-slate-500">{t.empty}</p></div>
+        <section className="shell-empty rounded-2xl border border-slate-200 bg-white">
+          <div className="shell-empty-card">
+            <Inbox className="shell-empty-icon" />
+            <h2 className="shell-empty-title">{t.empty}</h2>
+          </div>
+        </section>
       ) : (
         <div className="space-y-3">
           {filtered.map((order) => {

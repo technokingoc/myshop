@@ -381,11 +381,13 @@ export default function DashboardCatalogPage() {
       )}
 
       {filtered.length === 0 ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-          <PackageOpen className="mx-auto h-10 w-10 text-slate-300" />
-          <h2 className="mt-3 text-lg font-semibold text-slate-900">{t.noItemsTitle}</h2>
-          <p className="mt-1 text-sm text-slate-600">{t.noItemsHint}</p>
-          <button onClick={startCreate} className="mt-4 inline-flex h-10 items-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white">{t.addFirst}</button>
+        <section className="shell-empty rounded-2xl border border-slate-200 bg-white">
+          <div className="shell-empty-card">
+            <PackageOpen className="shell-empty-icon" />
+            <h2 className="shell-empty-title">{t.noItemsTitle}</h2>
+            <p className="shell-empty-subtitle">{t.noItemsHint}</p>
+            <button onClick={startCreate} className="shell-empty-cta inline-flex h-10 items-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white">{t.addFirst}</button>
+          </div>
         </section>
       ) : (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">

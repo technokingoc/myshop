@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f7fb;
+  --background: #f6f8fc;
   --foreground: #0f172a;
 
   --surface-0: #ffffff;
@@ -36,7 +36,7 @@
 }
 
 body {
-  background: radial-gradient(circle at top, #f8fbff 0%, var(--background) 55%, #f2f6fc 100%);
+  background: radial-gradient(circle at top, #fbfcff 0%, var(--background) 58%, #f5f8fc 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
@@ -138,12 +138,12 @@ select {
 .ui-btn-primary {
   background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%);
   color: #fff;
-  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.28);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.2);
 }
 
 .ui-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.24);
 }
 
 .ui-btn-secondary {
@@ -163,4 +163,44 @@ select {
 .ui-btn-ghost:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.shell-empty {
+  display: flex;
+  min-height: min(64vh, 620px);
+  align-items: center;
+  justify-content: center;
+  padding: 2.25rem 1rem;
+}
+
+.shell-empty-card {
+  width: 100%;
+  max-width: 32rem;
+  text-align: center;
+}
+
+.shell-empty-icon {
+  margin-inline: auto;
+  height: 2.75rem;
+  width: 2.75rem;
+  color: #94a3b8;
+}
+
+.shell-empty-title {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+.shell-empty-subtitle {
+  margin-top: 0.45rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #64748b;
+}
+
+.shell-empty-cta {
+  margin-top: 1.5rem;
 }

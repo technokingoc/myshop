@@ -210,13 +210,15 @@ export default function DashboardPage() {
 
   if (!setup?.done) {
     return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        <Store className="mx-auto h-12 w-12 text-slate-400" />
-        <h1 className="mt-4 text-2xl font-bold text-slate-900">{t.notSetup}</h1>
-        <p className="mt-2 text-slate-600">{t.notSetupHint}</p>
-        <button onClick={() => router.push("/")} className="ui-btn ui-btn-primary mt-6">
-          {t.goSetup}
-        </button>
+      <main className="shell-empty">
+        <div className="shell-empty-card">
+          <Store className="shell-empty-icon" />
+          <h1 className="shell-empty-title">{t.notSetup}</h1>
+          <p className="shell-empty-subtitle">{t.notSetupHint}</p>
+          <button onClick={() => router.push("/")} className="ui-btn ui-btn-primary shell-empty-cta">
+            {t.goSetup}
+          </button>
+        </div>
       </main>
     );
   }
