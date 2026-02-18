@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "@/lib/language";
 
-type Lang = "en" | "pt";
 type CatalogType = "Product" | "Service";
 type CatalogStatus = "Draft" | "Published";
 
@@ -36,7 +36,6 @@ type SetupPersisted = {
 };
 
 const STORAGE = {
-  lang: "myshop_lang",
   setup: "myshop_setup_v2",
   catalog: "myshop_catalog_v2",
 };
@@ -319,10 +318,7 @@ export default function Home() {
     }
   })();
 
-  const [lang, setLang] = useState<Lang>(() => {
-    if (typeof window === "undefined") return "en";
-    return localStorage.getItem(STORAGE.lang) === "pt" ? "pt" : "en";
-  });
+  const { lang } = useLanguage();
   const [step, setStep] = useState(() => Math.min(3, Math.max(1, initialSetupPersisted?.step || 1)));
   const [done, setDone] = useState(() => Boolean(initialSetupPersisted?.done));
   const [setup, setSetup] = useState<SetupData>(() => ({ ...defaultSetup, ...(initialSetupPersisted?.data || {}) }));
@@ -346,10 +342,6 @@ export default function Home() {
   const [intentItem, setIntentItem] = useState<CatalogItem | null>(null);
   const [intentData, setIntentData] = useState(blankIntent);
   const [intentSubmitted, setIntentSubmitted] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE.lang, lang);
-  }, [lang]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -491,54 +483,40 @@ export default function Home() {
   const progressPct = Math.round((step / 3) * 100);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="rounded-2xl border border-white/10 bg-gradient-to-b from-indigo-500/20 to-transparent p-6 sm:p-10">
+        <header className="rounded-2xl border border-slate-200 bg-gradient-to-b from-indigo-100 to-white p-6 sm:p-10">
           <div className="mb-6 flex items-center justify-between gap-2">
-            <p className="rounded-full border border-indigo-300/40 bg-indigo-400/20 px-3 py-1 text-xs sm:text-sm">{t.badge}</p>
-            <div className="flex gap-2 text-sm">
-              <button
-                onClick={() => setLang("en")}
-                className={`rounded-full px-3 py-1 ${lang === "en" ? "bg-white text-black" : "bg-white/10"}`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLang("pt")}
-                className={`rounded-full px-3 py-1 ${lang === "pt" ? "bg-white text-black" : "bg-white/10"}`}
-              >
-                PT
-              </button>
-            </div>
+            <p className="rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 px-3 py-1 text-xs sm:text-sm">{t.badge}</p>
           </div>
 
           <h1 className="text-3xl font-bold leading-tight sm:text-5xl">{t.title}</h1>
-          <p className="mt-4 max-w-3xl text-sm text-slate-200 sm:text-base">{t.subtitle}</p>
+          <p className="mt-4 max-w-3xl text-sm text-slate-600 sm:text-base">{t.subtitle}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="#setup" className="rounded-xl bg-white px-4 py-2 font-semibold text-black">
+            <a href="#setup" className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white">
               {t.ctaPrimary}
             </a>
-            <a href="#catalog" className="rounded-xl border border-white/25 px-4 py-2">
+            <a href="#catalog" className="rounded-xl border border-slate-300 bg-white px-4 py-2">
               {t.ctaSecondary}
             </a>
           </div>
-          <p className="mt-5 text-xs text-amber-200">{t.whyMocked}</p>
+          <p className="mt-5 text-xs text-amber-700">{t.whyMocked}</p>
         </header>
 
-        <section id="setup" className="mt-8 grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+        <section id="setup" className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-xl font-semibold">{t.setupTitle}</h2>
-          <p className="text-sm text-slate-300">{t.setupSubtitle}</p>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-600">{t.setupSubtitle}</p>
+          <p className="text-xs text-slate-500">
             {t.stepLabel} {step}/3 • {t.stepNames[step - 1]} {done && `• ${t.completed}`}
           </p>
 
           <div className="grid gap-2">
-            <div className="flex items-center justify-between text-xs text-slate-300">
+            <div className="flex items-center justify-between text-xs text-slate-600">
               <span>{t.progressLabel}</span>
               <span>{progressPct}%</span>
             </div>
-            <div className="h-2 rounded-full bg-white/10">
-              <div className="h-2 rounded-full bg-indigo-400 transition-all" style={{ width: `${progressPct}%` }} />
+            <div className="h-2 rounded-full bg-slate-100">
+              <div className="h-2 rounded-full bg-indigo-500 transition-all" style={{ width: `${progressPct}%` }} />
             </div>
             <div className="grid grid-cols-3 gap-2 pt-1">
               {t.stepNames.map((name, idx) => {
@@ -549,7 +527,7 @@ export default function Home() {
                   <div
                     key={name}
                     className={`rounded-lg border px-2 py-1 text-center text-[11px] ${
-                      active ? "border-indigo-300 bg-indigo-400/20" : complete ? "border-emerald-300/40 bg-emerald-400/10" : "border-white/10"
+                      active ? "border-indigo-300 bg-indigo-50" : complete ? "border-emerald-200 bg-emerald-50" : "border-slate-200"
                     }`}
                   >
                     {name}
@@ -559,15 +537,15 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-indigo-300/30 bg-indigo-500/10 p-3 text-sm">
-            <p className="font-medium text-indigo-200">{t.previewRoute}</p>
-            <p className="mt-1 break-all text-slate-200">{previewPath}</p>
-            <a href={previewUrl} className="mt-2 inline-block text-indigo-300 underline underline-offset-2" target="_blank" rel="noreferrer">
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm">
+            <p className="font-medium text-indigo-700">{t.previewRoute}</p>
+            <p className="mt-1 break-all text-slate-600">{previewPath}</p>
+            <a href={previewUrl} className="mt-2 inline-block text-indigo-600 underline underline-offset-2" target="_blank" rel="noreferrer">
               {previewUrl}
             </a>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {step === 1 && (
               <>
                 <Input
@@ -583,7 +561,7 @@ export default function Home() {
                     error={setupErrors.storefrontSlug}
                     onChange={(v) => updateSetup("storefrontSlug", v)}
                   />
-                  <span className="text-xs text-slate-400">{t.slugHint}</span>
+                  <span className="text-xs text-slate-500">{t.slugHint}</span>
                 </div>
               </>
             )}
@@ -613,32 +591,32 @@ export default function Home() {
             <button
               onClick={() => setStep((s) => Math.max(1, s - 1))}
               disabled={step === 1}
-              className="rounded-lg border border-white/20 px-3 py-2 disabled:opacity-40"
+              className="rounded-lg border border-slate-300 px-3 py-2 disabled:opacity-40"
             >
               {t.backBtn}
             </button>
             {step < 3 ? (
-              <button onClick={onNextStep} className="rounded-lg bg-indigo-400 px-3 py-2 font-semibold text-black">
+              <button onClick={onNextStep} className="rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
                 {t.nextBtn}
               </button>
             ) : (
-              <button onClick={onFinish} className="rounded-lg bg-emerald-400 px-3 py-2 font-semibold text-black">
+              <button onClick={onFinish} className="rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white">
                 {t.finishBtn}
               </button>
             )}
-            <button onClick={resetSetup} className="rounded-lg border border-white/20 px-3 py-2">
+            <button onClick={resetSetup} className="rounded-lg border border-slate-300 px-3 py-2">
               {t.resetBtn}
             </button>
-            {done && <span className="self-center text-sm text-emerald-300">{t.doneMsg}</span>}
+            {done && <span className="self-center text-sm text-emerald-700">{t.doneMsg}</span>}
           </div>
         </section>
 
-        <section id="catalog" className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+        <section id="catalog" className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-xl font-semibold">{t.catalogTitle}</h2>
-          <p className="mb-4 text-sm text-slate-300">{t.catalogSubtitle}</p>
+          <p className="mb-4 text-sm text-slate-600">{t.catalogSubtitle}</p>
 
-          <div className="mb-4 grid gap-3 rounded-xl border border-white/10 bg-slate-900/30 p-3 sm:grid-cols-2">
-            <h3 className="sm:col-span-2 font-medium">{t.catalogFormTitle}</h3>
+          <div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-3">
+            <h3 className="sm:col-span-2 xl:col-span-3 font-medium">{t.catalogFormTitle}</h3>
             <Input label={t.itemName} value={catalogForm.name} onChange={(v) => onCatalogField("name", v)} />
             <Input label={t.itemCategory} value={catalogForm.category} onChange={(v) => onCatalogField("category", v)} />
             <Input label={t.itemDescription} value={catalogForm.shortDescription} onChange={(v) => onCatalogField("shortDescription", v)} />
@@ -646,11 +624,11 @@ export default function Home() {
             <Input label={t.itemPrice} value={catalogForm.price} onChange={(v) => onCatalogField("price", v)} />
 
             <label className="grid gap-1 text-sm">
-              <span className="text-slate-300">{t.itemType}</span>
+              <span className="text-slate-600">{t.itemType}</span>
               <select
                 value={catalogForm.type}
                 onChange={(e) => onCatalogField("type", e.target.value as CatalogType)}
-                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 outline-none ring-indigo-300 transition focus:ring"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 transition focus:ring"
               >
                 <option value="Product">{t.productsSection}</option>
                 <option value="Service">{t.servicesSection}</option>
@@ -658,28 +636,28 @@ export default function Home() {
             </label>
 
             <label className="grid gap-1 text-sm">
-              <span className="text-slate-300">{t.itemStatus}</span>
+              <span className="text-slate-600">{t.itemStatus}</span>
               <select
                 value={catalogForm.status}
                 onChange={(e) => onCatalogField("status", e.target.value as CatalogStatus)}
-                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 outline-none ring-indigo-300 transition focus:ring"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 transition focus:ring"
               >
                 <option value="Draft">{t.draft}</option>
                 <option value="Published">{t.published}</option>
               </select>
             </label>
 
-            <div className="sm:col-span-2 rounded-lg border border-white/10 bg-slate-950/60 p-3">
-              <p className="mb-2 text-xs text-slate-300">{t.imagePreview}</p>
+            <div className="sm:col-span-2 xl:col-span-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="mb-2 text-xs text-slate-600">{t.imagePreview}</p>
               <PreviewImage src={catalogForm.imageUrl} alt={catalogForm.name || "preview"} className="h-36 w-full rounded-lg object-cover" />
             </div>
 
-            <div className="sm:col-span-2 flex gap-2">
-              <button onClick={submitCatalog} className="rounded-lg bg-indigo-400 px-3 py-2 font-semibold text-black">
+            <div className="sm:col-span-2 xl:col-span-3 flex gap-2">
+              <button onClick={submitCatalog} className="rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
                 {editingId !== null ? t.saveBtn : t.addBtn}
               </button>
               {editingId !== null && (
-                <button onClick={cancelEdit} className="rounded-lg border border-white/20 px-3 py-2">
+                <button onClick={cancelEdit} className="rounded-lg border border-slate-300 px-3 py-2">
                   {t.cancelBtn}
                 </button>
               )}
@@ -688,7 +666,7 @@ export default function Home() {
 
           <div className="grid gap-3">
             {catalog.map((item) => (
-              <article key={item.id} className="grid grid-cols-[72px_1fr] gap-3 rounded-xl border border-white/10 p-3 sm:grid-cols-[96px_1fr]">
+              <article key={item.id} className="grid grid-cols-[72px_1fr] gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[96px_1fr]">
                 <PreviewImage
                   src={item.imageUrl}
                   alt={item.name}
@@ -696,21 +674,21 @@ export default function Home() {
                 />
                 <div>
                   <h3 className="font-medium">{item.name}</h3>
-                  <p className="text-xs text-slate-400">{item.category || "General"}</p>
-                  <p className="text-sm text-slate-300">{item.shortDescription || "-"}</p>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-xs text-slate-500">{item.category || "General"}</p>
+                  <p className="text-sm text-slate-600">{item.shortDescription || "-"}</p>
+                  <p className="text-sm text-slate-600">
                     {item.type} • {setup.currency} {item.price}
                   </p>
-                  <span className="mt-2 inline-block rounded-full border border-white/20 px-2 py-1 text-xs">
+                  <span className="mt-2 inline-block rounded-full border border-slate-300 px-2 py-1 text-xs">
                     {item.status === "Published" ? t.published : t.draft}
                   </span>
                   <div className="mt-2 flex gap-2">
-                    <button onClick={() => startEdit(item)} className="rounded-md border border-white/20 px-2 py-1 text-xs">
+                    <button onClick={() => startEdit(item)} className="rounded-md border border-slate-300 px-2 py-1 text-xs">
                       {t.editBtn}
                     </button>
                     <button
                       onClick={() => setCatalog((prev) => prev.filter((i) => i.id !== item.id))}
-                      className="rounded-md border border-rose-300/40 px-2 py-1 text-xs text-rose-200"
+                      className="rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
                     >
                       {t.deleteBtn}
                     </button>
@@ -722,39 +700,39 @@ export default function Home() {
         </section>
 
         <section className="mt-8 grid gap-4 lg:grid-cols-2">
-          <article className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+          <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
             <h2 className="text-xl font-semibold">{t.previewTitle}</h2>
-            <p className="mb-4 text-sm text-slate-300">{t.previewSubtitle}</p>
-            <div className="rounded-xl border border-white/10 bg-slate-900/80 p-4">
+            <p className="mb-4 text-sm text-slate-600">{t.previewSubtitle}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <h3 className="font-semibold">{setup.storeName || "MyShop Demo Store"}</h3>
-              <p className="text-sm text-slate-300">@{slug}</p>
+              <p className="text-sm text-slate-600">@{slug}</p>
 
-              <h4 className="mt-4 text-sm font-medium text-slate-300">{t.sellerProfileTitle}</h4>
-              <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
+              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.sellerProfileTitle}</h4>
+              <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3 text-sm">
                 <p>
                   {setup.ownerName || "Store Owner"} • {setup.businessType || "Micro business"}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-slate-600">
                   {t.basedIn}: {setup.city || "Maputo"}
                 </p>
                 <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="rounded-md border border-white/10 p-2">
+                  <div className="rounded-md border border-slate-200 p-2">
                     <p className="font-semibold">97%</p>
-                    <p className="text-slate-300">{t.responseRate}</p>
+                    <p className="text-slate-600">{t.responseRate}</p>
                   </div>
-                  <div className="rounded-md border border-white/10 p-2">
+                  <div className="rounded-md border border-slate-200 p-2">
                     <p className="font-semibold">18m</p>
-                    <p className="text-slate-300">{t.avgReply}</p>
+                    <p className="text-slate-600">{t.avgReply}</p>
                   </div>
-                  <div className="rounded-md border border-white/10 p-2">
+                  <div className="rounded-md border border-slate-200 p-2">
                     <p className="font-semibold">4.8★</p>
-                    <p className="text-slate-300">{t.customerReviews}</p>
+                    <p className="text-slate-600">{t.customerReviews}</p>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-slate-400">{t.socialProofPending}</p>
+                <p className="mt-2 text-xs text-slate-500">{t.socialProofPending}</p>
               </div>
 
-              <h4 className="mt-4 text-sm font-medium text-slate-300">{t.socialLinks}</h4>
+              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.socialLinks}</h4>
               <ul className="mt-2 space-y-1 text-sm">
                 <li>
                   WhatsApp: <LinkOrText href={setup.whatsapp} fallback="https://wa.me/your-number" />
@@ -767,9 +745,9 @@ export default function Home() {
                 </li>
               </ul>
 
-              <h4 className="mt-4 text-sm font-medium text-slate-300">{t.productsSection}</h4>
+              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.productsSection}</h4>
               {publishedProducts.length === 0 ? (
-                <p className="text-sm text-slate-400">{t.emptyProducts}</p>
+                <p className="text-sm text-slate-500">{t.emptyProducts}</p>
               ) : (
                 <ul className="mt-1 space-y-1 text-sm">
                   {publishedProducts.map((item) => (
@@ -780,9 +758,9 @@ export default function Home() {
                 </ul>
               )}
 
-              <h4 className="mt-4 text-sm font-medium text-slate-300">{t.servicesSection}</h4>
+              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.servicesSection}</h4>
               {publishedServices.length === 0 ? (
-                <p className="text-sm text-slate-400">{t.emptyServices}</p>
+                <p className="text-sm text-slate-500">{t.emptyServices}</p>
               ) : (
                 <ul className="mt-1 space-y-1 text-sm">
                   {publishedServices.map((item) => (
@@ -795,10 +773,10 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+          <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
             <h2 className="text-xl font-semibold">{t.pricingTitle}</h2>
-            <p className="mb-4 text-sm text-slate-300">{t.pricingSubtitle}</p>
-            <div className="rounded-xl border border-indigo-300/30 bg-indigo-500/10 p-4">
+            <p className="mb-4 text-sm text-slate-600">{t.pricingSubtitle}</p>
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
               <h3 className="text-lg font-semibold">{t.planName}</h3>
               <p className="mt-1 text-2xl font-bold">{t.planPrice}</p>
               <ul className="mt-3 list-inside list-disc space-y-1 text-sm">
@@ -806,23 +784,23 @@ export default function Home() {
                   <li key={b}>{b}</li>
                 ))}
               </ul>
-              <p className="mt-4 rounded-lg border border-amber-300/40 bg-amber-400/10 p-2 text-xs text-amber-200">{t.planFoot}</p>
-              <p className="mt-2 text-xs text-slate-200">{t.paypalInfo}</p>
-              <button className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black">{t.choosePlan}</button>
+              <p className="mt-4 rounded-lg border border-amber-300/40 bg-amber-50 p-2 text-xs text-amber-700">{t.planFoot}</p>
+              <p className="mt-2 text-xs text-slate-600">{t.paypalInfo}</p>
+              <button className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-white">{t.choosePlan}</button>
             </div>
           </article>
         </section>
 
         <section className="mt-8">
           <h2 className="mb-2 text-xl font-semibold">{t.previewTitle} • Cards</h2>
-          <p className="mb-3 text-sm text-slate-300">{t.categoryFilter}</p>
+          <p className="mb-3 text-sm text-slate-600">{t.categoryFilter}</p>
           <div className="mb-4 flex flex-wrap gap-2">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`rounded-full border px-3 py-1 text-xs ${
-                  activeCategory === cat ? "border-indigo-300 bg-indigo-400/20" : "border-white/20"
+                  activeCategory === cat ? "border-indigo-300 bg-indigo-50" : "border-slate-300"
                 }`}
               >
                 {cat === "all" ? t.allCategories : cat}
@@ -832,23 +810,23 @@ export default function Home() {
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {filteredPublishedCatalog.map((item) => (
-              <article key={`card-${item.id}`} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <article key={`card-${item.id}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <PreviewImage src={item.imageUrl} alt={item.name} className="h-40 w-full object-cover" />
                 <div className="p-4">
-                  <p className="text-xs text-indigo-300">{item.category || "General"}</p>
+                  <p className="text-xs text-indigo-600">{item.category || "General"}</p>
                   <h3 className="font-semibold">{item.name}</h3>
-                  <p className="mt-1 text-sm text-slate-300">{item.shortDescription || "-"}</p>
+                  <p className="mt-1 text-sm text-slate-600">{item.shortDescription || "-"}</p>
                   <p className="mt-2 text-sm font-medium">
                     {setup.currency} {item.price}
                   </p>
                   <div className="mt-3 flex gap-2">
                     <button
                       onClick={() => openIntentModal(item)}
-                      className="rounded-lg bg-emerald-400 px-3 py-2 text-xs font-semibold text-black"
+                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
                     >
                       {item.type === "Product" ? t.cardCTAProduct : t.cardCTAService}
                     </button>
-                    <button className="rounded-lg border border-white/20 px-3 py-2 text-xs" title={t.paypalMockNote}>
+                    <button className="rounded-lg border border-slate-300 px-3 py-2 text-xs" title={t.paypalMockNote}>
                       PayPal
                     </button>
                   </div>
@@ -860,29 +838,29 @@ export default function Home() {
       </main>
 
       {intentItem && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/60 sm:items-center sm:justify-center">
-          <div className="w-full rounded-t-2xl border border-white/15 bg-slate-900 p-4 sm:max-w-md sm:rounded-2xl">
+        <div className="fixed inset-0 z-50 flex items-end bg-slate-900/30 sm:items-center sm:justify-center">
+          <div className="w-full rounded-t-2xl border border-slate-300 bg-white p-4 sm:max-w-md sm:rounded-2xl">
             <div className="mb-3 flex items-start justify-between gap-2">
               <div>
                 <h3 className="font-semibold">
                   {intentItem.type === "Product" ? t.intentModalTitleProduct : t.intentModalTitleService}: {intentItem.name}
                 </h3>
-                <p className="mt-1 text-xs text-slate-300">{t.intentIntro}</p>
+                <p className="mt-1 text-xs text-slate-600">{t.intentIntro}</p>
               </div>
-              <button onClick={closeIntentModal} className="rounded-lg border border-white/20 px-2 py-1 text-xs">
+              <button onClick={closeIntentModal} className="rounded-lg border border-slate-300 px-2 py-1 text-xs">
                 {t.closeBtn}
               </button>
             </div>
 
             {intentSubmitted ? (
-              <div className="rounded-lg border border-emerald-300/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">{t.intentDone}</div>
+              <div className="rounded-lg border border-emerald-300/40 bg-emerald-50 p-3 text-sm text-emerald-700">{t.intentDone}</div>
             ) : (
               <div className="grid gap-2">
                 <Input label={t.intentName} value={intentData.name} onChange={(v) => setIntentData((p) => ({ ...p, name: v }))} />
                 <Input label={t.intentContact} value={intentData.contact} onChange={(v) => setIntentData((p) => ({ ...p, contact: v }))} />
                 <Input label={t.intentMessage} value={intentData.note} onChange={(v) => setIntentData((p) => ({ ...p, note: v }))} />
-                <p className="rounded-lg border border-amber-300/30 bg-amber-500/10 p-2 text-xs text-amber-200">{t.paypalMockNote}</p>
-                <button onClick={submitIntent} className="rounded-lg bg-indigo-400 px-3 py-2 text-sm font-semibold text-black">
+                <p className="rounded-lg border border-amber-300/30 bg-amber-50 p-2 text-xs text-amber-700">{t.paypalMockNote}</p>
+                <button onClick={submitIntent} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white">
                   {t.intentSubmit}
                 </button>
               </div>
@@ -907,15 +885,15 @@ function Input({
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-slate-300">{label}</span>
+      <span className="text-slate-600">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`rounded-lg border bg-slate-900 px-3 py-2 outline-none ring-indigo-300 transition focus:ring ${
-          error ? "border-rose-400/60" : "border-white/15"
+        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-indigo-300 transition focus:ring ${
+          error ? "border-rose-400" : "border-slate-300"
         }`}
       />
-      {error && <span className="text-xs text-rose-300">{error}</span>}
+      {error && <span className="text-xs text-rose-600">{error}</span>}
     </label>
   );
 }
@@ -923,7 +901,7 @@ function Input({
 function LinkOrText({ href, fallback }: { href: string; fallback: string }) {
   const value = href.trim() || fallback;
   return (
-    <a href={value} target="_blank" rel="noreferrer" className="text-indigo-300 underline underline-offset-2">
+    <a href={value} target="_blank" rel="noreferrer" className="text-indigo-600 underline underline-offset-2">
       {value}
     </a>
   );
