@@ -83,13 +83,12 @@ function NavItem({
     <Link
       href={item.href}
       onClick={onClick}
-      className={`group relative flex min-h-11 items-center gap-3 rounded-lg px-3.5 text-sm font-medium transition-colors ${
+      className={`group flex min-h-11 items-center gap-3 rounded-lg px-3.5 text-sm font-medium transition-colors ${
         active
           ? "bg-indigo-50 text-slate-900"
           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       }`}
     >
-      <span className={`absolute inset-y-2 left-0 w-0.5 rounded-full ${active ? "bg-indigo-500" : "bg-transparent"}`} />
       <item.icon className={`h-4 w-4 ${active ? "text-indigo-600" : ""}`} />
       <span>{item.label}</span>
     </Link>
