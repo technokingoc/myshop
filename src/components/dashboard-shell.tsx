@@ -3,11 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "@/lib/language";
 import {
-  LayoutDashboard,
   Package,
   ShoppingCart,
   Settings,
-  BarChart3,
   Store,
   Menu,
   X,
@@ -39,7 +37,6 @@ const dict = {
     dashboard: "Dashboard",
     catalog: "Catalog",
     orders: "Orders",
-    analytics: "Analytics",
     settings: "Settings",
     storefront: "Storefront",
     notifications: "Notifications",
@@ -54,7 +51,6 @@ const dict = {
     dashboard: "Painel",
     catalog: "Catálogo",
     orders: "Pedidos",
-    analytics: "Análises",
     settings: "Configurações",
     storefront: "Loja",
     notifications: "Notificações",
@@ -119,8 +115,6 @@ export function DashboardShell({
     { label: t.catalog, icon: Package, href: "/#catalog", key: "catalog" },
     { label: t.storefront, icon: Store, href: slug ? `/s/${slug}` : "/", key: "storefront" },
     { label: t.settings, icon: Settings, href: "/dashboard/settings", key: "settings" },
-    { label: t.dashboard, icon: LayoutDashboard, href: "/dashboard", key: "dashboard" },
-    { label: t.analytics, icon: BarChart3, href: "/dashboard/analytics", key: "analytics" },
   ];
 
   return (

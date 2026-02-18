@@ -5,33 +5,6 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
-import { fetchJsonWithRetry } from "@/lib/api-client";
-import {
-  Store,
-  ShoppingBag,
-  Pencil,
-  Trash2,
-  Plus,
-  Save,
-  XCircle,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  RotateCcw,
-  CreditCard,
-  MessageCircle,
-  Instagram,
-  Facebook,
-  Star,
-  Clock,
-  BarChart3,
-  X,
-  ImageIcon,
-  LayoutDashboard,
-} from "lucide-react";
-
-type CatalogType = "Product" | "Service";
-type CatalogStatus = "Draft" | "Published";
 
 type SetupData = {
   storeName: string;
@@ -48,12 +21,12 @@ type SetupData = {
 type CatalogItem = {
   id: number;
   name: string;
-  type: CatalogType;
+  type: "Product" | "Service";
   category: string;
   shortDescription: string;
   imageUrl: string;
   price: string;
-  status: CatalogStatus;
+  status: "Draft" | "Published";
 };
 
 type SetupPersisted = {
@@ -62,6 +35,8 @@ type SetupPersisted = {
   data: SetupData;
   sellerId?: number;
 };
+
+type AutoSaveState = "saved" | "saving" | "unsaved";
 
 const STORAGE = {
   setup: "myshop_setup_v2",
@@ -81,135 +56,26 @@ const defaultSetup: SetupData = {
   facebook: "",
 };
 
-const defaultCatalog: CatalogItem[] = [
-  {
-    id: 1,
-    name: "Sample Product A",
-    type: "Product",
-    category: "Beauty",
-    shortDescription: "Hydrating serum for daily use.",
-    imageUrl: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600",
-    price: "15",
-    status: "Published",
-  },
-  {
-    id: 2,
-    name: "Sample Service B",
-    type: "Service",
-    category: "Consulting",
-    shortDescription: "30-minute onboarding call.",
-    imageUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600",
-    price: "25",
-    status: "Published",
-  },
-  {
-    id: 3,
-    name: "Sample Product C",
-    type: "Product",
-    category: "Food",
-    shortDescription: "Fresh homemade snack box.",
-    imageUrl: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600",
-    price: "8",
-    status: "Draft",
-  },
-];
-
-const dictionary = {
+const copy = {
   en: {
-    badge: "Built for informal sellers & micro businesses",
-    title: "Launch your professional storefront in minutes",
-    subtitle:
-      "MyShop helps small sellers create trusted online storefronts, organize products, and share social ordering links without technical complexity.",
-    ctaPrimary: "Start setup",
-    ctaSecondary: "Manage catalog",
-    whyMocked: "MVP note: local storage only (no backend yet).",
-
-    setupTitle: "Store setup flow",
-    setupSubtitle: "3-step onboarding persisted in your browser local storage.",
-    stepLabel: "Step",
-    completed: "Completed",
-    slugHint: "Use lowercase letters/numbers and dashes only.",
-    previewRoute: "Storefront route mock",
-    stepNames: ["Store identity", "Business details", "Social channels"],
-    progressLabel: "Progress",
-    requiredField: "This field is required",
-    validationSummary: "Please review the highlighted fields before continuing.",
-    helperStoreName: "Use your public business name for customer trust.",
-    helperCurrency: "Use the currency you charge most often.",
-    helperWhatsapp: "Paste full link (example: https://wa.me/258...).",
-
-    catalogTitle: "Catalog management",
-    catalogSubtitle: "Mock CRUD with add/edit/delete persisted locally.",
-    imagePreview: "Image preview",
-
-    previewTitle: "Storefront preview",
-    previewSubtitle: "Live preview from your setup + catalog.",
-    socialLinks: "Social links",
-    productsSection: "Products",
-    servicesSection: "Services",
-    emptyProducts: "No published products yet.",
-    emptyServices: "No published services yet.",
-    cardCTAProduct: "Order now",
-    cardCTAService: "Book now",
-    categoryFilter: "Category filters",
-    allCategories: "All categories",
-
-    sellerProfileTitle: "Seller profile",
-    basedIn: "Based in",
-    responseRate: "Response rate",
-    avgReply: "Avg. reply",
-    customerReviews: "Customer reviews",
-    socialProofPending: "Public social proof will appear after your first 3 completed customer intents.",
-    noDataYet: "No data yet — stats will appear once your store is active.",
-
-    intentModalTitleProduct: "Order intent",
-    intentModalTitleService: "Booking intent",
-    intentIntro: "This sends a mock intent only. No payment is executed here.",
-    intentName: "Customer name",
-    intentContact: "Preferred contact",
-    intentMessage: "Notes",
-    intentSubmit: "Send intent",
-    intentDone: "Intent captured. Follow up manually via social channels.",
-    paypalMockNote: "PayPal note: checkout happens on external PayPal page only (manual link in MVP).",
-    closeBtn: "Close",
-
-    pricingTitle: "Affordable pricing",
-    pricingSubtitle: "Simple plans with clear PayPal checkout messaging.",
-    planName: "Starter",
-    planPrice: "$9 / month",
-    planBullets: [
-      "1 storefront with custom slug",
-      "Catalog up to 50 products/services",
-      "Social CTA buttons (WhatsApp / Instagram / Facebook)",
-      "PayPal payment link support (manual link in MVP)",
+    pageTitle: "Store setup",
+    pageSubtitle: "Professional onboarding with clear steps and instant guidance.",
+    links: {
+      dashboard: "Dashboard",
+      storefront: "Storefront preview",
+    },
+    progress: "Progress",
+    autosave: {
+      saved: "Saved",
+      saving: "Saving...",
+      unsaved: "Unsaved changes",
+    },
+    steps: [
+      { title: "Store identity", desc: "Define your public brand details." },
+      { title: "Business details", desc: "Set owner and business fundamentals." },
+      { title: "Social channels", desc: "Add links customers use to reach you." },
+      { title: "Review & finish", desc: "Confirm everything before publishing." },
     ],
-    planFoot: "PayPal checkout opens an external PayPal page. MyShop does not process or store card details in this MVP.",
-    paypalInfo: "PayPal-ready: connect your plan manually after subscription confirmation.",
-    choosePlan: "Coming soon",
-
-    nextBtn: "Next",
-    backBtn: "Back",
-    finishBtn: "Finish",
-    resetBtn: "Reset",
-    doneMsg: "Setup draft saved and marked as complete.",
-
-    catalogFormTitle: "Add / edit item",
-    itemName: "Item name",
-    itemType: "Type",
-    itemCategory: "Category",
-    itemDescription: "Short description",
-    itemImageUrl: "Image URL",
-    itemPrice: "Price",
-    itemStatus: "Status",
-    addBtn: "Add item",
-    saveBtn: "Save changes",
-    cancelBtn: "Cancel",
-    editBtn: "Edit",
-    deleteBtn: "Delete",
-    deleteConfirm: "Are you sure you want to delete this item?",
-    published: "Published",
-    draft: "Draft",
-
     labels: {
       storeName: "Store name",
       storefrontSlug: "Storefront slug",
@@ -221,102 +87,72 @@ const dictionary = {
       instagram: "Instagram link",
       facebook: "Facebook link",
     },
+    placeholders: {
+      storeName: "Ex: Nanda Beauty Corner",
+      storefrontSlug: "Ex: nanda-beauty",
+      ownerName: "Ex: Fernanda Silva",
+      businessType: "Ex: Retail, Salon, Bakery",
+      currency: "Ex: MZN, USD",
+      city: "Ex: Maputo - Sommerschield",
+      whatsapp: "https://wa.me/25884XXXXXXX",
+      instagram: "https://instagram.com/yourstore",
+      facebook: "https://facebook.com/yourstore",
+    },
+    hints: {
+      slug: "Lowercase letters, numbers and dashes only.",
+      whatsapp: "Use full link format with country code.",
+    },
+    validationSummary: "Please correct highlighted fields before continuing.",
+    fieldErrors: {
+      required: "This field is required.",
+      slug: "Use only lowercase letters, numbers and dashes.",
+      whatsapp: "Use a valid URL (example: https://wa.me/25884XXXXXXX).",
+      instagram: "Use a valid URL.",
+      facebook: "Use a valid URL.",
+    },
+    review: {
+      title: "Review before finish",
+      business: "Business",
+      channels: "Channels",
+      catalog: "Catalog snapshot",
+      items: "items",
+      published: "published",
+      draft: "draft",
+      previewRoute: "Storefront route",
+    },
+    completion: {
+      title: "Setup completed successfully",
+      subtitle: "Your store foundation is ready. Continue with practical next actions.",
+      goDashboard: "Open dashboard",
+      goStorefront: "View storefront",
+      manageCatalog: "Manage catalog",
+    },
+    actions: {
+      back: "Back",
+      next: "Next",
+      finish: "Save & finish",
+      reset: "Reset",
+    },
   },
   pt: {
-    badge: "Feito para vendedores informais e micro negócios",
-    title: "Lance sua loja profissional em minutos",
-    subtitle:
-      "O MyShop ajuda pequenos vendedores a criar vitrines online confiáveis, organizar produtos e partilhar links sociais sem complexidade técnica.",
-    ctaPrimary: "Iniciar configuração",
-    ctaSecondary: "Gerir catálogo",
-    whyMocked: "Nota MVP: apenas armazenamento local (sem backend ainda).",
-
-    setupTitle: "Fluxo de configuração da loja",
-    setupSubtitle: "Onboarding em 3 etapas persistido no armazenamento local.",
-    stepLabel: "Etapa",
-    completed: "Concluído",
-    slugHint: "Use apenas minúsculas/números e hífen.",
-    previewRoute: "Mock da rota da loja",
-    stepNames: ["Identidade da loja", "Dados do negócio", "Canais sociais"],
-    progressLabel: "Progresso",
-    requiredField: "Este campo é obrigatório",
-    validationSummary: "Revise os campos destacados antes de continuar.",
-    helperStoreName: "Use o nome público do seu negócio para maior confiança.",
-    helperCurrency: "Use a moeda em que cobra com mais frequência.",
-    helperWhatsapp: "Cole o link completo (exemplo: https://wa.me/258...).",
-
-    catalogTitle: "Gestão de catálogo",
-    catalogSubtitle: "CRUD mock com adicionar/editar/apagar persistido localmente.",
-    imagePreview: "Pré-visualização da imagem",
-
-    previewTitle: "Pré-visualização da loja",
-    previewSubtitle: "Prévia ao vivo com base na configuração + catálogo.",
-    socialLinks: "Links sociais",
-    productsSection: "Produtos",
-    servicesSection: "Serviços",
-    emptyProducts: "Ainda não há produtos publicados.",
-    emptyServices: "Ainda não há serviços publicados.",
-    cardCTAProduct: "Encomendar",
-    cardCTAService: "Reservar",
-    categoryFilter: "Filtros de categoria",
-    allCategories: "Todas categorias",
-
-    sellerProfileTitle: "Perfil do vendedor",
-    basedIn: "Localização",
-    responseRate: "Taxa de resposta",
-    avgReply: "Resposta média",
-    customerReviews: "Avaliações de clientes",
-    socialProofPending: "A prova social pública aparece após os 3 primeiros intentos concluídos de clientes.",
-    noDataYet: "Ainda sem dados — as estatísticas aparecerão quando a loja estiver ativa.",
-
-    intentModalTitleProduct: "Intenção de encomenda",
-    intentModalTitleService: "Intenção de reserva",
-    intentIntro: "Isto envia apenas uma intenção mock. Nenhum pagamento é executado aqui.",
-    intentName: "Nome do cliente",
-    intentContact: "Contacto preferido",
-    intentMessage: "Notas",
-    intentSubmit: "Enviar intenção",
-    intentDone: "Intenção registada. Faça o seguimento manual pelos canais sociais.",
-    paypalMockNote: "Nota PayPal: o checkout acontece apenas numa página externa do PayPal (link manual no MVP).",
-    closeBtn: "Fechar",
-
-    pricingTitle: "Preço acessível",
-    pricingSubtitle: "Planos simples com mensagem clara sobre checkout PayPal.",
-    planName: "Inicial",
-    planPrice: "$9 / mês",
-    planBullets: [
-      "1 loja virtual com slug personalizado",
-      "Catálogo até 50 produtos/serviços",
-      "Botões CTA sociais (WhatsApp / Instagram / Facebook)",
-      "Suporte a link de pagamento PayPal (manual no MVP)",
+    pageTitle: "Configuração da loja",
+    pageSubtitle: "Onboarding profissional com etapas claras e orientação imediata.",
+    links: {
+      dashboard: "Painel",
+      storefront: "Prévia da loja",
+    },
+    progress: "Progresso",
+    autosave: {
+      saved: "Guardado",
+      saving: "A guardar...",
+      unsaved: "Alterações por guardar",
+    },
+    steps: [
+      { title: "Identidade da loja", desc: "Defina os detalhes públicos da sua marca." },
+      { title: "Dados do negócio", desc: "Defina responsável e fundamentos do negócio." },
+      { title: "Canais sociais", desc: "Adicione os links que clientes usam para contacto." },
+      { title: "Revisar e concluir", desc: "Confirme tudo antes de publicar." },
     ],
-    planFoot: "O checkout PayPal abre numa página externa do PayPal. O MyShop não processa nem guarda dados de cartão neste MVP.",
-    paypalInfo: "Pronto para PayPal: conecte o plano manualmente após confirmação da subscrição.",
-    choosePlan: "Em breve",
-
-    nextBtn: "Próximo",
-    backBtn: "Voltar",
-    finishBtn: "Concluir",
-    resetBtn: "Reiniciar",
-    doneMsg: "Rascunho salvo e configuração marcada como concluída.",
-
-    catalogFormTitle: "Adicionar / editar item",
-    itemName: "Nome do item",
-    itemType: "Tipo",
-    itemCategory: "Categoria",
-    itemDescription: "Descrição curta",
-    itemImageUrl: "URL da imagem",
-    itemPrice: "Preço",
-    itemStatus: "Estado",
-    addBtn: "Adicionar item",
-    saveBtn: "Guardar alterações",
-    cancelBtn: "Cancelar",
-    editBtn: "Editar",
-    deleteBtn: "Apagar",
-    deleteConfirm: "Tem a certeza que deseja apagar este item?",
-    published: "Publicado",
-    draft: "Rascunho",
-
     labels: {
       storeName: "Nome da loja",
       storefrontSlug: "Slug da loja",
@@ -328,272 +164,223 @@ const dictionary = {
       instagram: "Link do Instagram",
       facebook: "Link do Facebook",
     },
+    placeholders: {
+      storeName: "Ex: Nanda Beauty Corner",
+      storefrontSlug: "Ex: nanda-beauty",
+      ownerName: "Ex: Fernanda Silva",
+      businessType: "Ex: Retalho, Salão, Padaria",
+      currency: "Ex: MZN, USD",
+      city: "Ex: Maputo - Sommerschield",
+      whatsapp: "https://wa.me/25884XXXXXXX",
+      instagram: "https://instagram.com/sualoja",
+      facebook: "https://facebook.com/sualoja",
+    },
+    hints: {
+      slug: "Use apenas minúsculas, números e hífen.",
+      whatsapp: "Use o formato de link completo com código do país.",
+    },
+    validationSummary: "Corrija os campos destacados antes de continuar.",
+    fieldErrors: {
+      required: "Este campo é obrigatório.",
+      slug: "Use apenas minúsculas, números e hífen.",
+      whatsapp: "Use um URL válido (exemplo: https://wa.me/25884XXXXXXX).",
+      instagram: "Use um URL válido.",
+      facebook: "Use um URL válido.",
+    },
+    review: {
+      title: "Revisar antes de concluir",
+      business: "Negócio",
+      channels: "Canais",
+      catalog: "Resumo do catálogo",
+      items: "itens",
+      published: "publicados",
+      draft: "rascunho",
+      previewRoute: "Rota da loja",
+    },
+    completion: {
+      title: "Configuração concluída com sucesso",
+      subtitle: "A base da sua loja está pronta. Continue com ações práticas.",
+      goDashboard: "Abrir painel",
+      goStorefront: "Ver loja",
+      manageCatalog: "Gerir catálogo",
+    },
+    actions: {
+      back: "Voltar",
+      next: "Próximo",
+      finish: "Guardar e concluir",
+      reset: "Reiniciar",
+    },
   },
-};
+} as const;
 
-const blankCatalogForm: Omit<CatalogItem, "id"> = {
-  name: "",
-  type: "Product",
-  category: "",
-  shortDescription: "",
-  imageUrl: "",
-  price: "",
-  status: "Draft",
-};
+function sanitizeSlug(raw: string) {
+  return raw
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
 
-const blankIntent = {
-  name: "",
-  contact: "",
-  note: "",
-};
+function isValidUrl(value: string) {
+  if (!value.trim()) return true;
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
-export default function Home() {
-  const initialSetupPersisted: SetupPersisted | null = (() => {
-    if (typeof window === "undefined") return null;
-    const raw = localStorage.getItem(STORAGE.setup);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as SetupPersisted;
-    } catch {
-      return null;
-    }
-  })();
-
+export default function SetupPage() {
+  const router = useRouter();
   const { lang } = useLanguage();
   const common = getDict(lang).common;
   const toastText = getDict(lang).toast;
+  const t = copy[lang];
   const toast = useToast();
-  const router = useRouter();
-  const [step, setStep] = useState(() => Math.min(3, Math.max(1, initialSetupPersisted?.step || 1)));
-  const [done, setDone] = useState(() => Boolean(initialSetupPersisted?.done));
-  const [setup, setSetup] = useState<SetupData>(() => ({ ...defaultSetup, ...(initialSetupPersisted?.data || {}) }));
-  const [setupErrors, setSetupErrors] = useState<Partial<Record<keyof SetupData, string>>>({});
-  const [catalog, setCatalog] = useState<CatalogItem[]>(() => {
-    if (typeof window === "undefined") return defaultCatalog;
-    const raw = localStorage.getItem(STORAGE.catalog);
-    if (!raw) return defaultCatalog;
-    try {
-      const parsed = JSON.parse(raw) as CatalogItem[];
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultCatalog;
-    } catch {
-      return defaultCatalog;
+
+  const [step, setStep] = useState(1);
+  const [done, setDone] = useState(false);
+  const [setup, setSetup] = useState<SetupData>(defaultSetup);
+  const [sellerId, setSellerId] = useState<number | null>(null);
+  const [autosaveState, setAutosaveState] = useState<AutoSaveState>("saved");
+  const [dirty, setDirty] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof SetupData, string>>>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof SetupData, boolean>>>({});
+  const [catalogSnapshot, setCatalogSnapshot] = useState<CatalogItem[]>([]);
+
+  useEffect(() => {
+    const raw = localStorage.getItem(STORAGE.setup);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as SetupPersisted;
+        setStep(Math.min(4, Math.max(1, parsed.step || 1)));
+        setDone(Boolean(parsed.done));
+        setSetup({ ...defaultSetup, ...parsed.data });
+        setSellerId(parsed.sellerId ?? null);
+      } catch {}
     }
-  });
-
-  const [sellerId, setSellerId] = useState<number | null>(() => {
-    if (typeof window === "undefined") return null;
-    const raw = localStorage.getItem(STORAGE.sellerId);
-    return raw ? Number(raw) : null;
-  });
-  const [catalogForm, setCatalogForm] = useState(blankCatalogForm);
-
-  useEffect(() => {
-    if (!sellerId) return;
-    fetch(`/api/catalog?sellerId=${sellerId}`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((rows) => {
-        if (Array.isArray(rows) && rows.length > 0) {
-          setCatalog(
-            rows.map((row) => ({
-              id: row.id,
-              name: row.name,
-              type: row.type,
-              category: row.category || "",
-              shortDescription: row.shortDescription || "",
-              imageUrl: row.imageUrl || "",
-              price: String(row.price ?? ""),
-              status: row.status,
-            })),
-          );
-        }
-      })
-      .catch(() => {});
-  }, [sellerId]);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [catalogSearch, setCatalogSearch] = useState("");
-  const [catalogStatusFilter, setCatalogStatusFilter] = useState<"all" | CatalogStatus>("all");
-
-  const [intentItem, setIntentItem] = useState<CatalogItem | null>(null);
-  const [intentData, setIntentData] = useState(blankIntent);
-  const [intentSubmitted, setIntentSubmitted] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE.setup,
-      JSON.stringify({
-        step,
-        done,
-        data: setup,
-        sellerId: sellerId ?? undefined,
-      } satisfies SetupPersisted),
-    );
-  }, [step, done, setup, sellerId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = localStorage.getItem("myshop_setup_history_v1");
-    if (!raw) return;
-    try {
-      const prev = JSON.parse(raw) as Partial<SetupData>;
-      setSetup((curr) => ({
-        ...curr,
-        currency: curr.currency || prev.currency || "USD",
-        city: curr.city || prev.city || "",
-        instagram: curr.instagram || prev.instagram || "",
-        facebook: curr.facebook || prev.facebook || "",
-      }));
-    } catch {}
+    const rawCatalog = localStorage.getItem(STORAGE.catalog);
+    if (rawCatalog) {
+      try {
+        const parsed = JSON.parse(rawCatalog) as CatalogItem[];
+        if (Array.isArray(parsed)) setCatalogSnapshot(parsed);
+      } catch {}
+    }
+    const localSeller = localStorage.getItem(STORAGE.sellerId);
+    if (localSeller && !Number.isNaN(Number(localSeller))) setSellerId(Number(localSeller));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE.catalog, JSON.stringify(catalog));
-  }, [catalog]);
+    if (!dirty) return;
+    setAutosaveState("saving");
+    const timer = setTimeout(() => {
+      localStorage.setItem(
+        STORAGE.setup,
+        JSON.stringify({ step, done, data: setup, sellerId: sellerId ?? undefined } satisfies SetupPersisted),
+      );
+      setAutosaveState("saved");
+      setDirty(false);
+    }, 550);
+    return () => {
+      clearTimeout(timer);
+      setAutosaveState("unsaved");
+    };
+  }, [dirty, step, done, setup, sellerId]);
 
+  const slug = setup.storefrontSlug || sanitizeSlug(setup.storeName) || "myshop-demo";
+  const previewPath = `/s/${slug}`;
 
-  const t = useMemo(() => dictionary[lang], [lang]);
-
-  const updateSetup = (key: keyof SetupData, value: string) => {
-    const next = key === "storefrontSlug" ? sanitizeSlug(value) : value;
-    setSetup((prev) => ({ ...prev, [key]: next }));
-    setSetupErrors((prev) => ({ ...prev, [key]: "" }));
-  };
-
-  const resetSetup = () => {
-    setStep(1);
-    setDone(false);
-    setSetup(defaultSetup);
-    setSetupErrors({});
-    localStorage.removeItem(STORAGE.setup);
-  };
-
-  const onCatalogField = (key: keyof Omit<CatalogItem, "id">, value: string) => {
-    setCatalogForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const submitCatalog = async () => {
-    if (!catalogForm.name.trim() || !catalogForm.price.trim()) return;
-
-    if (sellerId) {
-      try {
-        if (editingId !== null) {
-          const row = await fetchJsonWithRetry<{ id?: number }>(
-            "/api/catalog",
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: editingId, ...catalogForm }),
-            },
-            3,
-            "setup:catalog:update",
-          );
-          setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm, id: row.id ?? editingId } : item)));
-          setEditingId(null);
-          toast.success(toastText.updated);
-        } else {
-          const row = await fetchJsonWithRetry<{ id?: number }>(
-            "/api/catalog",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sellerId, ...catalogForm }),
-            },
-            3,
-            "setup:catalog:create",
-          );
-          setCatalog((prev) => [...prev, { id: row.id ?? (prev.length ? Math.max(...prev.map((i) => i.id)) + 1 : 1), ...catalogForm }]);
-          toast.success(toastText.created);
-        }
-      } catch {
-        if (editingId !== null) {
-          setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm } : item)));
-          setEditingId(null);
-        } else {
-          const nextId = catalog.length ? Math.max(...catalog.map((i) => i.id)) + 1 : 1;
-          setCatalog((prev) => [...prev, { id: nextId, ...catalogForm }]);
-        }
-        toast.info(toastText.syncFailed);
-      }
-    } else {
-      if (editingId !== null) {
-        setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm } : item)));
-        setEditingId(null);
-        toast.success(toastText.updated);
-      } else {
-        const nextId = catalog.length ? Math.max(...catalog.map((i) => i.id)) + 1 : 1;
-        setCatalog((prev) => [...prev, { id: nextId, ...catalogForm }]);
-        toast.success(toastText.created);
-      }
+  const validateField = (key: keyof SetupData, value: string) => {
+    const val = value.trim();
+    if (["storeName", "storefrontSlug", "ownerName", "businessType", "currency", "city"].includes(key) && !val) {
+      return t.fieldErrors.required;
     }
-
-    setCatalogForm(blankCatalogForm);
+    if (key === "storefrontSlug" && val && !/^[a-z0-9-]+$/.test(val)) return t.fieldErrors.slug;
+    if (key === "whatsapp") {
+      if (!val) return t.fieldErrors.required;
+      if (!isValidUrl(val)) return t.fieldErrors.whatsapp;
+    }
+    if (key === "instagram" && val && !isValidUrl(val)) return t.fieldErrors.instagram;
+    if (key === "facebook" && val && !isValidUrl(val)) return t.fieldErrors.facebook;
+    return "";
   };
 
-  const startEdit = (item: CatalogItem) => {
-    setEditingId(item.id);
-    setCatalogForm({
-      name: item.name,
-      type: item.type,
-      category: item.category,
-      shortDescription: item.shortDescription,
-      imageUrl: item.imageUrl,
-      price: item.price,
-      status: item.status,
-    });
+  const updateField = (key: keyof SetupData, value: string) => {
+    const nextValue = key === "storefrontSlug" ? sanitizeSlug(value) : value;
+    setSetup((prev) => ({ ...prev, [key]: nextValue }));
+    setDirty(true);
+    if (touched[key]) {
+      const err = validateField(key, nextValue);
+      setErrors((prev) => ({ ...prev, [key]: err }));
+    }
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setCatalogForm(blankCatalogForm);
+  const touchField = (key: keyof SetupData) => {
+    setTouched((prev) => ({ ...prev, [key]: true }));
+    const err = validateField(key, setup[key]);
+    setErrors((prev) => ({ ...prev, [key]: err }));
+  };
+
+  const stepFields: Record<number, (keyof SetupData)[]> = {
+    1: ["storeName", "storefrontSlug"],
+    2: ["ownerName", "businessType", "currency", "city"],
+    3: ["whatsapp", "instagram", "facebook"],
+    4: [],
   };
 
   const validateStep = (targetStep: number) => {
+    const keys = stepFields[targetStep];
     const nextErrors: Partial<Record<keyof SetupData, string>> = {};
-
-    if (targetStep === 1) {
-      if (!setup.storeName.trim()) nextErrors.storeName = t.requiredField;
-      if (!setup.storefrontSlug.trim()) nextErrors.storefrontSlug = t.requiredField;
+    for (const k of keys) {
+      const err = validateField(k, setup[k]);
+      if (err) nextErrors[k] = err;
     }
-
-    if (targetStep === 2) {
-      if (!setup.ownerName.trim()) nextErrors.ownerName = t.requiredField;
-      if (!setup.businessType.trim()) nextErrors.businessType = t.requiredField;
-      if (!setup.currency.trim()) nextErrors.currency = t.requiredField;
-      if (!setup.city.trim()) nextErrors.city = t.requiredField;
-    }
-
-    if (targetStep === 3) {
-      if (!setup.whatsapp.trim()) nextErrors.whatsapp = t.requiredField;
-    }
-
-    setSetupErrors(nextErrors);
+    setErrors((prev) => ({ ...prev, ...nextErrors }));
+    setTouched((prev) => keys.reduce((acc, k) => ({ ...acc, [k]: true }), prev));
     return Object.keys(nextErrors).length === 0;
   };
 
-  const onNextStep = () => {
-    if (!validateStep(step)) return;
-    setStep((s) => Math.min(3, s + 1));
+  const onNext = () => {
+    if (step <= 3 && !validateStep(step)) return;
+    setStep((s) => Math.min(4, s + 1));
+    setDirty(true);
+  };
+
+  const onBack = () => {
+    setStep((s) => Math.max(1, s - 1));
+    setDirty(true);
+  };
+
+  const onReset = () => {
+    setStep(1);
+    setDone(false);
+    setSetup(defaultSetup);
+    setErrors({});
+    setTouched({});
+    setDirty(true);
+    localStorage.removeItem(STORAGE.setup);
   };
 
   const onFinish = async () => {
-    if (!validateStep(3)) return;
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
 
-    const slug = setup.storefrontSlug || sanitizeSlug(setup.storeName) || "myshop-demo";
+    const payload = {
+      slug,
+      name: setup.storeName,
+      ownerName: setup.ownerName,
+      businessType: setup.businessType,
+      currency: setup.currency,
+      city: setup.city,
+      socialLinks: {
+        whatsapp: setup.whatsapp,
+        instagram: setup.instagram,
+        facebook: setup.facebook,
+      },
+    };
+
     try {
-      const payload = {
-        slug,
-        name: setup.storeName,
-        ownerName: setup.ownerName,
-        businessType: setup.businessType,
-        currency: setup.currency,
-        city: setup.city,
-        socialLinks: {
-          whatsapp: setup.whatsapp,
-          instagram: setup.instagram,
-          facebook: setup.facebook,
-        },
-      };
-
       let seller: { id: number } | null = null;
       const existingRes = await fetch(`/api/sellers/${slug}`);
       if (existingRes.ok) {
@@ -618,609 +405,258 @@ export default function Home() {
         localStorage.setItem(STORAGE.sellerId, String(seller.id));
       }
     } catch {
-      // fallback to local-only mode
+      // local-only fallback
     }
 
-    localStorage.setItem(
-      "myshop_setup_history_v1",
-      JSON.stringify({
-        currency: setup.currency,
-        city: setup.city,
-        instagram: setup.instagram,
-        facebook: setup.facebook,
-      }),
-    );
-
     setDone(true);
+    setDirty(true);
     toast.success(toastText.saved);
   };
 
-  const openIntentModal = (item: CatalogItem) => {
-    setIntentItem(item);
-    setIntentData(blankIntent);
-    setIntentSubmitted(false);
-  };
+  const publishedCount = catalogSnapshot.filter((i) => i.status === "Published").length;
+  const draftCount = catalogSnapshot.filter((i) => i.status === "Draft").length;
 
-  const closeIntentModal = () => {
-    setIntentItem(null);
-  };
+  const hasStepErrors = Object.entries(errors).some(([key, val]) => val && stepFields[step].includes(key as keyof SetupData));
 
-  const submitIntent = () => {
-    if (!intentData.name.trim() || !intentData.contact.trim()) return;
-    setIntentSubmitted(true);
-  };
-
-  const slug = setup.storefrontSlug || sanitizeSlug(setup.storeName) || "myshop-demo";
-  const previewPath = `/s/${slug}`;
-  const previewUrl = `https://myshop-amber.vercel.app${previewPath}?preview=1`;
-
-  const publishedProducts = catalog.filter((i) => i.type === "Product" && i.status === "Published");
-  const publishedServices = catalog.filter((i) => i.type === "Service" && i.status === "Published");
-  const publishedCatalog = catalog.filter((i) => i.status === "Published");
-
-  const categories = [
-    "all",
-    ...Array.from(
-      new Set(
-        publishedCatalog
-          .map((item) => item.category.trim())
-          .filter(Boolean),
-      ),
-    ),
-  ];
-
-  const filteredPublishedCatalog =
-    activeCategory === "all" ? publishedCatalog : publishedCatalog.filter((item) => item.category === activeCategory);
-
-  const progressPct = Math.round((step / 3) * 100);
-
-  const filteredCatalogRows = catalog.filter((item) => {
-    if (catalogStatusFilter !== "all" && item.status !== catalogStatusFilter) return false;
-    if (!catalogSearch.trim()) return true;
-    const q = catalogSearch.toLowerCase();
-    return item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
-  });
-
-  const bulkSetStatus = async (status: CatalogStatus) => {
-    const targets = filteredCatalogRows.filter((i) => i.status !== status);
-    setCatalog((prev) => prev.map((i) => (targets.some((t) => t.id === i.id) ? { ...i, status } : i)));
-    if (sellerId) {
-      await Promise.all(
-        targets.map((item) =>
-          fetch("/api/catalog", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: item.id, status }),
-          }).catch(() => null),
-        ),
-      );
-    }
-  };
+  const fields = useMemo(
+    () => ({
+      storeName: {
+        label: t.labels.storeName,
+        placeholder: t.placeholders.storeName,
+      },
+      storefrontSlug: {
+        label: t.labels.storefrontSlug,
+        placeholder: t.placeholders.storefrontSlug,
+      },
+      ownerName: {
+        label: t.labels.ownerName,
+        placeholder: t.placeholders.ownerName,
+      },
+      businessType: {
+        label: t.labels.businessType,
+        placeholder: t.placeholders.businessType,
+      },
+      currency: {
+        label: t.labels.currency,
+        placeholder: t.placeholders.currency,
+      },
+      city: {
+        label: t.labels.city,
+        placeholder: t.placeholders.city,
+      },
+      whatsapp: {
+        label: t.labels.whatsapp,
+        placeholder: t.placeholders.whatsapp,
+      },
+      instagram: {
+        label: t.labels.instagram,
+        placeholder: t.placeholders.instagram,
+      },
+      facebook: {
+        label: t.labels.facebook,
+        placeholder: t.placeholders.facebook,
+      },
+    }),
+    [t],
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="rounded-2xl border border-slate-200 bg-gradient-to-b from-indigo-100 to-white p-6 sm:p-10">
-          <div className="mb-6 flex items-center justify-between gap-2">
-            <p className="rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 px-3 py-1 text-xs sm:text-sm">{t.badge}</p>
-          </div>
-
-          <h1 className="text-3xl font-bold leading-tight sm:text-5xl">{t.title}</h1>
-          <p className="mt-4 max-w-3xl text-sm text-slate-600 sm:text-base">{t.subtitle}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {done ? (
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                {common.goToDashboard}
-              </button>
-            ) : (
-              <a href="#setup" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white">
-                <Store className="h-4 w-4" />
-                {t.ctaPrimary}
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 pb-28 sm:px-6 lg:px-8 lg:py-8">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold sm:text-3xl">{t.pageTitle}</h1>
+              <p className="mt-1 text-sm text-slate-600">{t.pageSubtitle}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <a href="/dashboard" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50">
+                {t.links.dashboard}
               </a>
+              <a href={previewPath} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50">
+                {t.links.storefront}
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1">
+              <div className="flex items-center justify-between text-xs text-slate-600">
+                <span>{t.progress}</span>
+                <span>{Math.round((step / 4) * 100)}%</span>
+              </div>
+              <div className="mt-1 h-2 rounded-full bg-slate-100">
+                <div className="h-2 rounded-full bg-blue-600 transition-all" style={{ width: `${Math.round((step / 4) * 100)}%` }} />
+              </div>
+            </div>
+            <span className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-700">
+              {autosaveState === "saved" ? t.autosave.saved : autosaveState === "saving" ? t.autosave.saving : t.autosave.unsaved}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-4">
+            {t.steps.map((item, idx) => {
+              const index = idx + 1;
+              const active = step === index;
+              const complete = done || index < step;
+              return (
+                <button
+                  key={item.title}
+                  type="button"
+                  onClick={() => {
+                    if (index <= step) setStep(index);
+                  }}
+                  className={`rounded-xl border p-3 text-left ${
+                    active
+                      ? "border-blue-200 bg-blue-50"
+                      : complete
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <p className="text-xs text-slate-500">{index}. {item.title}</p>
+                  <p className="mt-1 text-xs text-slate-600">{item.desc}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          {hasStepErrors && (
+            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{t.validationSummary}</div>
+          )}
+
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            {step === 1 && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={fields.storeName.label} value={setup.storeName} placeholder={fields.storeName.placeholder} error={errors.storeName} onChange={(v) => updateField("storeName", v)} onBlur={() => touchField("storeName")} />
+                <div>
+                  <Field label={fields.storefrontSlug.label} value={setup.storefrontSlug} placeholder={fields.storefrontSlug.placeholder} error={errors.storefrontSlug} onChange={(v) => updateField("storefrontSlug", v)} onBlur={() => touchField("storefrontSlug")} />
+                  <p className="mt-1 text-xs text-slate-500">{t.hints.slug}</p>
+                </div>
+              </div>
             )}
-            <a href="#catalog" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2">
-              <ShoppingBag className="h-4 w-4" />
-              {t.ctaSecondary}
-            </a>
+
+            {step === 2 && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={fields.ownerName.label} value={setup.ownerName} placeholder={fields.ownerName.placeholder} error={errors.ownerName} onChange={(v) => updateField("ownerName", v)} onBlur={() => touchField("ownerName")} />
+                <Field label={fields.businessType.label} value={setup.businessType} placeholder={fields.businessType.placeholder} error={errors.businessType} onChange={(v) => updateField("businessType", v)} onBlur={() => touchField("businessType")} />
+                <Field label={fields.currency.label} value={setup.currency} placeholder={fields.currency.placeholder} error={errors.currency} onChange={(v) => updateField("currency", v)} onBlur={() => touchField("currency")} />
+                <Field label={fields.city.label} value={setup.city} placeholder={fields.city.placeholder} error={errors.city} onChange={(v) => updateField("city", v)} onBlur={() => touchField("city")} />
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Field label={fields.whatsapp.label} value={setup.whatsapp} placeholder={fields.whatsapp.placeholder} error={errors.whatsapp} onChange={(v) => updateField("whatsapp", v)} onBlur={() => touchField("whatsapp")} />
+                  <p className="mt-1 text-xs text-slate-500">{t.hints.whatsapp}</p>
+                </div>
+                <Field label={fields.instagram.label} value={setup.instagram} placeholder={fields.instagram.placeholder} error={errors.instagram} onChange={(v) => updateField("instagram", v)} onBlur={() => touchField("instagram")} />
+                <Field label={fields.facebook.label} value={setup.facebook} placeholder={fields.facebook.placeholder} error={errors.facebook} onChange={(v) => updateField("facebook", v)} onBlur={() => touchField("facebook")} />
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="grid gap-4 md:grid-cols-3">
+                <article className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-sm font-semibold">{t.review.business}</h3>
+                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                    <li>{t.labels.storeName}: {setup.storeName || "-"}</li>
+                    <li>{t.labels.storefrontSlug}: {setup.storefrontSlug || "-"}</li>
+                    <li>{t.labels.ownerName}: {setup.ownerName || "-"}</li>
+                    <li>{t.labels.businessType}: {setup.businessType || "-"}</li>
+                    <li>{t.labels.currency}: {setup.currency || "-"}</li>
+                    <li>{t.labels.city}: {setup.city || "-"}</li>
+                  </ul>
+                </article>
+                <article className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-sm font-semibold">{t.review.channels}</h3>
+                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                    <li>WhatsApp: {setup.whatsapp || "-"}</li>
+                    <li>Instagram: {setup.instagram || "-"}</li>
+                    <li>Facebook: {setup.facebook || "-"}</li>
+                  </ul>
+                  <p className="mt-3 text-xs text-slate-500">{t.review.previewRoute}: {previewPath}</p>
+                </article>
+                <article className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-sm font-semibold">{t.review.catalog}</h3>
+                  <p className="mt-2 text-sm text-slate-700">{catalogSnapshot.length} {t.review.items}</p>
+                  <p className="text-sm text-slate-700">{publishedCount} {t.review.published}</p>
+                  <p className="text-sm text-slate-700">{draftCount} {t.review.draft}</p>
+                  <a href="/#catalog" className="mt-3 inline-block text-sm text-blue-600 underline underline-offset-2">{t.completion.manageCatalog}</a>
+                </article>
+              </div>
+            )}
           </div>
-          <p className="mt-5 text-xs text-amber-700">{t.whyMocked}</p>
-        </header>
 
-        <section id="setup" className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">{t.setupTitle}</h2>
-          <p className="text-sm text-slate-600">{t.setupSubtitle}</p>
-          <p className="text-xs text-slate-500">
-            {t.stepLabel} {step}/3 • {t.stepNames[step - 1]} {done && `• ${t.completed}`}
-          </p>
-
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>{t.progressLabel}</span>
-              <span>{progressPct}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-slate-100">
-              <div className="h-2 rounded-full bg-indigo-500 transition-all" style={{ width: `${progressPct}%` }} />
-            </div>
-            <div className="grid grid-cols-3 gap-2 pt-1">
-              {t.stepNames.map((name, idx) => {
-                const current = idx + 1;
-                const active = current === step;
-                const complete = current < step || done;
-                return (
-                  <div
-                    key={name}
-                    className={`rounded-lg border px-2 py-1 text-center text-[11px] ${
-                      active ? "border-indigo-300 bg-indigo-50" : complete ? "border-emerald-200 bg-emerald-50" : "border-slate-200"
-                    }`}
-                  >
-                    {name}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm">
-            <p className="font-medium text-indigo-700">{t.previewRoute}</p>
-            <p className="mt-1 break-all text-slate-600">{previewPath}</p>
-            <a href={previewUrl} className="mt-2 inline-block text-indigo-600 underline underline-offset-2" target="_blank" rel="noreferrer">
-              {previewUrl}
-            </a>
-          </div>
-
-          {Object.keys(setupErrors).length > 0 && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-              <p className="font-semibold">{t.validationSummary}</p>
-              <ul className="mt-1 list-inside list-disc">
-                {Object.entries(setupErrors)
-                  .filter(([, value]) => Boolean(value))
-                  .map(([key, value]) => (
-                    <li key={key}>{t.labels[key as keyof typeof t.labels]}: {value}</li>
-                  ))}
-              </ul>
+          {done && (
+            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <h3 className="font-semibold text-emerald-800">{t.completion.title}</h3>
+              <p className="mt-1 text-sm text-emerald-700">{t.completion.subtitle}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button onClick={() => router.push("/dashboard")} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">{t.completion.goDashboard}</button>
+                <a href={previewPath} target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm">{t.completion.goStorefront}</a>
+                <a href="/#catalog" className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm">{t.completion.manageCatalog}</a>
+              </div>
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {step === 1 && (
-              <>
-                <div>
-                  <Input
-                    label={t.labels.storeName}
-                    value={setup.storeName}
-                    error={setupErrors.storeName}
-                    onChange={(v) => updateSetup("storeName", v)}
-                  />
-                  <p className="mt-1 text-xs text-slate-500">{t.helperStoreName}</p>
-                </div>
-                <div className="grid gap-1 text-sm">
-                  <Input
-                    label={t.labels.storefrontSlug}
-                    value={setup.storefrontSlug}
-                    error={setupErrors.storefrontSlug}
-                    onChange={(v) => updateSetup("storefrontSlug", v)}
-                  />
-                  <span className="text-xs text-slate-500">{t.slugHint}</span>
-                </div>
-              </>
-            )}
-            {step === 2 && (
-              <>
-                <Input label={t.labels.ownerName} value={setup.ownerName} error={setupErrors.ownerName} onChange={(v) => updateSetup("ownerName", v)} />
-                <Input
-                  label={t.labels.businessType}
-                  value={setup.businessType}
-                  error={setupErrors.businessType}
-                  onChange={(v) => updateSetup("businessType", v)}
-                />
-                <div>
-                  <Input label={t.labels.currency} value={setup.currency} error={setupErrors.currency} onChange={(v) => updateSetup("currency", v)} />
-                  <p className="mt-1 text-xs text-slate-500">{t.helperCurrency}</p>
-                </div>
-                <Input label={t.labels.city} value={setup.city} error={setupErrors.city} onChange={(v) => updateSetup("city", v)} />
-              </>
-            )}
-            {step === 3 && (
-              <>
-                <div>
-                  <Input label={t.labels.whatsapp} value={setup.whatsapp} error={setupErrors.whatsapp} onChange={(v) => updateSetup("whatsapp", v)} />
-                  <p className="mt-1 text-xs text-slate-500">{t.helperWhatsapp}</p>
-                </div>
-                <Input label={t.labels.instagram} value={setup.instagram} onChange={(v) => updateSetup("instagram", v)} />
-                <Input label={t.labels.facebook} value={setup.facebook} onChange={(v) => updateSetup("facebook", v)} />
-              </>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setStep((s) => Math.max(1, s - 1))}
-              disabled={step === 1}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 disabled:opacity-40"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              {t.backBtn}
-            </button>
-            {step < 3 ? (
-              <button onClick={onNextStep} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
-                {t.nextBtn}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+          <div className="mt-5 hidden flex-wrap gap-2 lg:flex">
+            <button onClick={onBack} disabled={step === 1} className="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-40">{t.actions.back}</button>
+            {step < 4 ? (
+              <button onClick={onNext} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">{t.actions.next}</button>
             ) : (
-              <button onClick={onFinish} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white">
-                <Check className="h-3.5 w-3.5" />
-                {t.finishBtn}
-              </button>
+              <button onClick={onFinish} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">{t.actions.finish}</button>
             )}
-            <button onClick={resetSetup} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2">
-              <RotateCcw className="h-3.5 w-3.5" />
-              {t.resetBtn}
-            </button>
-            {done && (
-              <div className="flex items-center gap-2 self-center">
-                <Check className="h-4 w-4 text-emerald-600" />
-                <span className="text-sm text-emerald-700">{t.doneMsg}</span>
-                <button
-                  onClick={() => router.push("/dashboard")}
-                  className="ml-2 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5" />
-                  {common.dashboard}
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section id="catalog" className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">{t.catalogTitle}</h2>
-          <p className="mb-4 text-sm text-slate-600">{t.catalogSubtitle}</p>
-
-          <div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-3">
-            <h3 className="sm:col-span-2 xl:col-span-3 font-medium">{t.catalogFormTitle}</h3>
-            <Input label={t.itemName} value={catalogForm.name} onChange={(v) => onCatalogField("name", v)} />
-            <Input label={t.itemCategory} value={catalogForm.category} onChange={(v) => onCatalogField("category", v)} />
-            <Input label={t.itemDescription} value={catalogForm.shortDescription} onChange={(v) => onCatalogField("shortDescription", v)} />
-            <Input label={t.itemImageUrl} value={catalogForm.imageUrl} onChange={(v) => onCatalogField("imageUrl", v)} />
-            <Input label={t.itemPrice} value={catalogForm.price} onChange={(v) => onCatalogField("price", v)} />
-
-            <label className="grid gap-1 text-sm">
-              <span className="text-slate-600">{t.itemType}</span>
-              <select
-                value={catalogForm.type}
-                onChange={(e) => onCatalogField("type", e.target.value as CatalogType)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 transition focus:ring"
-              >
-                <option value="Product">{t.productsSection}</option>
-                <option value="Service">{t.servicesSection}</option>
-              </select>
-            </label>
-
-            <label className="grid gap-1 text-sm">
-              <span className="text-slate-600">{t.itemStatus}</span>
-              <select
-                value={catalogForm.status}
-                onChange={(e) => onCatalogField("status", e.target.value as CatalogStatus)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 transition focus:ring"
-              >
-                <option value="Draft">{t.draft}</option>
-                <option value="Published">{t.published}</option>
-              </select>
-            </label>
-
-            <div className="sm:col-span-2 xl:col-span-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="mb-2 text-xs text-slate-600">{t.imagePreview}</p>
-              <PreviewImage src={catalogForm.imageUrl} alt={catalogForm.name || "preview"} className="h-36 w-full rounded-lg object-cover" />
-            </div>
-
-            <div className="sm:col-span-2 xl:col-span-3 flex gap-2">
-              <button onClick={submitCatalog} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
-                {editingId !== null ? <Save className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                {editingId !== null ? t.saveBtn : t.addBtn}
-              </button>
-              {editingId !== null && (
-                <button onClick={cancelEdit} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2">
-                  <XCircle className="h-3.5 w-3.5" />
-                  {t.cancelBtn}
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-3 grid gap-2 sm:grid-cols-4">
-            <input
-              value={catalogSearch}
-              onChange={(e) => setCatalogSearch(e.target.value)}
-              placeholder={lang === "pt" ? "Pesquisar por nome/categoria" : "Search by name/category"}
-              className="sm:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-            <select
-              value={catalogStatusFilter}
-              onChange={(e) => setCatalogStatusFilter(e.target.value as "all" | CatalogStatus)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="all">{lang === "pt" ? "Todos estados" : "All statuses"}</option>
-              <option value="Published">{t.published}</option>
-              <option value="Draft">{t.draft}</option>
-            </select>
-            <div className="flex gap-2">
-              <button onClick={() => bulkSetStatus("Published")} className="flex-1 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">{lang === "pt" ? "Publicar filtro" : "Publish filtered"}</button>
-              <button onClick={() => bulkSetStatus("Draft")} className="flex-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">{lang === "pt" ? "Despublicar filtro" : "Unpublish filtered"}</button>
-            </div>
-          </div>
-
-          <div className="grid gap-3">
-            {filteredCatalogRows.map((item) => (
-              <article key={item.id} className="grid grid-cols-[72px_1fr] gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[96px_1fr]">
-                <PreviewImage
-                  src={item.imageUrl}
-                  alt={item.name}
-                  className="h-[72px] w-[72px] rounded-lg object-cover sm:h-[96px] sm:w-[96px]"
-                />
-                <div>
-                  <h3 className="font-medium">{item.name}</h3>
-                  <p className="text-xs text-slate-500">{item.category || "General"}</p>
-                  <p className="text-sm text-slate-600">{item.shortDescription || "-"}</p>
-                  <p className="text-sm text-slate-600">
-                    {item.type} • {setup.currency} {item.price}
-                  </p>
-                  <span className="mt-2 inline-block rounded-full border border-slate-300 px-2 py-1 text-xs">
-                    {item.status === "Published" ? t.published : t.draft}
-                  </span>
-                  <div className="mt-2 flex gap-2">
-                    <button onClick={() => startEdit(item)} className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-xs">
-                      <Pencil className="h-3 w-3" />
-                      {t.editBtn}
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm(t.deleteConfirm)) return;
-                        if (sellerId) {
-                          try {
-                            await fetchJsonWithRetry(`/api/catalog?id=${item.id}`, { method: "DELETE" }, 3, "setup:catalog:delete");
-                          } catch {
-                            toast.info(toastText.syncFailed);
-                          }
-                        }
-                        setCatalog((prev) => prev.filter((i) => i.id !== item.id));
-                        toast.success(toastText.deleted);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      {t.deleteBtn}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-8 grid gap-4 lg:grid-cols-2">
-          <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-            <h2 className="text-xl font-semibold">{t.previewTitle}</h2>
-            <p className="mb-4 text-sm text-slate-600">{t.previewSubtitle}</p>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h3 className="font-semibold">{setup.storeName || "MyShop Demo Store"}</h3>
-              <p className="text-sm text-slate-600">@{slug}</p>
-
-              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.sellerProfileTitle}</h4>
-              <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3 text-sm">
-                <p>
-                  {setup.ownerName || "Store Owner"} • {setup.businessType || "Micro business"}
-                </p>
-                <p className="text-slate-600">
-                  {t.basedIn}: {setup.city || "Maputo"}
-                </p>
-                <div className="mt-2 rounded-md border border-slate-200 p-2 text-center text-xs text-slate-500">
-                  {t.noDataYet}
-                </div>
-                <p className="mt-2 text-xs text-slate-500">{t.socialProofPending}</p>
-              </div>
-
-              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.socialLinks}</h4>
-              <ul className="mt-2 space-y-1 text-sm">
-                <li>
-                  WhatsApp: <LinkOrText href={setup.whatsapp} fallback="https://wa.me/your-number" />
-                </li>
-                <li>
-                  Instagram: <LinkOrText href={setup.instagram} fallback="https://instagram.com/your-store" />
-                </li>
-                <li>
-                  Facebook: <LinkOrText href={setup.facebook} fallback="https://facebook.com/your-store" />
-                </li>
-              </ul>
-
-              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.productsSection}</h4>
-              {publishedProducts.length === 0 ? (
-                <p className="text-sm text-slate-500">{t.emptyProducts}</p>
-              ) : (
-                <ul className="mt-1 space-y-1 text-sm">
-                  {publishedProducts.map((item) => (
-                    <li key={item.id}>
-                      {item.name} • {setup.currency} {item.price}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <h4 className="mt-4 text-sm font-medium text-slate-600">{t.servicesSection}</h4>
-              {publishedServices.length === 0 ? (
-                <p className="text-sm text-slate-500">{t.emptyServices}</p>
-              ) : (
-                <ul className="mt-1 space-y-1 text-sm">
-                  {publishedServices.map((item) => (
-                    <li key={item.id}>
-                      {item.name} • {setup.currency} {item.price}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </article>
-
-          <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-            <h2 className="text-xl font-semibold">{t.pricingTitle}</h2>
-            <p className="mb-4 text-sm text-slate-600">{t.pricingSubtitle}</p>
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-              <h3 className="text-lg font-semibold">{t.planName}</h3>
-              <p className="mt-1 text-2xl font-bold">{t.planPrice}</p>
-              <ul className="mt-3 list-inside list-disc space-y-1 text-sm">
-                {t.planBullets.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
-              <p className="mt-4 rounded-lg border border-amber-300/40 bg-amber-50 p-2 text-xs text-amber-700">{t.planFoot}</p>
-              <p className="mt-2 text-xs text-slate-600">{t.paypalInfo}</p>
-              <button disabled className="mt-3 rounded-lg bg-slate-300 px-3 py-2 text-sm font-semibold text-slate-500 cursor-not-allowed">{t.choosePlan}</button>
-            </div>
-          </article>
-        </section>
-
-        <section className="mt-8">
-          <h2 className="mb-2 text-xl font-semibold">{t.previewTitle} • Cards</h2>
-          <p className="mb-3 text-sm text-slate-600">{t.categoryFilter}</p>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  activeCategory === cat ? "border-indigo-300 bg-indigo-50" : "border-slate-300"
-                }`}
-              >
-                {cat === "all" ? t.allCategories : cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredPublishedCatalog.map((item) => (
-              <article key={`card-${item.id}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                <PreviewImage src={item.imageUrl} alt={item.name} className="h-40 w-full object-cover" />
-                <div className="p-4">
-                  <p className="text-xs text-indigo-600">{item.category || "General"}</p>
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{item.shortDescription || "-"}</p>
-                  <p className="mt-2 text-sm font-medium">
-                    {setup.currency} {item.price}
-                  </p>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => openIntentModal(item)}
-                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
-                    >
-                      {item.type === "Product" ? t.cardCTAProduct : t.cardCTAService}
-                    </button>
-                    <button className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs" title={t.paypalMockNote}>
-                      <CreditCard className="h-3 w-3" />
-                      PayPal
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
+            <button onClick={onReset} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">{t.actions.reset}</button>
+            <button onClick={() => router.push("/dashboard")} className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">{common.dashboard}</button>
           </div>
         </section>
       </main>
 
-      {intentItem && (
-        <div className="fixed inset-0 z-50 flex items-end bg-slate-900/30 sm:items-center sm:justify-center">
-          <div className="w-full rounded-t-2xl border border-slate-300 bg-white p-4 sm:max-w-md sm:rounded-2xl">
-            <div className="mb-3 flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold">
-                  {intentItem.type === "Product" ? t.intentModalTitleProduct : t.intentModalTitleService}: {intentItem.name}
-                </h3>
-                <p className="mt-1 text-xs text-slate-600">{t.intentIntro}</p>
-              </div>
-              <button onClick={closeIntentModal} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs">
-                <X className="h-3 w-3" />
-                {t.closeBtn}
-              </button>
-            </div>
-
-            {intentSubmitted ? (
-              <div className="rounded-lg border border-emerald-300/40 bg-emerald-50 p-3 text-sm text-emerald-700">{t.intentDone}</div>
-            ) : (
-              <div className="grid gap-2">
-                <Input label={t.intentName} value={intentData.name} onChange={(v) => setIntentData((p) => ({ ...p, name: v }))} />
-                <Input label={t.intentContact} value={intentData.contact} onChange={(v) => setIntentData((p) => ({ ...p, contact: v }))} />
-                <Input label={t.intentMessage} value={intentData.note} onChange={(v) => setIntentData((p) => ({ ...p, note: v }))} />
-                <p className="rounded-lg border border-amber-300/30 bg-amber-50 p-2 text-xs text-amber-700">{t.paypalMockNote}</p>
-                <button onClick={submitIntent} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white">
-                  {t.intentSubmit}
-                </button>
-              </div>
-            )}
-          </div>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-2 backdrop-blur lg:hidden">
+        <div className="mx-auto flex w-full max-w-5xl gap-2 px-2">
+          <button onClick={onBack} disabled={step === 1} className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-40">{t.actions.back}</button>
+          {step < 4 ? (
+            <button onClick={onNext} className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">{t.actions.next}</button>
+          ) : (
+            <button onClick={onFinish} className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">{t.actions.finish}</button>
+          )}
+          <button onClick={onReset} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">{t.actions.reset}</button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-function Input({
+function Field({
   label,
   value,
   onChange,
+  onBlur,
+  placeholder,
   error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur: () => void;
+  placeholder?: string;
   error?: string;
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-slate-600">{label}</span>
+      <span className="text-slate-700">{label}</span>
       <input
         value={value}
+        placeholder={placeholder}
+        onBlur={onBlur}
         onChange={(e) => onChange(e.target.value)}
-        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-indigo-300 transition focus:ring ${
+        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${
           error ? "border-rose-400" : "border-slate-300"
         }`}
       />
       {error && <span className="text-xs text-rose-600">{error}</span>}
     </label>
   );
-}
-
-function LinkOrText({ href, fallback }: { href: string; fallback: string }) {
-  const value = href.trim() || fallback;
-  return (
-    <a href={value} target="_blank" rel="noreferrer" className="text-indigo-600 underline underline-offset-2">
-      {value}
-    </a>
-  );
-}
-
-function PreviewImage({ src, alt, className }: { src: string; alt: string; className: string }) {
-  const fallback = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800";
-
-  return (
-    <img
-      src={src || fallback}
-      alt={alt}
-      onError={(e) => {
-        const target = e.currentTarget;
-        if (target.src !== fallback) target.src = fallback;
-      }}
-      className={className}
-    />
-  );
-}
-
-function sanitizeSlug(raw: string) {
-  return raw
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
 }
