@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   try {
     const db = getDb();
     const body = await req.json();
-    const { sellerId, name, type, price, status, imageUrl, shortDescription, category } = body;
+    const { sellerId, name, type, price, status, imageUrl, shortDescription, category, imageUrls } = body;
 
     if (!sellerId || !name) {
       return NextResponse.json({ error: "sellerId and name required" }, { status: 400 });
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
             price: String(price || "0"),
             status: status || "Draft",
             imageUrl: imageUrl || "",
+            imageUrls: imageUrls ? (typeof imageUrls === "string" ? imageUrls : JSON.stringify(imageUrls)) : "",
             shortDescription: shortDescription || "",
             category: category || "",
           })
@@ -109,6 +110,7 @@ export async function PUT(req: NextRequest) {
     if (updates.imageUrl !== undefined) setObj.imageUrl = updates.imageUrl;
     if (updates.shortDescription !== undefined) setObj.shortDescription = updates.shortDescription;
     if (updates.category !== undefined) setObj.category = updates.category;
+    if (updates.imageUrls !== undefined) setObj.imageUrls = typeof updates.imageUrls === "string" ? updates.imageUrls : JSON.stringify(updates.imageUrls);
 
     const [row] = await withRetry(
       () => db.update(catalogItems).set(setObj).where(eq(catalogItems.id, Number(id))).returning(),

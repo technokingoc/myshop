@@ -63,6 +63,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
             currency: body.currency ?? existing.currency,
             city: body.city ?? existing.city,
             logoUrl: body.logoUrl ?? existing.logoUrl,
+            bannerUrl: body.bannerUrl ?? existing.bannerUrl,
             socialLinks: body.socialLinks ?? existing.socialLinks,
             updatedAt: new Date(),
           })

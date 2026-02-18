@@ -21,6 +21,7 @@ type SetupData = {
   facebook: string;
   paymentLink: string;
   logoUrl?: string;
+  bannerUrl?: string;
   description?: string;
 };
 
@@ -59,6 +60,7 @@ export default function SettingsPage() {
               city: s.city ?? parsed.data.city,
               description: s.description ?? parsed.data.description,
               logoUrl: s.logoUrl ?? parsed.data.logoUrl,
+              bannerUrl: s.bannerUrl ?? parsed.data.bannerUrl,
               whatsapp: s.socialLinks?.whatsapp ?? parsed.data.whatsapp,
               instagram: s.socialLinks?.instagram ?? parsed.data.instagram,
               facebook: s.socialLinks?.facebook ?? parsed.data.facebook,
@@ -117,6 +119,7 @@ export default function SettingsPage() {
           currency: form.currency,
           city: form.city,
           logoUrl: form.logoUrl || "",
+          bannerUrl: form.bannerUrl || "",
           socialLinks: {
             whatsapp: form.whatsapp,
             instagram: form.instagram,
@@ -153,6 +156,9 @@ export default function SettingsPage() {
             <Field label={t.city} value={form.city} field="city" update={update} />
             <div className="sm:col-span-2">
               <Field label={t.logoUrl} value={form.logoUrl || ""} field="logoUrl" update={update} placeholder={t.logoUrlPh} />
+            </div>
+            <div className="sm:col-span-2">
+              <Field label={t.bannerUrl} value={form.bannerUrl || ""} field="bannerUrl" update={update} placeholder={t.bannerUrlPh} />
             </div>
           </div>
         </section>

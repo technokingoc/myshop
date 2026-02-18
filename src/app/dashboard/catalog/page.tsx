@@ -18,6 +18,7 @@ type CatalogItem = {
   category: string;
   shortDescription: string;
   imageUrl: string;
+  imageUrls: string;
   price: string;
   status: "Draft" | "Published";
 };
@@ -57,6 +58,9 @@ const dict = {
     publish: "Publish",
     unpublish: "Unpublish",
     dbFallback: "DB sync unavailable. Using local fallback.",
+    imageUrls: "Additional images",
+    addImageUrl: "Add image URL",
+    removeImage: "Remove",
   },
   pt: {
     title: "Catálogo",
@@ -89,6 +93,9 @@ const dict = {
     publish: "Publicar",
     unpublish: "Despublicar",
     dbFallback: "Sincronização com BD indisponível. A usar fallback local.",
+    imageUrls: "Imagens adicionais",
+    addImageUrl: "Adicionar URL de imagem",
+    removeImage: "Remover",
   },
 };
 
@@ -99,6 +106,7 @@ const initialForm: FormState = {
   category: "",
   shortDescription: "",
   imageUrl: "",
+  imageUrls: "",
   price: "",
   status: "Draft",
 };
@@ -207,6 +215,7 @@ export default function DashboardCatalogPage() {
       category: item.category,
       shortDescription: item.shortDescription,
       imageUrl: item.imageUrl,
+      imageUrls: item.imageUrls || "",
       price: item.price,
       status: item.status,
     });
@@ -465,6 +474,15 @@ export default function DashboardCatalogPage() {
               <div className="sm:col-span-2">
                 <Field label={t.imageUrl} value={form.imageUrl} onChange={(v) => setForm((p) => ({ ...p, imageUrl: v }))} />
               </div>
+              <div className="sm:col-span-2">
+                <MultiImageUrlField
+                  label={t.imageUrls}
+                  value={form.imageUrls}
+                  onChange={(v) => setForm((p) => ({ ...p, imageUrls: v }))}
+                  addLabel={t.addImageUrl}
+                  removeLabel={t.removeImage}
+                />
+              </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowForm(false)} className="h-10 rounded-xl border border-slate-300 px-4 text-sm font-medium text-slate-700">{t.cancel}</button>
@@ -482,6 +500,39 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
     <div>
       <label className="text-sm font-medium text-slate-700">{label}</label>
       <input value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-slate-300 px-3 text-sm" />
+    </div>
+  );
+}
+
+function MultiImageUrlField({
+  label, value, onChange, addLabel, removeLabel,
+}: {
+  label: string; value: string; onChange: (v: string) => void; addLabel: string; removeLabel: string;
+}) {
+  let urls: string[] = [];
+  try { const p = JSON.parse(value); if (Array.isArray(p)) urls = p; } catch {}
+
+  const update = (next: string[]) => onChange(JSON.stringify(next.filter(Boolean).length > 0 ? next : []));
+  const add = () => { if (urls.length < 5) update([...urls, ""]); };
+  const remove = (i: number) => update(urls.filter((_, idx) => idx !== i));
+  const set = (i: number, v: string) => { const n = [...urls]; n[i] = v; update(n); };
+
+  return (
+    <div>
+      <label className="text-sm font-medium text-slate-700">{label}</label>
+      <div className="mt-1 space-y-2">
+        {urls.map((url, i) => (
+          <div key={i} className="flex gap-2">
+            <input value={url} onChange={(e) => set(i, e.target.value)} placeholder={`Image ${i + 1}`} className="h-10 flex-1 rounded-xl border border-slate-300 px-3 text-sm" />
+            <button type="button" onClick={() => remove(i)} className="rounded-lg border border-rose-200 px-2 text-xs text-rose-600 hover:bg-rose-50">{removeLabel}</button>
+          </div>
+        ))}
+        {urls.length < 5 && (
+          <button type="button" onClick={add} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50">
+            <Plus className="h-3 w-3" /> {addLabel}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

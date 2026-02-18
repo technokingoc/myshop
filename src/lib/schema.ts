@@ -10,6 +10,7 @@ export const sellers = pgTable("sellers", {
   currency: varchar("currency", { length: 16 }).default("USD"),
   city: varchar("city", { length: 256 }).default(""),
   logoUrl: text("logo_url").default(""),
+  bannerUrl: text("banner_url").default(""),
   socialLinks: jsonb("social_links").$type<{
     whatsapp?: string;
     instagram?: string;
@@ -29,9 +30,21 @@ export const catalogItems = pgTable("catalog_items", {
   price: numeric("price", { precision: 12, scale: 2 }).notNull().default("0"),
   status: varchar("status", { length: 32 }).notNull().default("Draft"),
   imageUrl: text("image_url").default(""),
+  imageUrls: text("image_urls").default(""),
   shortDescription: text("short_description").default(""),
   category: varchar("category", { length: 128 }).default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  catalogItemId: integer("catalog_item_id").references(() => catalogItems.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }),
+  authorName: varchar("author_name", { length: 100 }).notNull(),
+  authorEmail: varchar("author_email", { length: 255 }),
+  content: text("content").notNull(),
+  rating: integer("rating"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const orders = pgTable("orders", {

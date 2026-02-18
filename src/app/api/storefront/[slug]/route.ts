@@ -35,6 +35,7 @@ export async function GET(
         currency: seller.currency,
         city: seller.city,
         logoUrl: seller.logoUrl,
+        bannerUrl: seller.bannerUrl,
         socialLinks: seller.socialLinks,
       },
       products,
