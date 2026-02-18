@@ -583,7 +583,7 @@ export default function SetupPage() {
                   <p className="mt-2 text-sm text-slate-700">{catalogSnapshot.length} {t.review.items}</p>
                   <p className="text-sm text-slate-700">{publishedCount} {t.review.published}</p>
                   <p className="text-sm text-slate-700">{draftCount} {t.review.draft}</p>
-                  <a href="/#catalog" className="mt-3 inline-block text-sm text-blue-600 underline underline-offset-2">{t.completion.manageCatalog}</a>
+                  <a href="/dashboard/catalog" className="mt-3 inline-block text-sm text-blue-600 underline underline-offset-2">{t.completion.manageCatalog}</a>
                 </article>
               </div>
             )}
@@ -596,7 +596,7 @@ export default function SetupPage() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <button onClick={() => router.push("/dashboard")} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">{t.completion.goDashboard}</button>
                 <a href={previewPath} target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm">{t.completion.goStorefront}</a>
-                <a href="/#catalog" className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm">{t.completion.manageCatalog}</a>
+                <a href="/dashboard/catalog" className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm">{t.completion.manageCatalog}</a>
               </div>
             </div>
           )}

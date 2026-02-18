@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { OrderFormDB } from "@/components/order-form-db";
-import { fetchJsonWithRetry } from "@/lib/api-client";
 import { Store, MapPin, MessageCircle, Instagram, Facebook, AlertCircle, Send, Loader2, ShieldCheck, Clock3 } from "lucide-react";
 
 type Seller = {
@@ -93,10 +92,14 @@ function normalizeSeller(input: unknown): Seller | null {
   if (!input || typeof input !== "object") return null;
   const row = input as Record<string, unknown>;
 
+  const slug = asString(row.slug).trim();
+  const name = asString(row.name).trim();
+  if (!slug || !name) return null;
+
   return {
     id: asNumber(row.id),
-    slug: asString(row.slug).trim(),
-    name: asString(row.name),
+    slug,
+    name,
     description: asString(row.description),
     ownerName: asString(row.ownerName),
     businessType: asString(row.businessType),
@@ -134,38 +137,61 @@ function logStorefrontIssue(event: string, details: Record<string, unknown>) {
 function loadLocalStorefront(slug: string): { seller: Seller | null; catalog: CatalogItem[] } {
   if (typeof window === "undefined") return { seller: null, catalog: [] };
 
-  const rawSetup = localStorage.getItem("myshop_setup_v2");
-  const rawCatalog = localStorage.getItem("myshop_catalog_v2");
-  if (!rawSetup) return { seller: null, catalog: [] };
+  try {
+    const rawSetup = localStorage.getItem("myshop_setup_v2");
+    const rawCatalog = localStorage.getItem("myshop_catalog_v2");
+    if (!rawSetup) return { seller: null, catalog: [] };
 
-  const setup = JSON.parse(rawSetup) as LocalSetup;
-  const data = setup?.data;
-  if (!data) return { seller: null, catalog: [] };
+    const setup = JSON.parse(rawSetup) as LocalSetup;
+    const data = setup?.data;
+    if (!data) return { seller: null, catalog: [] };
 
-  const localSlug = asString(data.storefrontSlug).trim();
-  if (!localSlug || localSlug !== slug) return { seller: null, catalog: [] };
+    const localSlug = asString(data.storefrontSlug).trim();
+    if (!localSlug || localSlug !== slug) return { seller: null, catalog: [] };
 
-  const seller = normalizeSeller({
-    id: localStorage.getItem("myshop_seller_id") || 0,
-    slug: localSlug,
-    name: data.storeName,
-    description: data.description,
-    ownerName: data.ownerName,
-    businessType: data.businessType,
-    currency: data.currency,
-    city: data.city,
-    logoUrl: data.logoUrl,
-    socialLinks: {
-      whatsapp: data.whatsapp,
-      instagram: data.instagram,
-      facebook: data.facebook,
-    },
-  });
+    const seller = normalizeSeller({
+      id: localStorage.getItem("myshop_seller_id") || 0,
+      slug: localSlug,
+      name: data.storeName,
+      description: data.description,
+      ownerName: data.ownerName,
+      businessType: data.businessType,
+      currency: data.currency,
+      city: data.city,
+      logoUrl: data.logoUrl,
+      socialLinks: {
+        whatsapp: data.whatsapp,
+        instagram: data.instagram,
+        facebook: data.facebook,
+      },
+    });
 
-  return {
-    seller,
-    catalog: normalizeCatalog(rawCatalog ? JSON.parse(rawCatalog) : []),
-  };
+    let parsedCatalog: unknown[] = [];
+    if (rawCatalog) {
+      try {
+        parsedCatalog = JSON.parse(rawCatalog);
+      } catch {
+        parsedCatalog = [];
+      }
+    }
+
+    return {
+      seller,
+      catalog: normalizeCatalog(parsedCatalog),
+    };
+  } catch {
+    return { seller: null, catalog: [] };
+  }
+}
+
+async function safeFetchJson(url: string): Promise<{ ok: boolean; status: number; data: unknown | null }> {
+  try {
+    const res = await fetch(url);
+    const data = await res.json().catch(() => null);
+    return { ok: res.ok, status: res.status, data };
+  } catch {
+    return { ok: false, status: 0, data: null };
+  }
 }
 
 const text = {
@@ -190,7 +216,6 @@ const text = {
     emptyCatalogHint: "This seller has not published products or services yet. You can still contact them directly.",
     contactSeller: "Contact seller",
     dbBanner: "Temporary connection issue. Showing available fallback content.",
-    hydrationError: "We couldn't load this storefront completely. Showing safe fallback data.",
     discover: "Find items quickly",
     search: "Search products/services",
     all: "All",
@@ -223,7 +248,6 @@ const text = {
     emptyCatalogHint: "Este vendedor ainda não publicou produtos ou serviços. Ainda pode contactá-lo diretamente.",
     contactSeller: "Contactar vendedor",
     dbBanner: "Falha temporária de ligação. A mostrar conteúdo de fallback disponível.",
-    hydrationError: "Não foi possível carregar esta loja por completo. A mostrar fallback seguro.",
     discover: "Encontre itens rapidamente",
     search: "Pesquisar produtos/serviços",
     all: "Todos",
@@ -258,76 +282,65 @@ export default function StorefrontPage() {
       setNotFound(false);
       setBanner(null);
 
-      try {
-        const [dbSeller, dbCatalog] = await Promise.all([
-          fetchJsonWithRetry<unknown>(`/api/sellers/${slug}`),
-          fetchJsonWithRetry<unknown>(`/api/catalog?sellerSlug=${slug}`),
-        ]);
+      const [sellerRes, catalogRes] = await Promise.all([
+        safeFetchJson(`/api/sellers/${slug}`),
+        safeFetchJson(`/api/catalog?sellerSlug=${slug}`),
+      ]);
 
-        const normalizedSeller = normalizeSeller(dbSeller);
-        const normalizedCatalog = normalizeCatalog(dbCatalog);
+      const normalizedSeller = sellerRes.ok ? normalizeSeller(sellerRes.data) : null;
+      const normalizedCatalog = catalogRes.ok ? normalizeCatalog(catalogRes.data) : [];
 
-        if (!normalizedSeller || !normalizedSeller.slug) {
-          throw new Error("Invalid seller payload");
-        }
-
+      if (normalizedSeller) {
         setSeller(normalizedSeller);
         setCatalog(normalizedCatalog);
-      } catch (dbError) {
-        logStorefrontIssue("db hydrate failed", {
-          slug,
-          message: dbError instanceof Error ? dbError.message : "unknown",
-        });
-
-        try {
-          const local = loadLocalStorefront(slug);
-
-          if (local.seller) {
-            setSeller(local.seller);
-            setCatalog(local.catalog);
-            setBanner(t.dbBanner);
-          } else {
-            setNotFound(true);
-          }
-        } catch (localError) {
-          logStorefrontIssue("local fallback parse failed", {
-            slug,
-            message: localError instanceof Error ? localError.message : "unknown",
-          });
-          setSeller(null);
-          setCatalog([]);
-          setBanner(t.hydrationError);
-          setNotFound(true);
-        }
-      } finally {
+        if (!sellerRes.ok || !catalogRes.ok) setBanner(t.dbBanner);
         setLoading(false);
+        return;
       }
+
+      if (sellerRes.status === 404) {
+        setSeller(null);
+        setCatalog([]);
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      logStorefrontIssue("db hydrate fallback", { slug, sellerStatus: sellerRes.status, catalogStatus: catalogRes.status });
+      const local = loadLocalStorefront(slug);
+
+      if (local.seller) {
+        setSeller(local.seller);
+        setCatalog(local.catalog);
+        setBanner(t.dbBanner);
+      } else {
+        setSeller(null);
+        setCatalog([]);
+        setNotFound(true);
+      }
+
+      setLoading(false);
     };
 
     hydrateStorefront();
-  }, [slug, t.dbBanner, t.hydrationError]);
+  }, [slug, t.dbBanner]);
 
-  if (loading) return <main className="mx-auto w-full max-w-6xl px-4 py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-400" /><p className="mt-3 text-slate-500">{t.loading}</p></main>;
-  if (notFound || !seller) return <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm"><AlertCircle className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-2xl font-bold text-slate-900">{t.missing}</h1><p className="mt-2 text-slate-600">{t.hint}</p></section></main>;
-
-  const social = seller.socialLinks;
   const published = catalog.filter((i) => i.status === "Published");
-  const categories = useMemo(
-    () => ["all", ...Array.from(new Set(published.map((i) => asString(i.category).trim()).filter(Boolean)))],
-    [published],
-  );
-
+  const categories = ["all", ...Array.from(new Set(published.map((i) => asString(i.category).trim()).filter(Boolean)))];
   const discovered = published.filter((i) => {
     if (category !== "all" && i.category !== category) return false;
     const query = asString(search).trim().toLowerCase();
     if (!query) return true;
-
     return asString(i.name).toLowerCase().includes(query) || asString(i.shortDescription).toLowerCase().includes(query);
   });
-
   const publishedProducts = discovered.filter((i) => i.type === "Product");
   const publishedServices = discovered.filter((i) => i.type === "Service");
+
+  if (loading) return <main className="mx-auto w-full max-w-6xl px-4 py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-400" /><p className="mt-3 text-slate-500">{t.loading}</p></main>;
+  if (notFound || !seller) return <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm"><AlertCircle className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-2xl font-bold text-slate-900">{t.missing}</h1><p className="mt-2 text-slate-600">{t.hint}</p></section></main>;
+
   const hasCatalog = published.length > 0;
+  const social = seller.socialLinks;
   const contactHref = social.whatsapp || social.instagram || social.facebook || "";
 
   return (

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "@/lib/language";
 import {
+  LayoutDashboard,
   Package,
   ShoppingCart,
   Settings,
@@ -42,10 +43,8 @@ const dict = {
     notifications: "Notifications",
     noNotifications: "No notifications yet",
     logout: "Logout",
-    quickOrders: "Orders",
-    quickCatalog: "Catalog",
-    quickStorefront: "Store",
-    quickSettings: "Settings",
+    hello: "Welcome back",
+    context: "Manage your store operations",
   },
   pt: {
     dashboard: "Painel",
@@ -56,10 +55,8 @@ const dict = {
     notifications: "Notificações",
     noNotifications: "Sem notificações",
     logout: "Sair",
-    quickOrders: "Pedidos",
-    quickCatalog: "Catálogo",
-    quickStorefront: "Loja",
-    quickSettings: "Definições",
+    hello: "Bem-vindo de volta",
+    context: "Gerencie as operações da sua loja",
   },
 };
 
@@ -110,47 +107,168 @@ export function DashboardShell({
     return setup.data.storefrontSlug || sanitizeSlug(setup.data.storeName) || "myshop-demo";
   }, [setup]);
 
+  const ownerName = setup?.data?.ownerName || "Seller";
+
   const navItems = [
+    { label: t.dashboard, icon: LayoutDashboard, href: "/dashboard", key: "dashboard" },
+    { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
     { label: t.orders, icon: ShoppingCart, href: "/dashboard/orders", key: "orders" },
-    { label: t.catalog, icon: Package, href: "/#catalog", key: "catalog" },
     { label: t.storefront, icon: Store, href: slug ? `/s/${slug}` : "/", key: "storefront" },
     { label: t.settings, icon: Settings, href: "/dashboard/settings", key: "settings" },
   ];
+
+  const mobileItems = navItems.filter((n) => ["orders", "catalog", "storefront", "settings"].includes(n.key));
 
   return (
     <AuthGate>
       <div className="min-h-screen bg-slate-50">
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-900/30 lg:hidden" onClick={() => setMobileNavOpen(false)}>
-            <nav className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
-                <span className="font-semibold text-slate-900">MyShop</span>
-                <button onClick={() => setMobileNavOpen(false)} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+          <div className="fixed inset-0 z-50 bg-slate-900/35 lg:hidden" onClick={() => setMobileNavOpen(false)}>
+            <nav
+              className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
+                <div>
+                  <p className="text-sm text-slate-500">MyShop</p>
+                  <p className="text-base font-semibold text-slate-900">{ownerName}</p>
+                </div>
+                <button
+                  onClick={() => setMobileNavOpen(false)}
+                  className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <ul className="mt-2 space-y-1 px-2">{navItems.map((item) => <li key={item.key}><a href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${item.key === activePage ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`} onClick={() => setMobileNavOpen(false)}><item.icon className="h-4 w-4" />{item.label}</a></li>)}</ul>
+              <ul className="mt-3 space-y-1.5 px-3">
+                {navItems.map((item) => (
+                  <li key={item.key}>
+                    <a
+                      href={item.href}
+                      className={`flex h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium transition ${
+                        item.key === activePage
+                          ? "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                      onClick={() => setMobileNavOpen(false)}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </nav>
           </div>
         )}
 
-        <aside className="fixed left-0 top-[57px] hidden h-[calc(100vh-57px)] w-56 border-r border-slate-200 bg-white lg:block">
-          <ul className="mt-4 space-y-1 px-2">{navItems.map((item) => <li key={item.key}><a href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${item.key === activePage ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}><item.icon className="h-4 w-4" />{item.label}</a></li>)}</ul>
+        <aside className="fixed left-0 top-0 hidden h-screen w-72 border-r border-slate-200 bg-white lg:block">
+          <div className="border-b border-slate-200 px-6 py-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">MyShop Seller</p>
+            <h2 className="mt-1 text-lg font-semibold text-slate-900">{setup?.data?.storeName || "MyShop"}</h2>
+            <p className="mt-1 text-sm text-slate-500">@{slug || "store"}</p>
+          </div>
+          <ul className="mt-4 space-y-1.5 px-3">
+            {navItems.map((item) => (
+              <li key={item.key}>
+                <a
+                  href={item.href}
+                  className={`group flex h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium transition ${
+                    item.key === activePage
+                      ? "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </aside>
 
-        <main className="lg:ml-56">
-          <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 lg:hidden"><button onClick={() => setMobileNavOpen(true)} className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100"><Menu className="h-5 w-5" /></button><h1 className="font-semibold text-slate-900">{navItems.find((n) => n.key === activePage)?.label || "Dashboard"}</h1></div>
-          <div className="mx-auto flex w-full max-w-5xl items-center justify-end gap-2 px-4 pt-4 sm:px-6 lg:px-8">
-            <button onClick={() => setNotifOpen((v) => !v)} className="relative rounded-lg border border-slate-300 bg-white p-2 text-slate-700"><Bell className="h-4 w-4" />{events.length > 0 && <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] text-white">{events.length}</span>}</button>
-            <button onClick={() => { clearSession(); window.location.href = "/login"; }} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><LogOut className="h-4 w-4" />{t.logout}</button>
-          </div>
-          {notifOpen && <div className="mx-auto mt-2 w-full max-w-5xl px-4 sm:px-6 lg:px-8"><div className="rounded-xl border border-slate-200 bg-white p-3"><h3 className="text-sm font-semibold text-slate-800">{t.notifications}</h3><ul className="mt-2 space-y-2">{events.length === 0 ? <li className="text-sm text-slate-500">{t.noNotifications}</li> : events.map((evt) => <li key={evt.id} className="rounded-lg bg-slate-50 px-3 py-2 text-sm"><p className="text-slate-800">{evt.message}</p><p className="text-xs text-slate-400">{new Date(evt.createdAt).toLocaleString()}</p></li>)}</ul></div></div>}
-          <div className="mx-auto w-full max-w-5xl px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-8">{children}</div>
+        <main className="pb-28 lg:ml-72 lg:pb-8">
+          <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+            <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+              <div className="flex min-w-0 items-center gap-3">
+                <button
+                  onClick={() => setMobileNavOpen(true)}
+                  className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">{t.hello}, {ownerName}</p>
+                  <p className="truncate text-xs text-slate-500">{t.context}</p>
+                </div>
+              </div>
 
-          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-2 backdrop-blur lg:hidden">
-            <div className="mx-auto grid w-full max-w-5xl grid-cols-4 gap-2">
-              <a href="/dashboard/orders" className="rounded-lg border border-slate-200 px-2 py-2 text-center text-xs font-medium text-slate-700">{t.quickOrders}</a>
-              <a href="/#catalog" className="rounded-lg border border-slate-200 px-2 py-2 text-center text-xs font-medium text-slate-700">{t.quickCatalog}</a>
-              <a href={slug ? `/s/${slug}` : "/"} className="rounded-lg border border-slate-200 px-2 py-2 text-center text-xs font-medium text-slate-700">{t.quickStorefront}</a>
-              <a href="/dashboard/settings" className="rounded-lg border border-slate-200 px-2 py-2 text-center text-xs font-medium text-slate-700">{t.quickSettings}</a>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setNotifOpen((v) => !v)}
+                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                >
+                  <Bell className="h-4 w-4" />
+                  {events.length > 0 && (
+                    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] text-white">
+                      {events.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    clearSession();
+                    window.location.href = "/login";
+                  }}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t.logout}
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {notifOpen && (
+            <div className="mx-auto mt-4 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-800">{t.notifications}</h3>
+                <ul className="mt-2 space-y-2">
+                  {events.length === 0 ? (
+                    <li className="text-sm text-slate-500">{t.noNotifications}</li>
+                  ) : (
+                    events.map((evt) => (
+                      <li key={evt.id} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                        <p className="text-slate-800">{evt.message}</p>
+                        <p className="text-xs text-slate-400">{new Date(evt.createdAt).toLocaleString()}</p>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
+
+          <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
+            <div className="mx-auto w-full max-w-xl rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-lg backdrop-blur">
+              <div className={`grid gap-1 ${mobileItems.length > 4 ? "grid-cols-5" : "grid-cols-4"}`}>
+                {mobileItems.map((item) => (
+                  <a
+                    key={item.key}
+                    href={item.href}
+                    className={`flex min-h-11 flex-col items-center justify-center rounded-xl px-2 py-1.5 text-[11px] font-medium transition ${
+                      item.key === activePage
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                  >
+                    <item.icon className="mb-0.5 h-4 w-4" />
+                    {item.label}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </main>
