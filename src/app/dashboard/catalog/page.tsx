@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useLanguage } from "@/lib/language";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 import { useToast } from "@/components/toast-provider";
-import { Plus, Search, PackageOpen, Trash2, Pencil, CheckSquare, Square, Eye, EyeOff } from "lucide-react";
+import { Plus, Search, PackageOpen, Trash2, Pencil, CheckSquare, Square, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
-
-type SetupData = { storefrontSlug?: string };
-type SetupPersisted = { data?: SetupData; sellerId?: number };
 
 type CatalogItem = {
   id: number;
@@ -23,7 +20,6 @@ type CatalogItem = {
   status: "Draft" | "Published";
 };
 
-const STORAGE_SETUP = "myshop_setup_v2";
 const STORAGE_CATALOG = "myshop_catalog_v2";
 
 const dict = {
@@ -52,7 +48,7 @@ const dict = {
     name: "Name",
     category: "Category",
     description: "Description",
-    imageUrl: "Image URL",
+    imageUrl: "Main image URL",
     service: "Service",
     product: "Product",
     publish: "Publish",
@@ -61,6 +57,8 @@ const dict = {
     imageUrls: "Additional images",
     addImageUrl: "Add image URL",
     removeImage: "Remove",
+    statusLabel: "Visibility",
+    preview: "Preview",
   },
   pt: {
     title: "Catálogo",
@@ -87,7 +85,7 @@ const dict = {
     name: "Nome",
     category: "Categoria",
     description: "Descrição",
-    imageUrl: "URL da imagem",
+    imageUrl: "URL da imagem principal",
     service: "Serviço",
     product: "Produto",
     publish: "Publicar",
@@ -96,6 +94,8 @@ const dict = {
     imageUrls: "Imagens adicionais",
     addImageUrl: "Adicionar URL de imagem",
     removeImage: "Remover",
+    statusLabel: "Visibilidade",
+    preview: "Pré-visualização",
   },
 };
 
@@ -110,6 +110,21 @@ const initialForm: FormState = {
   price: "",
   status: "Draft",
 };
+
+/* ── Tiny image preview (shows thumbnail if URL is valid) ── */
+function ImagePreview({ url, size = "h-10 w-10" }: { url: string; size?: string }) {
+  const [ok, setOk] = useState(true);
+  useEffect(() => { setOk(true); }, [url]);
+  if (!url || !ok) return null;
+  return (
+    <img
+      src={url}
+      alt=""
+      className={`${size} shrink-0 rounded-lg object-cover border border-slate-200`}
+      onError={() => setOk(false)}
+    />
+  );
+}
 
 export default function DashboardCatalogPage() {
   const { lang } = useLanguage();
@@ -135,32 +150,32 @@ export default function DashboardCatalogPage() {
     localStorage.setItem(STORAGE_CATALOG, JSON.stringify(next));
   };
 
-  const loadData = async () => {
-    const rawSetup = localStorage.getItem(STORAGE_SETUP);
+  const loadData = useCallback(async () => {
+    // Load cached catalog from localStorage first
     const rawCatalog = localStorage.getItem(STORAGE_CATALOG);
-    const setup = rawSetup ? (JSON.parse(rawSetup) as SetupPersisted) : null;
-
     const fallback = rawCatalog ? (JSON.parse(rawCatalog) as CatalogItem[]) : [];
     setItems(Array.isArray(fallback) ? fallback : []);
 
-    const localSlug = setup?.data?.storefrontSlug || "";
-    setSlug(localSlug);
-
-    let currentSellerId = setup?.sellerId || Number(localStorage.getItem("myshop_seller_id") || 0) || null;
-
+    // Get sellerId from /api/auth/me session (cookie-based)
+    let currentSellerId: number | null = null;
+    let currentSlug = "";
     try {
-      if (localSlug && !currentSellerId) {
-        const seller = await fetchJsonWithRetry<{ id: number }>(`/api/sellers/${localSlug}`, undefined, 2, "catalog:seller");
-        currentSellerId = seller?.id || null;
-        if (currentSellerId) localStorage.setItem("myshop_seller_id", String(currentSellerId));
+      const meRes = await fetch("/api/auth/me");
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        if (meData.session) {
+          currentSellerId = meData.session.sellerId || null;
+          currentSlug = meData.session.sellerSlug || "";
+        }
       }
     } catch {
-      // ignore and continue fallback
+      // session fetch failed, continue with fallback
     }
 
     setSellerId(currentSellerId);
+    setSlug(currentSlug);
 
-    if (!currentSellerId && !localSlug) {
+    if (!currentSellerId && !currentSlug) {
       setDbReady(false);
       setHydrated(true);
       return;
@@ -176,7 +191,7 @@ export default function DashboardCatalogPage() {
 
       const dbItems = currentSellerId
         ? await fetchJsonWithRetry<CatalogItem[]>(`/api/catalog?sellerId=${currentSellerId}`, undefined, 2, "catalog:list")
-        : await fetchJsonWithRetry<CatalogItem[]>(`/api/catalog?sellerSlug=${localSlug}`, undefined, 2, "catalog:list");
+        : await fetchJsonWithRetry<CatalogItem[]>(`/api/catalog?sellerSlug=${currentSlug}`, undefined, 2, "catalog:list");
 
       setDbReady(true);
       persistLocal(Array.isArray(dbItems) ? dbItems : []);
@@ -186,11 +201,9 @@ export default function DashboardCatalogPage() {
     } finally {
       setHydrated(true);
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -200,6 +213,11 @@ export default function DashboardCatalogPage() {
       return item.name.toLowerCase().includes(q) || (item.shortDescription || "").toLowerCase().includes(q);
     });
   }, [items, search, statusFilter]);
+
+  // Count badges
+  const countAll = items.length;
+  const countPublished = items.filter((i) => i.status === "Published").length;
+  const countDraft = items.filter((i) => i.status === "Draft").length;
 
   const startCreate = () => {
     setEditingId(null);
@@ -232,44 +250,26 @@ export default function DashboardCatalogPage() {
         try {
           const updated = await fetchJsonWithRetry<CatalogItem>(
             "/api/catalog",
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: editingId, ...form }),
-            },
-            2,
-            "catalog:update",
+            { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingId, ...form }) },
+            2, "catalog:update",
           );
           persistLocal(localNext.map((i) => (i.id === editingId ? updated : i)));
-        } catch {
-          setDbReady(false);
-        }
+        } catch { setDbReady(false); }
       }
     } else {
       const tempId = Date.now();
-      const draft: CatalogItem = {
-        id: tempId,
-        sellerId: sellerId || 0,
-        ...form,
-      };
+      const draft: CatalogItem = { id: tempId, sellerId: sellerId || 0, ...form };
       persistLocal([draft, ...items]);
 
       if (dbReady && sellerId) {
         try {
           const created = await fetchJsonWithRetry<CatalogItem>(
             "/api/catalog",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sellerId, ...form }),
-            },
-            2,
-            "catalog:create",
+            { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellerId, ...form }) },
+            2, "catalog:create",
           );
           persistLocal([created, ...items]);
-        } catch {
-          setDbReady(false);
-        }
+        } catch { setDbReady(false); }
       }
     }
 
@@ -281,18 +281,9 @@ export default function DashboardCatalogPage() {
   const removeItem = async (id: number) => {
     const next = items.filter((i) => i.id !== id);
     persistLocal(next);
-    setSelected((prev) => {
-      const n = new Set(prev);
-      n.delete(id);
-      return n;
-    });
-
+    setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
     if (dbReady) {
-      try {
-        await fetchJsonWithRetry(`/api/catalog?id=${id}`, { method: "DELETE" }, 2, "catalog:delete");
-      } catch {
-        setDbReady(false);
-      }
+      try { await fetchJsonWithRetry(`/api/catalog?id=${id}`, { method: "DELETE" }, 2, "catalog:delete"); } catch { setDbReady(false); }
     }
   };
 
@@ -300,22 +291,10 @@ export default function DashboardCatalogPage() {
     const nextStatus: CatalogItem["status"] = publish ? "Published" : "Draft";
     const next = items.map((i) => (i.id === item.id ? { ...i, status: nextStatus } : i));
     persistLocal(next);
-
     if (dbReady) {
       try {
-        await fetchJsonWithRetry(
-          "/api/catalog",
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: item.id, status: nextStatus }),
-          },
-          2,
-          "catalog:toggle",
-        );
-      } catch {
-        setDbReady(false);
-      }
+        await fetchJsonWithRetry("/api/catalog", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id, status: nextStatus }) }, 2, "catalog:toggle");
+      } catch { setDbReady(false); }
     }
   };
 
@@ -325,23 +304,10 @@ export default function DashboardCatalogPage() {
     const ids = new Set(selected);
     const next = items.map((i) => (ids.has(i.id) ? { ...i, status: nextStatus } : i));
     persistLocal(next);
-
     if (dbReady) {
       await Promise.all(
         Array.from(ids).map((id) =>
-          fetchJsonWithRetry(
-            "/api/catalog",
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id, status: nextStatus }),
-            },
-            2,
-            "catalog:bulk",
-          ).catch(() => {
-            setDbReady(false);
-            return null;
-          }),
+          fetchJsonWithRetry("/api/catalog", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: nextStatus }) }, 2, "catalog:bulk").catch(() => { setDbReady(false); return null; }),
         ),
       );
     }
@@ -351,37 +317,43 @@ export default function DashboardCatalogPage() {
 
   return (
     <>
+      {/* Header */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
           <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
           {!dbReady && <p className="mt-2 text-xs font-medium text-amber-700">{t.dbFallback}</p>}
         </div>
-        <button
-          onClick={startCreate}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800"
-        >
-          <Plus className="h-4 w-4" />
-          {t.add}
+        <button onClick={startCreate} className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800">
+          <Plus className="h-4 w-4" /> {t.add}
         </button>
       </div>
 
-      <section className="mb-4 grid gap-2 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-4">
-        <label className="md:col-span-3 flex h-11 items-center gap-2 rounded-xl border border-slate-200 px-3">
+      {/* Search + filter tabs with count badges */}
+      <section className="mb-4 space-y-3">
+        <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
           <Search className="h-4 w-4 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.search} className="w-full text-sm outline-none" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.search} className="w-full text-sm outline-none bg-transparent" />
         </label>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as "All" | "Draft" | "Published")}
-          className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
-        >
-          <option value="All">{t.all}</option>
-          <option value="Published">{t.published}</option>
-          <option value="Draft">{t.draft}</option>
-        </select>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {([["All", t.all, countAll], ["Published", t.published, countPublished], ["Draft", t.draft, countDraft]] as const).map(([val, label, count]) => (
+            <button
+              key={val}
+              onClick={() => setStatusFilter(val)}
+              className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                statusFilter === val ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              }`}
+            >
+              {label}
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${statusFilter === val ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>
+                {count}
+              </span>
+            </button>
+          ))}
+        </div>
       </section>
 
+      {/* Bulk actions */}
       {selected.size > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm">
           <span className="font-medium text-indigo-800">{selected.size} {t.selected}</span>
@@ -390,6 +362,7 @@ export default function DashboardCatalogPage() {
         </div>
       )}
 
+      {/* Empty state */}
       {filtered.length === 0 ? (
         <section className="shell-empty rounded-2xl border border-slate-200 bg-white">
           <div className="shell-empty-card">
@@ -400,67 +373,133 @@ export default function DashboardCatalogPage() {
           </div>
         </section>
       ) : (
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="grid grid-cols-12 gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <div className="col-span-1"><button onClick={() => setSelected(new Set(selected.size === filtered.length ? [] : filtered.map((i) => i.id)))}>{selected.size === filtered.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}</button></div>
-            <div className="col-span-4">{t.name}</div>
-            <div className="col-span-2">{t.type}</div>
-            <div className="col-span-2">{t.price}</div>
-            <div className="col-span-1">{t.status}</div>
-            <div className="col-span-2 text-right">{t.actions}</div>
-          </div>
-          <div className="divide-y divide-slate-100">
+        <>
+          {/* Mobile: Card layout */}
+          <section className="space-y-3 md:hidden">
             {filtered.map((item) => {
               const isSelected = selected.has(item.id);
               return (
-                <div key={item.id} className="grid grid-cols-12 items-center gap-2 px-4 py-3">
-                  <div className="col-span-1">
-                    <button onClick={() => setSelected((prev) => {
-                      const n = new Set(prev);
-                      if (n.has(item.id)) n.delete(item.id); else n.add(item.id);
-                      return n;
-                    })}>{isSelected ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-400" />}</button>
-                  </div>
-                  <div className="col-span-4 flex min-w-0 items-center gap-2.5">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
-                    ) : (
-                      <PlaceholderImage className="h-9 w-9 shrink-0 rounded-lg" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-                      <p className="truncate text-xs text-slate-500">{item.category || "—"} {item.shortDescription ? `• ${item.shortDescription}` : ""}</p>
+                <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="flex gap-3">
+                    {/* Thumbnail */}
+                    <div className="shrink-0">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt="" className="h-16 w-16 rounded-lg object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                      ) : (
+                        <PlaceholderImage className="h-16 w-16 rounded-lg" />
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+                          <p className="truncate text-xs text-slate-500">{item.category || "—"}</p>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${item.status === "Published" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                          {item.status === "Published" ? t.published : t.draft}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm font-bold text-slate-800">{item.price || "0"}</p>
                     </div>
                   </div>
-                  <div className="col-span-2 text-sm text-slate-700">{item.type === "Service" ? t.service : t.product}</div>
-                  <div className="col-span-2 text-sm font-medium text-slate-800">{item.price || "0"}</div>
-                  <div className="col-span-1">
-                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${item.status === "Published" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                      {item.status === "Published" ? t.published : t.draft}
-                    </span>
-                  </div>
-                  <div className="col-span-2 flex items-center justify-end gap-1">
-                    <button onClick={() => togglePublish(item, item.status !== "Published")} className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50" title={item.status === "Published" ? t.unpublish : t.publish}>
-                      {item.status === "Published" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {/* Actions row */}
+                  <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+                    <button onClick={() => setSelected((prev) => { const n = new Set(prev); if (n.has(item.id)) n.delete(item.id); else n.add(item.id); return n; })}>
+                      {isSelected ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-400" />}
                     </button>
-                    <button onClick={() => startEdit(item)} className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50" title={t.edit}><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => removeItem(item.id)} className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50" title={t.delete}><Trash2 className="h-4 w-4" /></button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => togglePublish(item, item.status !== "Published")} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50" title={item.status === "Published" ? t.unpublish : t.publish}>
+                        {item.status === "Published" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                      <button onClick={() => startEdit(item)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50" title={t.edit}>
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => removeItem(item.id)} className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50" title={t.delete}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
-          </div>
-        </section>
+          </section>
+
+          {/* Desktop: Table layout */}
+          <section className="hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="grid grid-cols-[40px_1fr_100px_100px_100px_120px] gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div>
+                <button onClick={() => setSelected(new Set(selected.size === filtered.length ? [] : filtered.map((i) => i.id)))}>
+                  {selected.size === filtered.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                </button>
+              </div>
+              <div>{t.name}</div>
+              <div>{t.type}</div>
+              <div>{t.price}</div>
+              <div>{t.status}</div>
+              <div className="text-right">{t.actions}</div>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {filtered.map((item) => {
+                const isSelected = selected.has(item.id);
+                return (
+                  <div key={item.id} className="grid grid-cols-[40px_1fr_100px_100px_100px_120px] items-center gap-2 px-4 py-3">
+                    <div>
+                      <button onClick={() => setSelected((prev) => { const n = new Set(prev); if (n.has(item.id)) n.delete(item.id); else n.add(item.id); return n; })}>
+                        {isSelected ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-400" />}
+                      </button>
+                    </div>
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                      ) : (
+                        <PlaceholderImage className="h-9 w-9 shrink-0 rounded-lg" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+                        <p className="truncate text-xs text-slate-500">{item.category || "—"} {item.shortDescription ? `• ${item.shortDescription}` : ""}</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-slate-700">{item.type === "Service" ? t.service : t.product}</div>
+                    <div className="text-sm font-medium text-slate-800">{item.price || "0"}</div>
+                    <div>
+                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${item.status === "Published" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                        {item.status === "Published" ? t.published : t.draft}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => togglePublish(item, item.status !== "Published")} className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50" title={item.status === "Published" ? t.unpublish : t.publish}>
+                        {item.status === "Published" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                      <button onClick={() => startEdit(item)} className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50" title={t.edit}>
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => removeItem(item.id)} className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50" title={t.delete}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </>
       )}
 
+      {/* Form modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-slate-900/35 p-4" onClick={() => setShowForm(false)}>
-          <div className="mx-auto mt-10 w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/35 p-4" onClick={() => setShowForm(false)}>
+          <div className="mx-auto mt-4 mb-4 w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl sm:mt-10" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-slate-900">{editingId ? t.edit : t.add}</h3>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {/* Name */}
               <Field label={t.name} value={form.name} onChange={(v) => setForm((p) => ({ ...p, name: v }))} />
+              {/* Price */}
               <Field label={t.price} value={form.price} onChange={(v) => setForm((p) => ({ ...p, price: v }))} />
+              {/* Category */}
               <Field label={t.category} value={form.category} onChange={(v) => setForm((p) => ({ ...p, category: v }))} />
+              {/* Type */}
               <div>
                 <label className="text-sm font-medium text-slate-700">{t.type}</label>
                 <select value={form.type} onChange={(e) => setForm((p) => ({ ...p, type: e.target.value as "Product" | "Service" }))} className="mt-1 h-11 w-full rounded-xl border border-slate-300 px-3 text-sm">
@@ -468,12 +507,50 @@ export default function DashboardCatalogPage() {
                   <option value="Service">{t.service}</option>
                 </select>
               </div>
+              {/* Status toggle */}
               <div className="sm:col-span-2">
-                <Field label={t.description} value={form.shortDescription} onChange={(v) => setForm((p) => ({ ...p, shortDescription: v }))} />
+                <label className="text-sm font-medium text-slate-700">{t.statusLabel}</label>
+                <div className="mt-1 flex gap-2">
+                  {(["Draft", "Published"] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setForm((p) => ({ ...p, status: s }))}
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                        form.status === s
+                          ? s === "Published" ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-amber-300 bg-amber-50 text-amber-700"
+                          : "border-slate-200 text-slate-500 hover:border-slate-300"
+                      }`}
+                    >
+                      {s === "Published" ? t.published : t.draft}
+                    </button>
+                  ))}
+                </div>
               </div>
+              {/* Description */}
               <div className="sm:col-span-2">
-                <Field label={t.imageUrl} value={form.imageUrl} onChange={(v) => setForm((p) => ({ ...p, imageUrl: v }))} />
+                <label className="text-sm font-medium text-slate-700">{t.description}</label>
+                <textarea
+                  value={form.shortDescription}
+                  onChange={(e) => setForm((p) => ({ ...p, shortDescription: e.target.value }))}
+                  rows={2}
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                />
               </div>
+              {/* Main image URL + preview */}
+              <div className="sm:col-span-2">
+                <label className="text-sm font-medium text-slate-700">{t.imageUrl}</label>
+                <div className="mt-1 flex gap-2 items-start">
+                  <input
+                    value={form.imageUrl}
+                    onChange={(e) => setForm((p) => ({ ...p, imageUrl: e.target.value }))}
+                    className="h-11 flex-1 rounded-xl border border-slate-300 px-3 text-sm"
+                    placeholder="https://..."
+                  />
+                  <ImagePreview url={form.imageUrl} size="h-11 w-11" />
+                </div>
+              </div>
+              {/* Additional images */}
               <div className="sm:col-span-2">
                 <MultiImageUrlField
                   label={t.imageUrls}
@@ -484,6 +561,7 @@ export default function DashboardCatalogPage() {
                 />
               </div>
             </div>
+
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowForm(false)} className="h-10 rounded-xl border border-slate-300 px-4 text-sm font-medium text-slate-700">{t.cancel}</button>
               <button onClick={submitForm} className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white">{t.save}</button>
@@ -522,9 +600,10 @@ function MultiImageUrlField({
       <label className="text-sm font-medium text-slate-700">{label}</label>
       <div className="mt-1 space-y-2">
         {urls.map((url, i) => (
-          <div key={i} className="flex gap-2">
+          <div key={i} className="flex items-center gap-2">
             <input value={url} onChange={(e) => set(i, e.target.value)} placeholder={`Image ${i + 1}`} className="h-10 flex-1 rounded-xl border border-slate-300 px-3 text-sm" />
-            <button type="button" onClick={() => remove(i)} className="rounded-lg border border-rose-200 px-2 text-xs text-rose-600 hover:bg-rose-50">{removeLabel}</button>
+            <ImagePreview url={url} size="h-10 w-10" />
+            <button type="button" onClick={() => remove(i)} className="rounded-lg border border-rose-200 px-2 py-1.5 text-xs text-rose-600 hover:bg-rose-50">{removeLabel}</button>
           </div>
         ))}
         {urls.length < 5 && (

@@ -25,6 +25,13 @@ import {
 } from "lucide-react";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
 
+/* ── Safe image wrapper ── */
+function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; alt?: string; className?: string; fallback?: React.ReactNode }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return fallback ? <>{fallback}</> : null;
+  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />;
+}
+
 /* ── Types ── */
 type Seller = {
   id: number;
@@ -243,10 +250,15 @@ export default function StorefrontPage() {
         {/* Banner hero */}
         {seller.bannerUrl ? (
           <div className="mb-4 overflow-hidden rounded-xl">
-            <img
+            <SafeImg
               src={seller.bannerUrl}
               alt={`${seller.name} banner`}
               className="h-[140px] w-full object-cover sm:h-[200px]"
+              fallback={
+                <div className="flex h-[140px] items-center justify-center bg-gradient-to-r from-indigo-500 via-indigo-400 to-slate-400 sm:h-[200px]">
+                  <h2 className="text-2xl font-bold text-white/90 drop-shadow sm:text-3xl">{seller.name}</h2>
+                </div>
+              }
             />
           </div>
         ) : (
@@ -258,7 +270,7 @@ export default function StorefrontPage() {
         {/* Hero — compact */}
         <section className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5">
           {seller.logoUrl ? (
-            <img src={seller.logoUrl} alt={seller.name} className="h-14 w-14 rounded-full object-cover" />
+            <SafeImg src={seller.logoUrl} alt={seller.name} className="h-14 w-14 rounded-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-14 w-14 text-xl" />} />
           ) : (
             <AvatarPlaceholder name={seller.name} className="h-14 w-14 text-xl" />
           )}
@@ -384,7 +396,7 @@ function ProductCard({
     <article className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:shadow-md">
       <button onClick={onClick} className="w-full text-left">
         {product.imageUrl ? (
-          <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" />
+          <SafeImg src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" fallback={<PlaceholderImage className="aspect-square w-full rounded-t-xl" />} />
         ) : (
           <PlaceholderImage className="aspect-square w-full rounded-t-xl" />
         )}
@@ -648,12 +660,12 @@ function ProductDetailDrawer({
 
         {images.length > 0 ? (
           <div className="mt-3">
-            <img src={images[activeImg]} alt={product.name} className="aspect-video w-full rounded-lg object-cover" />
+            <SafeImg src={images[activeImg]} alt={product.name} className="aspect-video w-full rounded-lg object-cover" fallback={<PlaceholderImage className="aspect-video w-full rounded-lg" />} />
             {images.length > 1 && (
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                 {images.map((url, i) => (
                   <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 rounded-lg border-2 overflow-hidden ${i === activeImg ? "border-indigo-500" : "border-transparent"}`}>
-                    <img src={url} alt="" className="h-14 w-14 object-cover" />
+                    <SafeImg src={url} alt="" className="h-14 w-14 object-cover" fallback={<PlaceholderImage className="h-14 w-14" />} />
                   </button>
                 ))}
               </div>
@@ -768,7 +780,7 @@ function OrderModal({
             {/* Item summary */}
             <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
               {product.imageUrl ? (
-                <img src={product.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                <SafeImg src={product.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" fallback={<PlaceholderImage className="h-10 w-10 rounded-lg" />} />
               ) : (
                 <PlaceholderImage className="h-10 w-10 rounded-lg" />
               )}
