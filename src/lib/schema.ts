@@ -20,6 +20,7 @@ export const sellers = pgTable("sellers", {
   email: varchar("email", { length: 256 }).unique(),
   passwordHash: text("password_hash"),
   role: varchar("role", { length: 32 }).default("seller"),
+  plan: varchar("plan", { length: 32 }).default("free"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   emailNotifications: boolean("email_notifications").default(true),
 });

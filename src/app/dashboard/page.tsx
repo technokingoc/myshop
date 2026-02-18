@@ -26,6 +26,7 @@ type DashboardStats = {
   productCount: number;
   publishedCount: number;
   storeViews: number;
+  plan: string;
   recentOrders: {
     id: number;
     customerName: string;
@@ -47,6 +48,8 @@ const dict = {
     revenue: "Revenue",
     activeProducts: "Active Products",
     storeViews: "Store Views",
+    planBadge: "Plan",
+    upgrade: "Upgrade",
     recentOrders: "Recent Orders",
     noOrders: "No orders yet. Share your storefront to start receiving orders.",
     customer: "Customer",
@@ -82,6 +85,8 @@ const dict = {
     revenue: "Receita",
     activeProducts: "Produtos Activos",
     storeViews: "Visitas à Loja",
+    planBadge: "Plano",
+    upgrade: "Upgrade",
     recentOrders: "Pedidos Recentes",
     noOrders: "Ainda sem pedidos. Partilhe a sua loja para começar a receber pedidos.",
     customer: "Cliente",
@@ -168,6 +173,7 @@ export default function DashboardPage() {
     productCount: 0,
     publishedCount: 0,
     storeViews: 0,
+    plan: "free",
     recentOrders: [],
   };
 
@@ -190,9 +196,21 @@ export default function DashboardPage() {
     <>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">
-          {t.welcome}, {storeName} 👋
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-900">
+            {t.welcome}, {storeName} 👋
+          </h1>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+            data.plan === "business" ? "bg-violet-100 text-violet-700" : data.plan === "pro" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
+          }`}>
+            {(data.plan || "free").charAt(0).toUpperCase() + (data.plan || "free").slice(1)} {t.planBadge}
+          </span>
+          {data.plan === "free" && (
+            <Link href="/pricing" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+              {t.upgrade} →
+            </Link>
+          )}
+        </div>
         <p className="mt-1 text-sm text-slate-500">{t.overview}</p>
       </div>
 

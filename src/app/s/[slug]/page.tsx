@@ -45,6 +45,7 @@ type Seller = {
   logoUrl: string;
   bannerUrl: string;
   socialLinks: { whatsapp?: string; instagram?: string; facebook?: string };
+  plan?: string;
 };
 
 type Product = {
@@ -101,6 +102,7 @@ const dict = {
     item: "Item",
     about: "About",
     contact: "Contact",
+    poweredBy: "Powered by MyShop",
     storeBy: "Store by",
     reviews: "Reviews",
     noReviews: "No reviews yet",
@@ -140,6 +142,7 @@ const dict = {
     item: "Item",
     about: "Sobre",
     contact: "Contacto",
+    poweredBy: "Powered by MyShop",
     storeBy: "Loja de",
     reviews: "Avaliações",
     noReviews: "Ainda sem avaliações",
@@ -334,6 +337,11 @@ export default function StorefrontPage() {
         <footer className="mt-8 rounded-xl border border-slate-200 bg-white p-4 text-center text-xs text-slate-500">
           {t.storeBy} <span className="font-medium text-slate-700">{seller.ownerName || seller.name}</span>
           {seller.city && <span> · {seller.city}</span>}
+          {(!seller.plan || seller.plan === "free") && (
+            <p className="mt-2 border-t border-slate-100 pt-2">
+              <a href="/" className="font-medium text-indigo-500 hover:text-indigo-600">{t.poweredBy}</a>
+            </p>
+          )}
         </footer>
       </main>
 

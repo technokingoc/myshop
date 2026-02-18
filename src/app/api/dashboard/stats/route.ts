@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionFromCookie } from "@/lib/session";
 import { getDb } from "@/lib/db";
-import { orders, catalogItems } from "@/lib/schema";
+import { orders, catalogItems, sellers } from "@/lib/schema";
 import { eq, sql, and, desc } from "drizzle-orm";
 
 export async function GET() {
@@ -49,12 +49,19 @@ export async function GET() {
       .orderBy(desc(orders.createdAt))
       .limit(5);
 
+    // Get seller plan
+    const [sellerRow] = await db
+      .select({ plan: sellers.plan })
+      .from(sellers)
+      .where(eq(sellers.id, sellerId));
+
     return NextResponse.json({
       orderCount: Number(statsResult?.orderCount ?? 0),
       revenue: parseFloat(String(statsResult?.revenue ?? "0")),
       productCount: Number(productResult?.total ?? 0),
       publishedCount: Number(productResult?.published ?? 0),
       storeViews: 0, // placeholder
+      plan: sellerRow?.plan || "free",
       recentOrders,
     });
   } catch (error) {

@@ -24,6 +24,7 @@ const dict = {
     makeSeller: "Make Seller",
     delete: "Delete",
     viewStore: "View Store",
+    plan: "Plan",
     confirmDelete: "Delete this seller? This cannot be undone.",
     noSellers: "No sellers found",
   },
@@ -46,6 +47,7 @@ const dict = {
     makeSeller: "Tornar Vendedor",
     delete: "Apagar",
     viewStore: "Ver Loja",
+    plan: "Plano",
     confirmDelete: "Apagar este vendedor? Esta ação é irreversível.",
     noSellers: "Nenhum vendedor encontrado",
   },
@@ -53,7 +55,7 @@ const dict = {
 
 type Seller = {
   id: number; name: string; email: string; slug: string; role: string;
-  createdAt: string; productCount: number; orderCount: number;
+  plan: string; createdAt: string; productCount: number; orderCount: number;
 };
 
 export default function AdminSellers() {
@@ -89,6 +91,16 @@ export default function AdminSellers() {
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: newRole }),
+    });
+    load();
+  };
+
+  const changePlan = async (id: number, plan: string) => {
+    await fetch(`/api/admin/sellers/${id}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
     });
     load();
   };
@@ -141,6 +153,7 @@ export default function AdminSellers() {
               <th className="px-4 py-3">{t.slug}</th>
               <th className="px-4 py-3 text-center">{t.products}</th>
               <th className="px-4 py-3 text-center">{t.orders}</th>
+              <th className="px-4 py-3">{t.plan}</th>
               <th className="px-4 py-3">{t.role}</th>
               <th className="px-4 py-3">{t.joined}</th>
               <th className="px-4 py-3">{t.actions}</th>
@@ -148,7 +161,7 @@ export default function AdminSellers() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-500">{t.noSellers}</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-500">{t.noSellers}</td></tr>
             ) : filtered.map((s) => (
               <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                 <td className="px-4 py-3 font-medium text-slate-800">{s.name}</td>
@@ -156,6 +169,19 @@ export default function AdminSellers() {
                 <td className="px-4 py-3 text-slate-500">{s.slug}</td>
                 <td className="px-4 py-3 text-center text-slate-600">{s.productCount}</td>
                 <td className="px-4 py-3 text-center text-slate-600">{s.orderCount}</td>
+                <td className="px-4 py-3">
+                  <select
+                    value={s.plan || "free"}
+                    onChange={(e) => changePlan(s.id, e.target.value)}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 cursor-pointer ${
+                      s.plan === "business" ? "bg-violet-100 text-violet-700" : s.plan === "pro" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                    <option value="business">Business</option>
+                  </select>
+                </td>
                 <td className="px-4 py-3">
                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                     s.role === "admin" ? "bg-violet-50 text-violet-700" : "bg-slate-100 text-slate-600"

@@ -14,6 +14,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const updates: Record<string, unknown> = {};
   if (body.role) updates.role = body.role;
+  if (body.plan) updates.plan = body.plan;
 
   await db.update(sellers).set(updates).where(eq(sellers.id, Number(id)));
 

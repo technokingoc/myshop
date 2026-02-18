@@ -1,213 +1,77 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language";
-import { Check, X, ArrowRight } from "lucide-react";
+import { Check, X, ArrowRight, Crown } from "lucide-react";
+import { PLANS, type PlanId } from "@/lib/plans";
+import { fetchSession, type AuthSession } from "@/lib/auth";
 
 const dict = {
   en: {
     title: "Pricing",
     subtitle: "Choose the plan that fits your business. Upgrade or downgrade anytime.",
-    paypalNote:
-      "PayPal checkout opens an external PayPal page. MyShop does not process or store card details.",
     getStarted: "Get started",
-    contactSales: "Contact sales",
-    freeName: "Free",
-    freePrice: "$0",
-    freePeriod: "forever",
-    freeDesc: "Perfect for trying out MyShop with a small catalog.",
-    starterName: "Starter",
-    starterPrice: "$9",
-    starterPeriod: "/ month",
-    starterDesc: "For sellers ready to grow their online presence.",
-    starterBadge: "Most popular",
-    proName: "Pro",
-    proPrice: "$29",
-    proPeriod: "/ month",
-    proDesc: "For established sellers who need full power.",
+    currentPlan: "Current plan",
+    upgrade: "Upgrade",
     comparisonTitle: "Feature comparison",
-    features: {
-      storefronts: "Storefronts",
-      products: "Products / services",
-      customSlug: "Custom slug",
-      socialButtons: "Social CTA buttons",
-      shareableLink: "Shareable link",
-      paypal: "PayPal payment link",
-      customDomain: "Custom domain",
-      analytics: "Analytics dashboard",
-      prioritySupport: "Priority support",
-      dedicatedSupport: "Dedicated support",
-    },
-    freeFeatures: {
-      storefronts: "1",
-      products: "Up to 10",
-      customSlug: false,
-      socialButtons: true,
-      shareableLink: true,
-      paypal: false,
-      customDomain: false,
-      analytics: false,
-      prioritySupport: false,
-      dedicatedSupport: false,
-    },
-    starterFeatures: {
-      storefronts: "1",
-      products: "Up to 50",
-      customSlug: true,
-      socialButtons: true,
-      shareableLink: true,
-      paypal: true,
-      customDomain: false,
-      analytics: false,
-      prioritySupport: true,
-      dedicatedSupport: false,
-    },
-    proFeatures: {
-      storefronts: "Unlimited",
-      products: "Unlimited",
-      customSlug: true,
-      socialButtons: true,
-      shareableLink: true,
-      paypal: true,
-      customDomain: true,
-      analytics: true,
-      prioritySupport: true,
-      dedicatedSupport: true,
-    },
     ctaTitle: "Ready to start?",
     ctaSub: "Create your store in minutes. No credit card required for the free plan.",
     ctaBtn: "Create your store",
+    comingSoonTitle: "Coming soon",
+    comingSoonMsg: "Payments are not yet available. Please contact us to upgrade your plan.",
+    close: "Close",
+    contactUs: "Contact us",
+    mostPopular: "Most popular",
   },
   pt: {
     title: "Preços",
     subtitle: "Escolha o plano ideal para o seu negócio. Mude a qualquer momento.",
-    paypalNote:
-      "O checkout PayPal abre numa página externa do PayPal. O MyShop não processa nem guarda dados de cartão.",
     getStarted: "Começar",
-    contactSales: "Contactar vendas",
-    freeName: "Grátis",
-    freePrice: "$0",
-    freePeriod: "para sempre",
-    freeDesc: "Perfeito para experimentar o MyShop com um catálogo pequeno.",
-    starterName: "Inicial",
-    starterPrice: "$9",
-    starterPeriod: "/ mês",
-    starterDesc: "Para vendedores prontos a crescer online.",
-    starterBadge: "Mais popular",
-    proName: "Pro",
-    proPrice: "$29",
-    proPeriod: "/ mês",
-    proDesc: "Para vendedores estabelecidos que precisam de tudo.",
+    currentPlan: "Plano atual",
+    upgrade: "Upgrade",
     comparisonTitle: "Comparação de funcionalidades",
-    features: {
-      storefronts: "Vitrines",
-      products: "Produtos / serviços",
-      customSlug: "Slug personalizado",
-      socialButtons: "Botões CTA sociais",
-      shareableLink: "Link partilhável",
-      paypal: "Link de pagamento PayPal",
-      customDomain: "Domínio próprio",
-      analytics: "Painel de analytics",
-      prioritySupport: "Suporte prioritário",
-      dedicatedSupport: "Suporte dedicado",
-    },
-    freeFeatures: {
-      storefronts: "1",
-      products: "Até 10",
-      customSlug: false,
-      socialButtons: true,
-      shareableLink: true,
-      paypal: false,
-      customDomain: false,
-      analytics: false,
-      prioritySupport: false,
-      dedicatedSupport: false,
-    },
-    starterFeatures: {
-      storefronts: "1",
-      products: "Até 50",
-      customSlug: true,
-      socialButtons: true,
-      shareableLink: true,
-      paypal: true,
-      customDomain: false,
-      analytics: false,
-      prioritySupport: true,
-      dedicatedSupport: false,
-    },
-    proFeatures: {
-      storefronts: "Ilimitadas",
-      products: "Ilimitados",
-      customSlug: true,
-      socialButtons: true,
-      shareableLink: true,
-      paypal: true,
-      customDomain: true,
-      analytics: true,
-      prioritySupport: true,
-      dedicatedSupport: true,
-    },
     ctaTitle: "Pronto para começar?",
     ctaSub: "Crie a sua loja em minutos. Não é necessário cartão de crédito para o plano grátis.",
     ctaBtn: "Criar a sua loja",
+    comingSoonTitle: "Em breve",
+    comingSoonMsg: "Pagamentos ainda não estão disponíveis. Contacte-nos para fazer upgrade do seu plano.",
+    close: "Fechar",
+    contactUs: "Contacte-nos",
+    mostPopular: "Mais popular",
   },
 };
 
-const PAYPAL_URL = "https://www.paypal.com/paypalme/myshopapp";
-
-const featureKeys = [
-  "storefronts",
-  "products",
-  "customSlug",
-  "socialButtons",
-  "shareableLink",
-  "paypal",
-  "customDomain",
-  "analytics",
-  "prioritySupport",
-  "dedicatedSupport",
-] as const;
+const planOrder: PlanId[] = ["free", "pro", "business"];
 
 export default function PricingPage() {
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
-  const plans = [
-    {
-      name: t.freeName,
-      price: t.freePrice,
-      period: t.freePeriod,
-      desc: t.freeDesc,
-      badge: null,
-      accent: false,
-      features: t.freeFeatures,
-      cta: t.getStarted,
-      href: "/setup",
-    },
-    {
-      name: t.starterName,
-      price: t.starterPrice,
-      period: t.starterPeriod,
-      desc: t.starterDesc,
-      badge: t.starterBadge,
-      accent: true,
-      features: t.starterFeatures,
-      cta: t.getStarted,
-      href: PAYPAL_URL,
-    },
-    {
-      name: t.proName,
-      price: t.proPrice,
-      period: t.proPeriod,
-      desc: t.proDesc,
-      badge: null,
-      accent: false,
-      features: t.proFeatures,
-      cta: t.getStarted,
-      href: PAYPAL_URL,
-    },
-  ];
+  useEffect(() => {
+    fetchSession().then(async (s) => {
+      setSession(s);
+      if (s) {
+        try {
+          const res = await fetch("/api/dashboard/stats", { credentials: "include" });
+          if (res.ok) {
+            const data = await res.json();
+            setCurrentPlan(data.plan || "free");
+          }
+        } catch {}
+      }
+    });
+  }, []);
+
+  const plans = planOrder.map((id) => PLANS[id]);
+
+  // Gather all unique feature keys
+  const allFeatureKeys = Array.from(
+    new Set(plans.flatMap((p) => p.features.map((f) => f.key)))
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -220,62 +84,71 @@ export default function PricingPage() {
 
         {/* Plan cards */}
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative flex flex-col rounded-2xl border p-6 ${
-                plan.accent
-                  ? "border-slate-900 bg-white shadow-lg"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              {plan.badge && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 px-3 py-0.5 text-xs font-semibold text-white">
-                  {plan.badge}
-                </span>
-              )}
-              <h2 className="text-lg font-semibold">{plan.name}</h2>
-              <p className="mt-3">
-                <span className="text-4xl font-bold">{plan.price}</span>
-                <span className="ml-1 text-sm text-slate-500">{plan.period}</span>
-              </p>
-              <p className="mt-2 text-sm text-slate-600">{plan.desc}</p>
-              <ul className="mt-6 flex-1 space-y-2.5">
-                {featureKeys.map((key) => {
-                  const val = plan.features[key];
-                  const label = t.features[key];
-                  if (val === false) return null;
-                  return (
-                    <li key={key} className="flex items-start gap-2 text-sm text-slate-700">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
-                      <span>
-                        {label}
-                        {typeof val === "string" && val !== "true" ? `: ${val}` : ""}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-              <a
-                href={plan.href}
-                target={plan.href.startsWith("http") ? "_blank" : undefined}
-                rel={plan.href.startsWith("http") ? "noreferrer" : undefined}
-                className={`mt-6 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition ${
-                  plan.accent
-                    ? "bg-slate-900 text-white hover:bg-slate-800"
-                    : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+          {plans.map((plan) => {
+            const isCurrent = currentPlan === plan.id;
+            const isPro = plan.id === "pro";
+            return (
+              <div
+                key={plan.id}
+                className={`relative flex flex-col rounded-2xl border p-6 ${
+                  isPro
+                    ? "border-indigo-500 bg-white shadow-lg ring-1 ring-indigo-500"
+                    : "border-slate-200 bg-white"
                 }`}
               >
-                {plan.cta}
-              </a>
-            </div>
-          ))}
+                {isPro && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-semibold text-white">
+                    {t.mostPopular}
+                  </span>
+                )}
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">{plan.name[lang]}</h2>
+                  {plan.id === "business" && <Crown className="h-4 w-4 text-violet-500" />}
+                </div>
+                <p className="mt-3">
+                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="ml-1 text-sm text-slate-500">{plan.period[lang]}</span>
+                </p>
+                <p className="mt-2 text-sm text-slate-600">{plan.description[lang]}</p>
+                <ul className="mt-6 flex-1 space-y-2.5">
+                  {plan.features.map((f) => (
+                    <li key={f.key} className="flex items-start gap-2 text-sm text-slate-700">
+                      {f.included ? (
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
+                      ) : (
+                        <X className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-300" />
+                      )}
+                      <span className={f.included ? "" : "text-slate-400"}>{f.label[lang]}</span>
+                    </li>
+                  ))}
+                </ul>
+                {isCurrent ? (
+                  <div className="mt-6 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-500">
+                    {t.currentPlan}
+                  </div>
+                ) : plan.id === "free" ? (
+                  <Link
+                    href="/setup"
+                    className="mt-6 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    {t.getStarted}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className={`mt-6 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition ${
+                      isPro
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                        : "bg-slate-900 text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    {t.upgrade}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
-
-        {/* PayPal note */}
-        <p className="mx-auto mt-8 max-w-xl text-center text-xs text-slate-500">
-          {t.paypalNote}
-        </p>
 
         {/* Feature comparison table */}
         <div className="mt-16">
@@ -285,24 +158,33 @@ export default function PricingPage() {
               <thead>
                 <tr className="border-b border-slate-200 text-left">
                   <th className="pb-3 pr-4 font-medium text-slate-600">&nbsp;</th>
-                  <th className="pb-3 px-4 font-semibold text-center">{t.freeName}</th>
-                  <th className="pb-3 px-4 font-semibold text-center">{t.starterName}</th>
-                  <th className="pb-3 px-4 font-semibold text-center">{t.proName}</th>
+                  {plans.map((p) => (
+                    <th key={p.id} className="pb-3 px-4 font-semibold text-center">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${p.badge}`}>
+                        {p.name[lang]}
+                      </span>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {featureKeys.map((key) => (
+                {allFeatureKeys.map((key) => (
                   <tr key={key} className="border-b border-slate-100">
-                    <td className="py-3 pr-4 text-slate-700">{t.features[key]}</td>
-                    <td className="py-3 px-4 text-center">
-                      <FeatureCell value={t.freeFeatures[key]} />
+                    <td className="py-3 pr-4 text-slate-700">
+                      {plans[0].features.find((f) => f.key === key)?.label[lang] || key}
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <FeatureCell value={t.starterFeatures[key]} />
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <FeatureCell value={t.proFeatures[key]} />
-                    </td>
+                    {plans.map((p) => {
+                      const feature = p.features.find((f) => f.key === key);
+                      return (
+                        <td key={p.id} className="py-3 px-4 text-center">
+                          {feature?.included ? (
+                            <Check className="mx-auto h-4 w-4 text-emerald-500" />
+                          ) : (
+                            <X className="mx-auto h-4 w-4 text-slate-300" />
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -323,12 +205,24 @@ export default function PricingPage() {
           </Link>
         </div>
       </div>
+
+      {/* Coming soon modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40" onClick={() => setShowModal(false)}>
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-900">{t.comingSoonTitle}</h3>
+            <p className="mt-2 text-sm text-slate-600">{t.comingSoonMsg}</p>
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setShowModal(false)} className="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                {t.close}
+              </button>
+              <a href="mailto:support@myshop.co.mz" className="flex-1 rounded-lg bg-indigo-600 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-700">
+                {t.contactUs}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-function FeatureCell({ value }: { value: boolean | string }) {
-  if (value === true) return <Check className="mx-auto h-4 w-4 text-emerald-500" />;
-  if (value === false) return <X className="mx-auto h-4 w-4 text-slate-300" />;
-  return <span className="text-slate-700">{value}</span>;
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useLanguage } from "@/lib/language";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 import { useToast } from "@/components/toast-provider";
-import { Plus, Search, PackageOpen, Trash2, Pencil, CheckSquare, Square, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, PackageOpen, Trash2, Pencil, CheckSquare, Square, Eye, EyeOff, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { ImageUpload } from "@/components/image-upload";
 
@@ -60,6 +60,9 @@ const dict = {
     removeImage: "Remove",
     statusLabel: "Visibility",
     preview: "Preview",
+    limitReached: "Product limit reached",
+    limitReachedHint: "Upgrade your plan to add more products.",
+    upgradeNow: "Upgrade",
   },
   pt: {
     title: "Catálogo",
@@ -97,6 +100,9 @@ const dict = {
     removeImage: "Remover",
     statusLabel: "Visibilidade",
     preview: "Pré-visualização",
+    limitReached: "Limite de produtos atingido",
+    limitReachedHint: "Faça upgrade do seu plano para adicionar mais produtos.",
+    upgradeNow: "Upgrade",
   },
 };
 
@@ -145,6 +151,7 @@ export default function DashboardCatalogPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
+  const [limitReached, setLimitReached] = useState(false);
 
   const persistLocal = (next: CatalogItem[]) => {
     setItems(next);
@@ -264,12 +271,24 @@ export default function DashboardCatalogPage() {
 
       if (dbReady && sellerId) {
         try {
-          const created = await fetchJsonWithRetry<CatalogItem>(
-            "/api/catalog",
-            { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellerId, ...form }) },
-            2, "catalog:create",
-          );
-          persistLocal([created, ...items]);
+          const res = await fetch("/api/catalog", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sellerId, ...form }),
+          });
+          if (res.status === 403) {
+            const data = await res.json();
+            if (data.errorCode === "PLAN_LIMIT_REACHED") {
+              setLimitReached(true);
+              // Remove the optimistic item
+              persistLocal(items);
+              return;
+            }
+          }
+          if (res.ok) {
+            const created = await res.json();
+            persistLocal([created, ...items]);
+          }
         } catch { setDbReady(false); }
       }
     }
@@ -329,6 +348,20 @@ export default function DashboardCatalogPage() {
           <Plus className="h-4 w-4" /> {t.add}
         </button>
       </div>
+
+      {/* Plan limit warning */}
+      {limitReached && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-800">{t.limitReached}</p>
+            <p className="text-xs text-amber-700">{t.limitReachedHint}</p>
+          </div>
+          <a href="/pricing" className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">
+            {t.upgradeNow}
+          </a>
+        </div>
+      )}
 
       {/* Search + filter tabs with count badges */}
       <section className="mb-4 space-y-3">

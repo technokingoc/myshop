@@ -2,64 +2,62 @@
 
 import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
-import { StoreCard } from "@/components/store-card";
 import { Footer } from "@/components/footer";
 import {
   ArrowRight,
+  Search,
   UserPlus,
   Package,
   Rocket,
   Store,
   ShoppingBag,
-  ClipboardCheck,
-  Users,
+  Star,
+  MapPin,
+  ChevronRight,
 } from "lucide-react";
 
 const dict = {
   en: {
-    heroTitle: "Your store, online in minutes",
-    heroSub: "Create a professional storefront, showcase products, and connect with customers — no technical skills needed.",
-    heroCta: "Create your store",
-    heroBrowse: "Browse stores",
-    featuredTitle: "Featured Stores",
-    featuredSub: "Discover stores already thriving on MyShop",
-    howTitle: "How it works",
-    howSub: "Three simple steps to start selling",
-    step1Title: "Create your account",
-    step1Desc: "Sign up in seconds with just your name and email.",
-    step2Title: "Add your products",
-    step2Desc: "Upload photos, set prices, and organize your catalog.",
-    step3Title: "Start selling",
-    step3Desc: "Share your store link and receive orders instantly.",
-    statsTitle: "Trusted by sellers everywhere",
-    statSellers: "Sellers",
-    statProducts: "Products",
-    statOrders: "Orders fulfilled",
-    viewAll: "View all stores",
+    heroTitle: "Discover local stores & products",
+    heroSub: "Find what you need from trusted sellers in your area",
+    searchPh: "Search stores or products...",
+    searchBtn: "Search",
+    statsStores: "stores",
+    statsProducts: "products",
+    statsOrders: "happy customers",
+    featured: "Featured Stores",
+    viewAll: "View all",
+    visit: "Visit",
+    products: "products",
+    how1: "Create your account",
+    how2: "Add your products",
+    how3: "Start selling",
+    ctaLine: "Ready to sell?",
+    ctaBtn: "Create your store — it's free",
     noStores: "Be the first to create a store!",
+    createStore: "Create your store",
   },
   pt: {
-    heroTitle: "Sua loja, online em minutos",
-    heroSub: "Crie uma vitrine profissional, mostre produtos e conecte-se com clientes — sem precisar de habilidades técnicas.",
-    heroCta: "Criar sua loja",
-    heroBrowse: "Explorar lojas",
-    featuredTitle: "Lojas em Destaque",
-    featuredSub: "Descubra lojas que já prosperam no MyShop",
-    howTitle: "Como funciona",
-    howSub: "Três passos simples para começar a vender",
-    step1Title: "Crie sua conta",
-    step1Desc: "Cadastre-se em segundos com seu nome e email.",
-    step2Title: "Adicione produtos",
-    step2Desc: "Envie fotos, defina preços e organize o catálogo.",
-    step3Title: "Comece a vender",
-    step3Desc: "Compartilhe o link da loja e receba pedidos instantaneamente.",
-    statsTitle: "Confiado por vendedores em todo lugar",
-    statSellers: "Vendedores",
-    statProducts: "Produtos",
-    statOrders: "Pedidos realizados",
-    viewAll: "Ver todas as lojas",
+    heroTitle: "Descubra lojas e produtos locais",
+    heroSub: "Encontre o que precisa de vendedores de confiança na sua área",
+    searchPh: "Pesquisar lojas ou produtos...",
+    searchBtn: "Pesquisar",
+    statsStores: "lojas",
+    statsProducts: "produtos",
+    statsOrders: "clientes felizes",
+    featured: "Lojas em Destaque",
+    viewAll: "Ver todas",
+    visit: "Visitar",
+    products: "produtos",
+    how1: "Crie sua conta",
+    how2: "Adicione produtos",
+    how3: "Comece a vender",
+    ctaLine: "Pronto para vender?",
+    ctaBtn: "Criar sua loja — é grátis",
     noStores: "Seja o primeiro a criar uma loja!",
+    createStore: "Criar sua loja",
   },
 };
 
@@ -76,21 +74,19 @@ interface StoreData {
   reviewCount: number;
 }
 
-interface Stats {
-  sellers: number;
-  products: number;
-  orders: number;
-}
+interface Stats { sellers: number; products: number; orders: number; }
 
 export default function HomePage() {
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
+  const router = useRouter();
   const [stores, setStores] = useState<StoreData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [searchQ, setSearchQ] = useState("");
 
   useEffect(() => {
-    fetch("/api/stores?limit=6")
+    fetch("/api/stores?limit=8&sort=popular")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
         if (d) {
@@ -99,110 +95,61 @@ export default function HomePage() {
         }
       })
       .catch(() => {});
-
     fetch("/api/stores/stats")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => d && setStats(d))
       .catch(() => {});
   }, []);
 
-  const steps = [
-    { icon: UserPlus, title: t.step1Title, desc: t.step1Desc },
-    { icon: Package, title: t.step2Title, desc: t.step2Desc },
-    { icon: Rocket, title: t.step3Title, desc: t.step3Desc },
-  ];
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQ.trim()) {
+      router.push(`/stores?search=${encodeURIComponent(searchQ.trim())}`);
+    } else {
+      router.push("/stores");
+    }
+  };
 
   return (
     <div className="min-h-screen text-slate-900">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/60 via-white to-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.12),transparent)]" />
-        <div className="relative mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-24">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+      {/* Hero — above the fold */}
+      <section className="relative bg-gradient-to-b from-indigo-50/80 via-white to-white">
+        <div className="mx-auto max-w-3xl px-4 pb-6 pt-12 text-center sm:pt-16">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             {t.heroTitle}
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+          <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500 sm:text-base">
             {t.heroSub}
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/register"
-              className="ui-btn ui-btn-primary"
-            >
-              {t.heroCta}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a
-              href="#stores"
-              className="ui-btn ui-btn-secondary"
-            >
-              {t.heroBrowse}
-            </a>
-          </div>
-        </div>
-      </section>
 
-      {/* Stats Bar */}
-      {stats && (stats.sellers > 0 || stats.products > 0) && (
-        <section className="border-y border-slate-200/60 bg-slate-50/50">
-          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-8 px-4 py-6 sm:gap-16">
-            {[
-              { val: stats.sellers, label: t.statSellers, icon: Users },
-              { val: stats.products, label: t.statProducts, icon: ShoppingBag },
-              { val: stats.orders, label: t.statOrders, icon: ClipboardCheck },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-2.5 text-center">
-                <s.icon className="h-5 w-5 text-indigo-500" />
-                <div>
-                  <p className="text-xl font-bold text-slate-900">{s.val}</p>
-                  <p className="text-xs text-slate-500">{s.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* How it Works */}
-      <section className="ui-section">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="text-center">
-            <h2 className="ui-h2">{t.howTitle}</h2>
-            <p className="ui-lead mt-2">{t.howSub}</p>
-          </div>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {steps.map((step, i) => (
-              <div key={step.title} className="relative text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <step.icon className="h-6 w-6" />
-                </div>
-                <span className="mb-1 block text-xs font-semibold text-indigo-500">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="text-sm font-semibold text-slate-900">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Stores */}
-      <section id="stores" className="ui-section pt-0">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="text-center">
-            <h2 className="ui-h2">{t.featuredTitle}</h2>
-            <p className="ui-lead mt-2">{t.featuredSub}</p>
-          </div>
+          {/* Integrated search bar */}
+          <form onSubmit={handleSearch} className="mx-auto mt-6 max-w-xl">
+            <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
+              <Search className="ml-4 h-5 w-5 shrink-0 text-slate-400" />
+              <input
+                type="text"
+                value={searchQ}
+                onChange={(e) => setSearchQ(e.target.value)}
+                placeholder={t.searchPh}
+                className="min-w-0 flex-1 border-0 bg-transparent px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none sm:py-3.5"
+              />
+              <button
+                type="submit"
+                className="mr-1.5 shrink-0 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 sm:px-6"
+              >
+                {t.searchBtn}
+              </button>
+            </div>
+          </form>
 
           {/* Category pills */}
-          {categories.length > 1 && (
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {categories.length > 0 && (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
               {categories.map((cat) => (
                 <Link
                   key={cat}
-                  href={`/stores?category=${encodeURIComponent(cat!)}`}
-                  className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                  href={`/stores?category=${encodeURIComponent(cat)}`}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
                 >
                   {cat}
                 </Link>
@@ -210,55 +157,124 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* Inline stats */}
+          {stats && (stats.sellers > 0 || stats.products > 0) && (
+            <p className="mt-4 text-xs text-slate-400">
+              {stats.sellers} {t.statsStores} · {stats.products} {t.statsProducts} · {stats.orders} {t.statsOrders}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* Featured stores — horizontal scroll */}
+      <section className="py-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-900">{t.featured}</h2>
+            <Link href="/stores" className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700">
+              {t.viewAll} <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           {stores.length > 0 ? (
-            <>
-              <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {stores.map((store) => (
-                  <StoreCard key={store.slug} store={store} />
-                ))}
-              </div>
-              <div className="mt-8 text-center">
-                <Link
-                  href="/stores"
-                  className="ui-btn ui-btn-secondary"
-                >
-                  {t.viewAll}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </>
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {stores.map((store) => (
+                <FeaturedStoreCard key={store.slug} store={store} t={t} />
+              ))}
+            </div>
           ) : (
-            <div className="mt-10 text-center">
-              <Store className="mx-auto h-10 w-10 text-slate-300" />
-              <p className="mt-3 text-sm text-slate-500">{t.noStores}</p>
-              <Link href="/register" className="ui-btn ui-btn-primary mt-4">
-                {t.heroCta}
-                <ArrowRight className="h-4 w-4" />
+            <div className="mt-6 text-center">
+              <Store className="mx-auto h-8 w-8 text-slate-300" />
+              <p className="mt-2 text-sm text-slate-500">{t.noStores}</p>
+              <Link href="/register" className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                {t.createStore} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           )}
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="ui-section pt-0">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6">
-          <div className="ui-panel px-6 py-12 text-center sm:px-10">
-            <h2 className="ui-h2">{lang === "pt" ? "Pronto para começar a vender?" : "Ready to start selling?"}</h2>
-            <p className="ui-lead mx-auto mt-3 max-w-2xl">
-              {lang === "pt"
-                ? "Junte-se a vendedores que querem uma presença online mais profissional."
-                : "Join sellers who want a cleaner, more professional online presence."}
-            </p>
-            <Link href="/register" className="ui-btn ui-btn-primary mt-8">
-              {t.heroCta}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+      {/* How it works — ultra compact */}
+      <section className="border-y border-slate-100 bg-slate-50/50 py-8">
+        <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 sm:flex-row sm:justify-center sm:gap-12">
+          {[
+            { icon: UserPlus, text: t.how1 },
+            { icon: Package, text: t.how2 },
+            { icon: Rocket, text: t.how3 },
+          ].map((step, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                <step.icon className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-semibold text-indigo-500">{String(i + 1).padStart(2, "0")}</span>
+                <p className="text-sm font-medium text-slate-800">{step.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA — single line */}
+      <section className="py-8">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 rounded-xl bg-indigo-600 px-6 py-5 sm:px-8">
+          <p className="text-sm font-semibold text-white sm:text-base">{t.ctaLine}</p>
+          <Link
+            href="/register"
+            className="shrink-0 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 sm:px-6"
+          >
+            {t.ctaBtn}
+          </Link>
         </div>
       </section>
 
       <Footer />
     </div>
+  );
+}
+
+/* Featured store card — compact horizontal scroll card */
+function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, string> }) {
+  return (
+    <Link
+      href={`/s/${store.slug}`}
+      className="group flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-shadow hover:shadow-md sm:w-64"
+    >
+      {/* Banner */}
+      <div className="relative h-20 bg-gradient-to-br from-indigo-100 to-slate-100">
+        {store.bannerUrl && (
+          <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" />
+        )}
+      </div>
+      {/* Content */}
+      <div className="flex flex-1 flex-col px-3 pb-3 pt-1">
+        <div className="flex items-start gap-2">
+          <div className="-mt-5 h-10 w-10 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-indigo-50 shadow-sm">
+            {store.logoUrl ? (
+              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm font-bold text-indigo-400">
+                {store.name.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 pt-0.5">
+            <p className="truncate text-sm font-semibold text-slate-900">{store.name}</p>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              {Number(store.avgRating) > 0 && (
+                <span className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  {store.avgRating}
+                </span>
+              )}
+              <span>{store.productCount} {t.products}</span>
+            </div>
+          </div>
+        </div>
+        <span className="mt-auto pt-2 text-xs font-semibold text-indigo-600 group-hover:text-indigo-700">
+          {t.visit} →
+        </span>
+      </div>
+    </Link>
   );
 }

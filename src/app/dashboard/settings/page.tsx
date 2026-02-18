@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/language";
-import { Save, Bell } from "lucide-react";
+import { Save, Bell, Crown } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
@@ -37,6 +37,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState<SetupData | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [planInfo, setPlanInfo] = useState<{ plan: string; productCount: number; orderCount: number } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -71,6 +72,14 @@ export default function SettingsPage() {
             setSetup({ ...parsed, data: merged });
             setForm(merged);
             if (s.emailNotifications !== undefined) setEmailNotifications(s.emailNotifications);
+            // Fetch plan info
+            try {
+              const statsRes = await fetch("/api/dashboard/stats", { credentials: "include" });
+              if (statsRes.ok) {
+                const stats = await statsRes.json();
+                setPlanInfo({ plan: stats.plan || "free", productCount: stats.productCount || 0, orderCount: stats.orderCount || 0 });
+              }
+            } catch {}
             setHydrated(true);
             return;
           }
@@ -202,6 +211,58 @@ export default function SettingsPage() {
             </div>
           </label>
         </section>
+
+        {planInfo && (
+          <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="mb-4 font-semibold text-slate-900 flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              {lang === "pt" ? "Plano & Uso" : "Plan & Usage"}
+            </h2>
+            <div className="flex items-center gap-3 mb-4">
+              <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold ${
+                planInfo.plan === "business" ? "bg-violet-100 text-violet-700" : planInfo.plan === "pro" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
+              }`}>
+                {planInfo.plan.charAt(0).toUpperCase() + planInfo.plan.slice(1)}
+              </span>
+              {planInfo.plan === "free" && (
+                <a href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                  {lang === "pt" ? "Fazer upgrade →" : "Upgrade →"}
+                </a>
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">{lang === "pt" ? "Produtos" : "Products"}</p>
+                <p className="text-lg font-bold text-slate-800">
+                  {planInfo.productCount}
+                  <span className="text-sm font-normal text-slate-400">
+                    {" / "}
+                    {planInfo.plan === "free" ? "10" : planInfo.plan === "pro" ? "100" : "∞"}
+                  </span>
+                </p>
+                {planInfo.plan === "free" && (
+                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-200">
+                    <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, (planInfo.productCount / 10) * 100)}%` }} />
+                  </div>
+                )}
+                {planInfo.plan === "pro" && (
+                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-200">
+                    <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, (planInfo.productCount / 100) * 100)}%` }} />
+                  </div>
+                )}
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">{lang === "pt" ? "Pedidos (total)" : "Orders (total)"}</p>
+                <p className="text-lg font-bold text-slate-800">
+                  {planInfo.orderCount}
+                  <span className="text-sm font-normal text-slate-400">
+                    {planInfo.plan === "free" ? " / 50 mo" : " / ∞"}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         <div className="flex items-center gap-3">
           <button onClick={handleSave} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">

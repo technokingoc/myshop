@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { catalogItems, sellers } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { checkDbReadiness, isMissingTableError } from "@/lib/db-readiness";
 import { withRetry } from "@/lib/retry";
+import { checkLimit } from "@/lib/plans";
 
 function isDbUnavailable(error: unknown) {
   const text = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
@@ -62,6 +63,33 @@ export async function POST(req: NextRequest) {
 
     if (!sellerId || !name) {
       return NextResponse.json({ error: "sellerId and name required" }, { status: 400 });
+    }
+
+    // Enforce product limit based on seller plan
+    const [seller] = await withRetry(
+      () => db.select({ plan: sellers.plan }).from(sellers).where(eq(sellers.id, Number(sellerId))),
+      3,
+    );
+    const [productCount] = await withRetry(
+      () =>
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(catalogItems)
+          .where(eq(catalogItems.sellerId, Number(sellerId))),
+      3,
+    );
+    const limitCheck = checkLimit(seller?.plan, "products", Number(productCount?.count ?? 0));
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: "Product limit reached",
+          errorCode: "PLAN_LIMIT_REACHED",
+          limit: limitCheck.limit,
+          current: limitCheck.current,
+          plan: seller?.plan || "free",
+        },
+        { status: 403 },
+      );
     }
 
     const [row] = await withRetry(

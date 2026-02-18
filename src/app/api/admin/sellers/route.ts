@@ -17,6 +17,7 @@ export async function GET() {
       email: sellers.email,
       slug: sellers.slug,
       role: sellers.role,
+      plan: sellers.plan,
       createdAt: sellers.createdAt,
       productCount: sql<number>`(SELECT COUNT(*) FROM catalog_items WHERE seller_id = ${sellers.id})`,
       orderCount: sql<number>`(SELECT COUNT(*) FROM orders WHERE seller_id = ${sellers.id})`,

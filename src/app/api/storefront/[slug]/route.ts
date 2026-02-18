@@ -37,6 +37,7 @@ export async function GET(
         logoUrl: seller.logoUrl,
         bannerUrl: seller.bannerUrl,
         socialLinks: seller.socialLinks,
+        plan: seller.plan || "free",
       },
       products,
     });
