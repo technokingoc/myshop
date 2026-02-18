@@ -411,6 +411,8 @@ export default function Home() {
   }, [sellerId]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogStatusFilter, setCatalogStatusFilter] = useState<"all" | CatalogStatus>("all");
 
   const [intentItem, setIntentItem] = useState<CatalogItem | null>(null);
   const [intentData, setIntentData] = useState(blankIntent);
@@ -672,6 +674,29 @@ export default function Home() {
 
   const progressPct = Math.round((step / 3) * 100);
 
+  const filteredCatalogRows = catalog.filter((item) => {
+    if (catalogStatusFilter !== "all" && item.status !== catalogStatusFilter) return false;
+    if (!catalogSearch.trim()) return true;
+    const q = catalogSearch.toLowerCase();
+    return item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+  });
+
+  const bulkSetStatus = async (status: CatalogStatus) => {
+    const targets = filteredCatalogRows.filter((i) => i.status !== status);
+    setCatalog((prev) => prev.map((i) => (targets.some((t) => t.id === i.id) ? { ...i, status } : i)));
+    if (sellerId) {
+      await Promise.all(
+        targets.map((item) =>
+          fetch("/api/catalog", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: item.id, status }),
+          }).catch(() => null),
+        ),
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -906,8 +931,30 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="mb-3 grid gap-2 sm:grid-cols-4">
+            <input
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              placeholder={lang === "pt" ? "Pesquisar por nome/categoria" : "Search by name/category"}
+              className="sm:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <select
+              value={catalogStatusFilter}
+              onChange={(e) => setCatalogStatusFilter(e.target.value as "all" | CatalogStatus)}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="all">{lang === "pt" ? "Todos estados" : "All statuses"}</option>
+              <option value="Published">{t.published}</option>
+              <option value="Draft">{t.draft}</option>
+            </select>
+            <div className="flex gap-2">
+              <button onClick={() => bulkSetStatus("Published")} className="flex-1 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">{lang === "pt" ? "Publicar filtro" : "Publish filtered"}</button>
+              <button onClick={() => bulkSetStatus("Draft")} className="flex-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">{lang === "pt" ? "Despublicar filtro" : "Unpublish filtered"}</button>
+            </div>
+          </div>
+
           <div className="grid gap-3">
-            {catalog.map((item) => (
+            {filteredCatalogRows.map((item) => (
               <article key={item.id} className="grid grid-cols-[72px_1fr] gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[96px_1fr]">
                 <PreviewImage
                   src={item.imageUrl}

@@ -25,6 +25,7 @@ type DbOrder = {
 
 type DbHealth = { ok: boolean; connected: boolean; missingTables: string[]; errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY" };
 type StatusNote = { text: string; createdAt: string };
+type PaymentState = "pending" | "paid" | "failed" | "manual";
 
 const statusColors = {
   new: "bg-blue-100 text-blue-700",
@@ -56,6 +57,8 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<OrderIntent | null>(null);
   const [notesByOrder, setNotesByOrder] = useState<Record<string, StatusNote[]>>({});
   const [noteText, setNoteText] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentState>("pending");
+  const [paymentLink, setPaymentLink] = useState("");
 
   const fetchOrders = async () => {
     const health = await fetch("/api/health/db").then((r) => r.json()).catch(() => null);
@@ -141,6 +144,30 @@ export default function OrdersPage() {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
     setSelectedOrder((prev) => (prev?.id === id ? { ...prev, status } : prev));
     toast.success(toastText.statusUpdated);
+  };
+
+  useEffect(() => {
+    if (!selectedOrder?.id) return;
+    fetch(`/api/payments/status?orderId=${selectedOrder.id}`)
+      .then((r) => (r.ok ? r.json() : { status: "pending" }))
+      .then((p) => {
+        setPaymentStatus((p?.status || "pending") as PaymentState);
+        setPaymentLink(p?.externalUrl || "");
+      })
+      .catch(() => {
+        setPaymentStatus("pending");
+        setPaymentLink("");
+      });
+  }, [selectedOrder?.id]);
+
+  const updatePayment = async (status: PaymentState) => {
+    if (!selectedOrder || !sellerId) return;
+    await fetch("/api/payments/status", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: Number(selectedOrder.id), sellerId, status, externalUrl: paymentLink || undefined }),
+    }).catch(() => null);
+    setPaymentStatus(status);
   };
 
   const addNote = () => {
@@ -234,6 +261,20 @@ export default function OrdersPage() {
               </div>
             )}
             <div className="mt-4 flex gap-2">{selectedOrder.status !== "contacted" && selectedOrder.status !== "completed" && <button onClick={() => handleStatus(selectedOrder.id, "contacted")} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">{t.markContacted}</button>}{selectedOrder.status !== "completed" && <button onClick={() => handleStatus(selectedOrder.id, "completed")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white">{t.markCompleted}</button>}</div>
+
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <h3 className="text-sm font-semibold text-slate-900">{lang === "pt" ? "Estado de pagamento" : "Payment status"}</h3>
+              <p className="mt-1 text-xs text-slate-500">{lang === "pt" ? "Fluxo seguro: sem captura de cartão no MyShop." : "Safe flow: no card capture in MyShop."}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(["pending", "paid", "failed", "manual"] as PaymentState[]).map((s) => (
+                  <button key={s} onClick={() => updatePayment(s)} className={`rounded-full border px-2.5 py-1 text-xs ${paymentStatus === s ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-300 text-slate-700"}`}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} placeholder={lang === "pt" ? "Link externo de pagamento (opcional)" : "External payment link (optional)"} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" />
+            </div>
+
             <div className="mt-6"><h3 className="text-sm font-semibold text-slate-900">{t.statusNotes}</h3><div className="mt-2 flex gap-2"><input value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder={t.notePlaceholder} className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" /><button onClick={addNote} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">{t.saveNote}</button></div><div className="mt-3 space-y-2">{(notesByOrder[selectedOrder.id] || []).length === 0 ? <p className="text-sm text-slate-500">{t.noNotes}</p> : (notesByOrder[selectedOrder.id] || []).map((note, idx) => (<div key={`${selectedOrder.id}-${idx}`} className="rounded-lg border border-slate-200 bg-slate-50 p-2"><p className="text-sm text-slate-700">{note.text}</p><p className="mt-1 text-xs text-slate-400">{new Date(note.createdAt).toLocaleString()}</p></div>))}</div></div>
             <button onClick={() => setSelectedOrder(null)} className="mt-6 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">{t.close}</button>
           </div>

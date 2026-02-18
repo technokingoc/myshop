@@ -46,7 +46,14 @@ export default function RootLayout({
           <ToastProvider>
             <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
             <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-              <Link href="/" className="text-sm font-semibold text-slate-700">MyShop</Link>
+              <div className="flex items-center gap-4">
+                <Link href="/" className="text-sm font-semibold text-slate-700">MyShop</Link>
+                <nav className="hidden items-center gap-3 text-sm text-slate-600 md:flex">
+                  <Link href="/setup" className="hover:text-slate-900">Setup</Link>
+                  <Link href="/login" className="hover:text-slate-900">Login</Link>
+                  <Link href="/dashboard" className="hover:text-slate-900">Dashboard</Link>
+                </nav>
+              </div>
               <div className="flex items-center gap-3">
                 <LanguageSwitch />
               </div>

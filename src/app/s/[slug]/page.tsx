@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { OrderFormDB } from "@/components/order-form-db";
@@ -103,6 +103,16 @@ const text = {
     emptyCatalogHint: "This seller has not published products or services yet. You can still contact them directly.",
     contactSeller: "Contact seller",
     dbBanner: "Temporary connection issue. Showing available fallback content.",
+    discover: "Find items quickly",
+    search: "Search products/services",
+    all: "All",
+    infoTitle: "Important info",
+    delivery: "Delivery",
+    policy: "Policy",
+    payment: "Payment",
+    deliveryText: "Delivery/collection is agreed directly with the seller.",
+    policyText: "Orders are confirmed by direct contact and stock availability.",
+    paymentText: "Payments happen via external safe links. MyShop does not capture cards.",
   },
   pt: {
     missing: "Loja não encontrada",
@@ -125,6 +135,16 @@ const text = {
     emptyCatalogHint: "Este vendedor ainda não publicou produtos ou serviços. Ainda pode contactá-lo diretamente.",
     contactSeller: "Contactar vendedor",
     dbBanner: "Falha temporária de ligação. A mostrar conteúdo de fallback disponível.",
+    discover: "Encontre itens rapidamente",
+    search: "Pesquisar produtos/serviços",
+    all: "Todos",
+    infoTitle: "Informações importantes",
+    delivery: "Entrega",
+    policy: "Política",
+    payment: "Pagamento",
+    deliveryText: "Entrega/recolha é combinada diretamente com o vendedor.",
+    policyText: "Pedidos são confirmados por contacto direto e disponibilidade de stock.",
+    paymentText: "Pagamentos acontecem por links externos seguros. O MyShop não captura cartões.",
   },
 };
 
@@ -138,6 +158,8 @@ export default function StorefrontPage() {
   const [notFound, setNotFound] = useState(false);
   const [orderItem, setOrderItem] = useState<{ id: number | null; name: string } | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
 
   useEffect(() => {
     if (!slug) return;
@@ -170,9 +192,20 @@ export default function StorefrontPage() {
   if (notFound || !seller) return <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm"><AlertCircle className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-2xl font-bold text-slate-900">{t.missing}</h1><p className="mt-2 text-slate-600">{t.hint}</p></section></main>;
 
   const social = seller.socialLinks || {};
-  const publishedProducts = catalog.filter((i) => i.status === "Published" && i.type === "Product");
-  const publishedServices = catalog.filter((i) => i.status === "Published" && i.type === "Service");
-  const hasCatalog = publishedProducts.length + publishedServices.length > 0;
+  const published = catalog.filter((i) => i.status === "Published");
+  const categories = useMemo(
+    () => ["all", ...Array.from(new Set(published.map((i) => i.category?.trim()).filter(Boolean)))],
+    [published],
+  );
+  const discovered = published.filter((i) => {
+    if (category !== "all" && i.category !== category) return false;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return i.name.toLowerCase().includes(q) || i.shortDescription.toLowerCase().includes(q);
+  });
+  const publishedProducts = discovered.filter((i) => i.type === "Product");
+  const publishedServices = discovered.filter((i) => i.type === "Service");
+  const hasCatalog = published.length > 0;
   const contactHref = social.whatsapp || social.instagram || social.facebook || "";
 
   return (
@@ -200,7 +233,30 @@ export default function StorefrontPage() {
           <SocialLink label="Instagram" href={social.instagram} icon={Instagram} />
           <SocialLink label="Facebook" href={social.facebook} icon={Facebook} />
         </div>
+
+        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <h3 className="text-sm font-semibold text-slate-900">{t.infoTitle}</h3>
+          <div className="mt-2 grid gap-3 sm:grid-cols-3 text-sm">
+            <div><p className="font-medium text-slate-800">{t.delivery}</p><p className="text-slate-600">{t.deliveryText}</p></div>
+            <div><p className="font-medium text-slate-800">{t.policy}</p><p className="text-slate-600">{t.policyText}</p></div>
+            <div><p className="font-medium text-slate-800">{t.payment}</p><p className="text-slate-600">{t.paymentText}</p></div>
+          </div>
+        </div>
       </section>
+
+      {hasCatalog && (
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-900">{t.discover}</h2>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.search} className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <div className="mt-3 flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button key={cat} onClick={() => setCategory(cat)} className={`rounded-full border px-3 py-1 text-xs ${category === cat ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-300 text-slate-700"}`}>
+                {cat === "all" ? t.all : cat}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {!hasCatalog ? (
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
