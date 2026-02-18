@@ -1,7 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
+import {
+  Store,
+  ShoppingBag,
+  Pencil,
+  Trash2,
+  Plus,
+  Save,
+  XCircle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  RotateCcw,
+  CreditCard,
+  MessageCircle,
+  Instagram,
+  Facebook,
+  Star,
+  Clock,
+  BarChart3,
+  X,
+  ImageIcon,
+  LayoutDashboard,
+} from "lucide-react";
 
 type CatalogType = "Product" | "Service";
 type CatalogStatus = "Draft" | "Published";
@@ -319,6 +343,7 @@ export default function Home() {
   })();
 
   const { lang } = useLanguage();
+  const router = useRouter();
   const [step, setStep] = useState(() => Math.min(3, Math.max(1, initialSetupPersisted?.step || 1)));
   const [done, setDone] = useState(() => Boolean(initialSetupPersisted?.done));
   const [setup, setSetup] = useState<SetupData>(() => ({ ...defaultSetup, ...(initialSetupPersisted?.data || {}) }));
@@ -493,10 +518,22 @@ export default function Home() {
           <h1 className="text-3xl font-bold leading-tight sm:text-5xl">{t.title}</h1>
           <p className="mt-4 max-w-3xl text-sm text-slate-600 sm:text-base">{t.subtitle}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="#setup" className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white">
-              {t.ctaPrimary}
-            </a>
-            <a href="#catalog" className="rounded-xl border border-slate-300 bg-white px-4 py-2">
+            {done ? (
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                {lang === "en" ? "Go to Dashboard" : "Ir ao Painel"}
+              </button>
+            ) : (
+              <a href="#setup" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white">
+                <Store className="h-4 w-4" />
+                {t.ctaPrimary}
+              </a>
+            )}
+            <a href="#catalog" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2">
+              <ShoppingBag className="h-4 w-4" />
               {t.ctaSecondary}
             </a>
           </div>
@@ -591,23 +628,39 @@ export default function Home() {
             <button
               onClick={() => setStep((s) => Math.max(1, s - 1))}
               disabled={step === 1}
-              className="rounded-lg border border-slate-300 px-3 py-2 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 disabled:opacity-40"
             >
+              <ArrowLeft className="h-3.5 w-3.5" />
               {t.backBtn}
             </button>
             {step < 3 ? (
-              <button onClick={onNextStep} className="rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
+              <button onClick={onNextStep} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
                 {t.nextBtn}
+                <ArrowRight className="h-3.5 w-3.5" />
               </button>
             ) : (
-              <button onClick={onFinish} className="rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white">
+              <button onClick={onFinish} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white">
+                <Check className="h-3.5 w-3.5" />
                 {t.finishBtn}
               </button>
             )}
-            <button onClick={resetSetup} className="rounded-lg border border-slate-300 px-3 py-2">
+            <button onClick={resetSetup} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2">
+              <RotateCcw className="h-3.5 w-3.5" />
               {t.resetBtn}
             </button>
-            {done && <span className="self-center text-sm text-emerald-700">{t.doneMsg}</span>}
+            {done && (
+              <div className="flex items-center gap-2 self-center">
+                <Check className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm text-emerald-700">{t.doneMsg}</span>
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="ml-2 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  {lang === "en" ? "Dashboard" : "Painel"}
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -653,11 +706,13 @@ export default function Home() {
             </div>
 
             <div className="sm:col-span-2 xl:col-span-3 flex gap-2">
-              <button onClick={submitCatalog} className="rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
+              <button onClick={submitCatalog} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white">
+                {editingId !== null ? <Save className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                 {editingId !== null ? t.saveBtn : t.addBtn}
               </button>
               {editingId !== null && (
-                <button onClick={cancelEdit} className="rounded-lg border border-slate-300 px-3 py-2">
+                <button onClick={cancelEdit} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2">
+                  <XCircle className="h-3.5 w-3.5" />
                   {t.cancelBtn}
                 </button>
               )}
@@ -683,13 +738,15 @@ export default function Home() {
                     {item.status === "Published" ? t.published : t.draft}
                   </span>
                   <div className="mt-2 flex gap-2">
-                    <button onClick={() => startEdit(item)} className="rounded-md border border-slate-300 px-2 py-1 text-xs">
+                    <button onClick={() => startEdit(item)} className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-xs">
+                      <Pencil className="h-3 w-3" />
                       {t.editBtn}
                     </button>
                     <button
                       onClick={() => setCatalog((prev) => prev.filter((i) => i.id !== item.id))}
-                      className="rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
+                      className="inline-flex items-center gap-1 rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
                     >
+                      <Trash2 className="h-3 w-3" />
                       {t.deleteBtn}
                     </button>
                   </div>
@@ -725,7 +782,7 @@ export default function Home() {
                     <p className="text-slate-600">{t.avgReply}</p>
                   </div>
                   <div className="rounded-md border border-slate-200 p-2">
-                    <p className="font-semibold">4.8★</p>
+                    <p className="inline-flex items-center gap-0.5 font-semibold">4.8 <Star className="h-3 w-3 fill-amber-400 text-amber-400" /></p>
                     <p className="text-slate-600">{t.customerReviews}</p>
                   </div>
                 </div>
@@ -826,7 +883,8 @@ export default function Home() {
                     >
                       {item.type === "Product" ? t.cardCTAProduct : t.cardCTAService}
                     </button>
-                    <button className="rounded-lg border border-slate-300 px-3 py-2 text-xs" title={t.paypalMockNote}>
+                    <button className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs" title={t.paypalMockNote}>
+                      <CreditCard className="h-3 w-3" />
                       PayPal
                     </button>
                   </div>
@@ -847,7 +905,8 @@ export default function Home() {
                 </h3>
                 <p className="mt-1 text-xs text-slate-600">{t.intentIntro}</p>
               </div>
-              <button onClick={closeIntentModal} className="rounded-lg border border-slate-300 px-2 py-1 text-xs">
+              <button onClick={closeIntentModal} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs">
+                <X className="h-3 w-3" />
                 {t.closeBtn}
               </button>
             </div>

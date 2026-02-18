@@ -3,6 +3,19 @@
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
+import {
+  Store,
+  MapPin,
+  MessageCircle,
+  Instagram,
+  Facebook,
+  ShoppingBag,
+  Briefcase,
+  Star,
+  Clock,
+  BarChart3,
+  AlertCircle,
+} from "lucide-react";
 
 type CatalogItem = {
   id: number;
@@ -90,7 +103,8 @@ export default function StorefrontPage() {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-900">{t.missing}</h1>
+          <AlertCircle className="mx-auto h-10 w-10 text-slate-400" />
+          <h1 className="mt-3 text-2xl font-bold text-slate-900">{t.missing}</h1>
           <p className="mt-2 text-slate-600">{t.hint}</p>
         </section>
       </main>
@@ -103,16 +117,20 @@ export default function StorefrontPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <h1 className="text-3xl font-bold text-slate-900">{setup.storeName || "MyShop"}</h1>
+        <div className="flex items-center gap-3">
+          <Store className="h-7 w-7 text-indigo-600" />
+          <h1 className="text-3xl font-bold text-slate-900">{setup.storeName || "MyShop"}</h1>
+        </div>
         <p className="mt-1 text-slate-600">@{setupSlug}</p>
-        <p className="mt-2 text-slate-700">
-          {setup.ownerName || "Owner"} • {setup.businessType || "Business"} • {setup.city || "Maputo"}
+        <p className="mt-2 flex items-center gap-1.5 text-slate-700">
+          <MapPin className="h-4 w-4 text-slate-400" />
+          {setup.ownerName || "Owner"} · {setup.businessType || "Business"} · {setup.city || "Maputo"}
         </p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <SocialLink label="WhatsApp" href={setup.whatsapp} />
-          <SocialLink label="Instagram" href={setup.instagram} />
-          <SocialLink label="Facebook" href={setup.facebook} />
+          <SocialLink label="WhatsApp" href={setup.whatsapp} icon={MessageCircle} />
+          <SocialLink label="Instagram" href={setup.instagram} icon={Instagram} />
+          <SocialLink label="Facebook" href={setup.facebook} icon={Facebook} />
         </div>
       </section>
 
@@ -133,11 +151,11 @@ export default function StorefrontPage() {
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">{t.social}</h2>
-        <ul className="mt-3 space-y-2 text-slate-700">
-          <li>WhatsApp: {setup.whatsapp || "-"}</li>
-          <li>Instagram: {setup.instagram || "-"}</li>
-          <li>Facebook: {setup.facebook || "-"}</li>
-        </ul>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <SocialLink label="WhatsApp" href={setup.whatsapp} icon={MessageCircle} />
+          <SocialLink label="Instagram" href={setup.instagram} icon={Instagram} />
+          <SocialLink label="Facebook" href={setup.facebook} icon={Facebook} />
+        </div>
       </section>
     </main>
   );
@@ -180,9 +198,14 @@ function CatalogSection({
   );
 }
 
-function SocialLink({ label, href }: { label: string; href: string }) {
+function SocialLink({ label, href, icon: Icon }: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }) {
   if (!href) {
-    return <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">{label}: -</div>;
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
+        <Icon className="h-4 w-4" />
+        {label}: —
+      </div>
+    );
   }
 
   return (
@@ -190,8 +213,9 @@ function SocialLink({ label, href }: { label: string; href: string }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-indigo-700 underline underline-offset-2"
+      className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-indigo-700 underline underline-offset-2"
     >
+      <Icon className="h-4 w-4" />
       {label}
     </a>
   );

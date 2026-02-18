@@ -31,8 +31,10 @@ export default function RootLayout({
         <LanguageProvider>
           <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
             <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-              <span className="text-sm font-semibold text-slate-700">MyShop</span>
-              <LanguageSwitch />
+              <a href="/" className="text-sm font-semibold text-slate-700">MyShop</a>
+              <div className="flex items-center gap-3">
+                <LanguageSwitch />
+              </div>
             </div>
           </div>
           {children}
