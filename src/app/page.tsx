@@ -102,9 +102,13 @@ const dictionary = {
     completed: "Completed",
     slugHint: "Use lowercase letters/numbers and dashes only.",
     previewRoute: "Storefront route mock",
+    stepNames: ["Store identity", "Business details", "Social channels"],
+    progressLabel: "Progress",
+    requiredField: "This field is required",
 
     catalogTitle: "Catalog management",
     catalogSubtitle: "Mock CRUD with add/edit/delete persisted locally.",
+    imagePreview: "Image preview",
 
     previewTitle: "Storefront preview",
     previewSubtitle: "Live preview from your setup + catalog.",
@@ -115,6 +119,26 @@ const dictionary = {
     emptyServices: "No published services yet.",
     cardCTAProduct: "Order now",
     cardCTAService: "Book now",
+    categoryFilter: "Category filters",
+    allCategories: "All categories",
+
+    sellerProfileTitle: "Seller profile",
+    basedIn: "Based in",
+    responseRate: "Response rate",
+    avgReply: "Avg. reply",
+    customerReviews: "Customer reviews",
+    socialProofPending: "Public social proof will appear after your first 3 completed customer intents.",
+
+    intentModalTitleProduct: "Order intent",
+    intentModalTitleService: "Booking intent",
+    intentIntro: "This sends a mock intent only. No payment is executed here.",
+    intentName: "Customer name",
+    intentContact: "Preferred contact",
+    intentMessage: "Notes",
+    intentSubmit: "Send intent",
+    intentDone: "Intent captured. Follow up manually via social channels.",
+    paypalMockNote: "PayPal note: checkout happens on external PayPal page only (manual link in MVP).",
+    closeBtn: "Close",
 
     pricingTitle: "Affordable pricing",
     pricingSubtitle: "Simple plans with clear PayPal checkout messaging.",
@@ -179,9 +203,13 @@ const dictionary = {
     completed: "Concluído",
     slugHint: "Use apenas minúsculas/números e hífen.",
     previewRoute: "Mock da rota da loja",
+    stepNames: ["Identidade da loja", "Dados do negócio", "Canais sociais"],
+    progressLabel: "Progresso",
+    requiredField: "Este campo é obrigatório",
 
     catalogTitle: "Gestão de catálogo",
     catalogSubtitle: "CRUD mock com adicionar/editar/apagar persistido localmente.",
+    imagePreview: "Pré-visualização da imagem",
 
     previewTitle: "Pré-visualização da loja",
     previewSubtitle: "Prévia ao vivo com base na configuração + catálogo.",
@@ -192,6 +220,26 @@ const dictionary = {
     emptyServices: "Ainda não há serviços publicados.",
     cardCTAProduct: "Encomendar",
     cardCTAService: "Reservar",
+    categoryFilter: "Filtros de categoria",
+    allCategories: "Todas categorias",
+
+    sellerProfileTitle: "Perfil do vendedor",
+    basedIn: "Localização",
+    responseRate: "Taxa de resposta",
+    avgReply: "Resposta média",
+    customerReviews: "Avaliações de clientes",
+    socialProofPending: "A prova social pública aparece após os 3 primeiros intentos concluídos de clientes.",
+
+    intentModalTitleProduct: "Intenção de encomenda",
+    intentModalTitleService: "Intenção de reserva",
+    intentIntro: "Isto envia apenas uma intenção mock. Nenhum pagamento é executado aqui.",
+    intentName: "Nome do cliente",
+    intentContact: "Contacto preferido",
+    intentMessage: "Notas",
+    intentSubmit: "Enviar intenção",
+    intentDone: "Intenção registada. Faça o seguimento manual pelos canais sociais.",
+    paypalMockNote: "Nota PayPal: o checkout acontece apenas numa página externa do PayPal (link manual no MVP).",
+    closeBtn: "Fechar",
 
     pricingTitle: "Preço acessível",
     pricingSubtitle: "Planos simples com mensagem clara sobre checkout PayPal.",
@@ -253,6 +301,12 @@ const blankCatalogForm: Omit<CatalogItem, "id"> = {
   status: "Draft",
 };
 
+const blankIntent = {
+  name: "",
+  contact: "",
+  note: "",
+};
+
 export default function Home() {
   const initialSetupPersisted: SetupPersisted | null = (() => {
     if (typeof window === "undefined") return null;
@@ -272,6 +326,7 @@ export default function Home() {
   const [step, setStep] = useState(() => Math.min(3, Math.max(1, initialSetupPersisted?.step || 1)));
   const [done, setDone] = useState(() => Boolean(initialSetupPersisted?.done));
   const [setup, setSetup] = useState<SetupData>(() => ({ ...defaultSetup, ...(initialSetupPersisted?.data || {}) }));
+  const [setupErrors, setSetupErrors] = useState<Partial<Record<keyof SetupData, string>>>({});
   const [catalog, setCatalog] = useState<CatalogItem[]>(() => {
     if (typeof window === "undefined") return defaultCatalog;
     const raw = localStorage.getItem(STORAGE.catalog);
@@ -286,6 +341,11 @@ export default function Home() {
 
   const [catalogForm, setCatalogForm] = useState(blankCatalogForm);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  const [intentItem, setIntentItem] = useState<CatalogItem | null>(null);
+  const [intentData, setIntentData] = useState(blankIntent);
+  const [intentSubmitted, setIntentSubmitted] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(STORAGE.lang, lang);
@@ -311,12 +371,14 @@ export default function Home() {
   const updateSetup = (key: keyof SetupData, value: string) => {
     const next = key === "storefrontSlug" ? sanitizeSlug(value) : value;
     setSetup((prev) => ({ ...prev, [key]: next }));
+    setSetupErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
   const resetSetup = () => {
     setStep(1);
     setDone(false);
     setSetup(defaultSetup);
+    setSetupErrors({});
     localStorage.removeItem(STORAGE.setup);
   };
 
@@ -356,6 +418,54 @@ export default function Home() {
     setCatalogForm(blankCatalogForm);
   };
 
+  const validateStep = (targetStep: number) => {
+    const nextErrors: Partial<Record<keyof SetupData, string>> = {};
+
+    if (targetStep === 1) {
+      if (!setup.storeName.trim()) nextErrors.storeName = t.requiredField;
+      if (!setup.storefrontSlug.trim()) nextErrors.storefrontSlug = t.requiredField;
+    }
+
+    if (targetStep === 2) {
+      if (!setup.ownerName.trim()) nextErrors.ownerName = t.requiredField;
+      if (!setup.businessType.trim()) nextErrors.businessType = t.requiredField;
+      if (!setup.currency.trim()) nextErrors.currency = t.requiredField;
+      if (!setup.city.trim()) nextErrors.city = t.requiredField;
+    }
+
+    if (targetStep === 3) {
+      if (!setup.whatsapp.trim()) nextErrors.whatsapp = t.requiredField;
+    }
+
+    setSetupErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const onNextStep = () => {
+    if (!validateStep(step)) return;
+    setStep((s) => Math.min(3, s + 1));
+  };
+
+  const onFinish = () => {
+    if (!validateStep(3)) return;
+    setDone(true);
+  };
+
+  const openIntentModal = (item: CatalogItem) => {
+    setIntentItem(item);
+    setIntentData(blankIntent);
+    setIntentSubmitted(false);
+  };
+
+  const closeIntentModal = () => {
+    setIntentItem(null);
+  };
+
+  const submitIntent = () => {
+    if (!intentData.name.trim() || !intentData.contact.trim()) return;
+    setIntentSubmitted(true);
+  };
+
   const slug = setup.storefrontSlug || sanitizeSlug(setup.storeName) || "myshop-demo";
   const previewPath = `/s/${slug}`;
   const previewUrl = `https://myshop-amber.vercel.app${previewPath}?preview=1`;
@@ -363,6 +473,22 @@ export default function Home() {
   const publishedProducts = catalog.filter((i) => i.type === "Product" && i.status === "Published");
   const publishedServices = catalog.filter((i) => i.type === "Service" && i.status === "Published");
   const publishedCatalog = catalog.filter((i) => i.status === "Published");
+
+  const categories = [
+    "all",
+    ...Array.from(
+      new Set(
+        publishedCatalog
+          .map((item) => item.category.trim())
+          .filter(Boolean),
+      ),
+    ),
+  ];
+
+  const filteredPublishedCatalog =
+    activeCategory === "all" ? publishedCatalog : publishedCatalog.filter((item) => item.category === activeCategory);
+
+  const progressPct = Math.round((step / 3) * 100);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -403,8 +529,35 @@ export default function Home() {
           <h2 className="text-xl font-semibold">{t.setupTitle}</h2>
           <p className="text-sm text-slate-300">{t.setupSubtitle}</p>
           <p className="text-xs text-slate-400">
-            {t.stepLabel} {step}/3 {done && `• ${t.completed}`}
+            {t.stepLabel} {step}/3 • {t.stepNames[step - 1]} {done && `• ${t.completed}`}
           </p>
+
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between text-xs text-slate-300">
+              <span>{t.progressLabel}</span>
+              <span>{progressPct}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/10">
+              <div className="h-2 rounded-full bg-indigo-400 transition-all" style={{ width: `${progressPct}%` }} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              {t.stepNames.map((name, idx) => {
+                const current = idx + 1;
+                const active = current === step;
+                const complete = current < step || done;
+                return (
+                  <div
+                    key={name}
+                    className={`rounded-lg border px-2 py-1 text-center text-[11px] ${
+                      active ? "border-indigo-300 bg-indigo-400/20" : complete ? "border-emerald-300/40 bg-emerald-400/10" : "border-white/10"
+                    }`}
+                  >
+                    {name}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="rounded-xl border border-indigo-300/30 bg-indigo-500/10 p-3 text-sm">
             <p className="font-medium text-indigo-200">{t.previewRoute}</p>
@@ -417,24 +570,39 @@ export default function Home() {
           <div className="grid gap-3 sm:grid-cols-2">
             {step === 1 && (
               <>
-                <Input label={t.labels.storeName} value={setup.storeName} onChange={(v) => updateSetup("storeName", v)} />
+                <Input
+                  label={t.labels.storeName}
+                  value={setup.storeName}
+                  error={setupErrors.storeName}
+                  onChange={(v) => updateSetup("storeName", v)}
+                />
                 <div className="grid gap-1 text-sm">
-                  <Input label={t.labels.storefrontSlug} value={setup.storefrontSlug} onChange={(v) => updateSetup("storefrontSlug", v)} />
+                  <Input
+                    label={t.labels.storefrontSlug}
+                    value={setup.storefrontSlug}
+                    error={setupErrors.storefrontSlug}
+                    onChange={(v) => updateSetup("storefrontSlug", v)}
+                  />
                   <span className="text-xs text-slate-400">{t.slugHint}</span>
                 </div>
               </>
             )}
             {step === 2 && (
               <>
-                <Input label={t.labels.ownerName} value={setup.ownerName} onChange={(v) => updateSetup("ownerName", v)} />
-                <Input label={t.labels.businessType} value={setup.businessType} onChange={(v) => updateSetup("businessType", v)} />
-                <Input label={t.labels.currency} value={setup.currency} onChange={(v) => updateSetup("currency", v)} />
-                <Input label={t.labels.city} value={setup.city} onChange={(v) => updateSetup("city", v)} />
+                <Input label={t.labels.ownerName} value={setup.ownerName} error={setupErrors.ownerName} onChange={(v) => updateSetup("ownerName", v)} />
+                <Input
+                  label={t.labels.businessType}
+                  value={setup.businessType}
+                  error={setupErrors.businessType}
+                  onChange={(v) => updateSetup("businessType", v)}
+                />
+                <Input label={t.labels.currency} value={setup.currency} error={setupErrors.currency} onChange={(v) => updateSetup("currency", v)} />
+                <Input label={t.labels.city} value={setup.city} error={setupErrors.city} onChange={(v) => updateSetup("city", v)} />
               </>
             )}
             {step === 3 && (
               <>
-                <Input label={t.labels.whatsapp} value={setup.whatsapp} onChange={(v) => updateSetup("whatsapp", v)} />
+                <Input label={t.labels.whatsapp} value={setup.whatsapp} error={setupErrors.whatsapp} onChange={(v) => updateSetup("whatsapp", v)} />
                 <Input label={t.labels.instagram} value={setup.instagram} onChange={(v) => updateSetup("instagram", v)} />
                 <Input label={t.labels.facebook} value={setup.facebook} onChange={(v) => updateSetup("facebook", v)} />
               </>
@@ -450,11 +618,11 @@ export default function Home() {
               {t.backBtn}
             </button>
             {step < 3 ? (
-              <button onClick={() => setStep((s) => Math.min(3, s + 1))} className="rounded-lg bg-indigo-400 px-3 py-2 font-semibold text-black">
+              <button onClick={onNextStep} className="rounded-lg bg-indigo-400 px-3 py-2 font-semibold text-black">
                 {t.nextBtn}
               </button>
             ) : (
-              <button onClick={() => setDone(true)} className="rounded-lg bg-emerald-400 px-3 py-2 font-semibold text-black">
+              <button onClick={onFinish} className="rounded-lg bg-emerald-400 px-3 py-2 font-semibold text-black">
                 {t.finishBtn}
               </button>
             )}
@@ -501,6 +669,11 @@ export default function Home() {
               </select>
             </label>
 
+            <div className="sm:col-span-2 rounded-lg border border-white/10 bg-slate-950/60 p-3">
+              <p className="mb-2 text-xs text-slate-300">{t.imagePreview}</p>
+              <PreviewImage src={catalogForm.imageUrl} alt={catalogForm.name || "preview"} className="h-36 w-full rounded-lg object-cover" />
+            </div>
+
             <div className="sm:col-span-2 flex gap-2">
               <button onClick={submitCatalog} className="rounded-lg bg-indigo-400 px-3 py-2 font-semibold text-black">
                 {editingId !== null ? t.saveBtn : t.addBtn}
@@ -516,8 +689,8 @@ export default function Home() {
           <div className="grid gap-3">
             {catalog.map((item) => (
               <article key={item.id} className="grid grid-cols-[72px_1fr] gap-3 rounded-xl border border-white/10 p-3 sm:grid-cols-[96px_1fr]">
-                <img
-                  src={item.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"}
+                <PreviewImage
+                  src={item.imageUrl}
                   alt={item.name}
                   className="h-[72px] w-[72px] rounded-lg object-cover sm:h-[96px] sm:w-[96px]"
                 />
@@ -555,6 +728,31 @@ export default function Home() {
             <div className="rounded-xl border border-white/10 bg-slate-900/80 p-4">
               <h3 className="font-semibold">{setup.storeName || "MyShop Demo Store"}</h3>
               <p className="text-sm text-slate-300">@{slug}</p>
+
+              <h4 className="mt-4 text-sm font-medium text-slate-300">{t.sellerProfileTitle}</h4>
+              <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
+                <p>
+                  {setup.ownerName || "Store Owner"} • {setup.businessType || "Micro business"}
+                </p>
+                <p className="text-slate-300">
+                  {t.basedIn}: {setup.city || "Maputo"}
+                </p>
+                <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="rounded-md border border-white/10 p-2">
+                    <p className="font-semibold">97%</p>
+                    <p className="text-slate-300">{t.responseRate}</p>
+                  </div>
+                  <div className="rounded-md border border-white/10 p-2">
+                    <p className="font-semibold">18m</p>
+                    <p className="text-slate-300">{t.avgReply}</p>
+                  </div>
+                  <div className="rounded-md border border-white/10 p-2">
+                    <p className="font-semibold">4.8★</p>
+                    <p className="text-slate-300">{t.customerReviews}</p>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-slate-400">{t.socialProofPending}</p>
+              </div>
 
               <h4 className="mt-4 text-sm font-medium text-slate-300">{t.socialLinks}</h4>
               <ul className="mt-2 space-y-1 text-sm">
@@ -616,15 +814,26 @@ export default function Home() {
         </section>
 
         <section className="mt-8">
-          <h2 className="mb-4 text-xl font-semibold">{t.previewTitle} • Cards</h2>
+          <h2 className="mb-2 text-xl font-semibold">{t.previewTitle} • Cards</h2>
+          <p className="mb-3 text-sm text-slate-300">{t.categoryFilter}</p>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  activeCategory === cat ? "border-indigo-300 bg-indigo-400/20" : "border-white/20"
+                }`}
+              >
+                {cat === "all" ? t.allCategories : cat}
+              </button>
+            ))}
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {publishedCatalog.map((item) => (
+            {filteredPublishedCatalog.map((item) => (
               <article key={`card-${item.id}`} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-                <img
-                  src={item.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800"}
-                  alt={item.name}
-                  className="h-40 w-full object-cover"
-                />
+                <PreviewImage src={item.imageUrl} alt={item.name} className="h-40 w-full object-cover" />
                 <div className="p-4">
                   <p className="text-xs text-indigo-300">{item.category || "General"}</p>
                   <h3 className="font-semibold">{item.name}</h3>
@@ -633,15 +842,15 @@ export default function Home() {
                     {setup.currency} {item.price}
                   </p>
                   <div className="mt-3 flex gap-2">
-                    <a
-                      href={setup.whatsapp || "https://wa.me/your-number"}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() => openIntentModal(item)}
                       className="rounded-lg bg-emerald-400 px-3 py-2 text-xs font-semibold text-black"
                     >
                       {item.type === "Product" ? t.cardCTAProduct : t.cardCTAService}
-                    </a>
-                    <button className="rounded-lg border border-white/20 px-3 py-2 text-xs">PayPal</button>
+                    </button>
+                    <button className="rounded-lg border border-white/20 px-3 py-2 text-xs" title={t.paypalMockNote}>
+                      PayPal
+                    </button>
                   </div>
                 </div>
               </article>
@@ -649,19 +858,64 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      {intentItem && (
+        <div className="fixed inset-0 z-50 flex items-end bg-black/60 sm:items-center sm:justify-center">
+          <div className="w-full rounded-t-2xl border border-white/15 bg-slate-900 p-4 sm:max-w-md sm:rounded-2xl">
+            <div className="mb-3 flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-semibold">
+                  {intentItem.type === "Product" ? t.intentModalTitleProduct : t.intentModalTitleService}: {intentItem.name}
+                </h3>
+                <p className="mt-1 text-xs text-slate-300">{t.intentIntro}</p>
+              </div>
+              <button onClick={closeIntentModal} className="rounded-lg border border-white/20 px-2 py-1 text-xs">
+                {t.closeBtn}
+              </button>
+            </div>
+
+            {intentSubmitted ? (
+              <div className="rounded-lg border border-emerald-300/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">{t.intentDone}</div>
+            ) : (
+              <div className="grid gap-2">
+                <Input label={t.intentName} value={intentData.name} onChange={(v) => setIntentData((p) => ({ ...p, name: v }))} />
+                <Input label={t.intentContact} value={intentData.contact} onChange={(v) => setIntentData((p) => ({ ...p, contact: v }))} />
+                <Input label={t.intentMessage} value={intentData.note} onChange={(v) => setIntentData((p) => ({ ...p, note: v }))} />
+                <p className="rounded-lg border border-amber-300/30 bg-amber-500/10 p-2 text-xs text-amber-200">{t.paypalMockNote}</p>
+                <button onClick={submitIntent} className="rounded-lg bg-indigo-400 px-3 py-2 text-sm font-semibold text-black">
+                  {t.intentSubmit}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function Input({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function Input({
+  label,
+  value,
+  onChange,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+}) {
   return (
     <label className="grid gap-1 text-sm">
       <span className="text-slate-300">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 outline-none ring-indigo-300 transition focus:ring"
+        className={`rounded-lg border bg-slate-900 px-3 py-2 outline-none ring-indigo-300 transition focus:ring ${
+          error ? "border-rose-400/60" : "border-white/15"
+        }`}
       />
+      {error && <span className="text-xs text-rose-300">{error}</span>}
     </label>
   );
 }
@@ -672,6 +926,22 @@ function LinkOrText({ href, fallback }: { href: string; fallback: string }) {
     <a href={value} target="_blank" rel="noreferrer" className="text-indigo-300 underline underline-offset-2">
       {value}
     </a>
+  );
+}
+
+function PreviewImage({ src, alt, className }: { src: string; alt: string; className: string }) {
+  const fallback = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800";
+
+  return (
+    <img
+      src={src || fallback}
+      alt={alt}
+      onError={(e) => {
+        const target = e.currentTarget;
+        if (target.src !== fallback) target.src = fallback;
+      }}
+      className={className}
+    />
   );
 }
 
