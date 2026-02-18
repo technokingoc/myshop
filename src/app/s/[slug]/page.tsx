@@ -107,7 +107,9 @@ export default function StorefrontPage() {
   const normalizedSlug = useMemo(() => sanitizeSlug(slug ?? ""), [slug]);
   const setupSlug = useMemo(() => sanitizeSlug(setup?.storefrontSlug || setup?.storeName || ""), [setup]);
 
-  if (!setup || !normalizedSlug || normalizedSlug !== setupSlug) {
+  // In the local-storage MVP, the storefront preview works only in the same browser.
+  // We skip slug matching — any valid setup data enables the preview.
+  if (!setup) {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">

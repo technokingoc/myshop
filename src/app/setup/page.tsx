@@ -151,6 +151,7 @@ const dictionary = {
     avgReply: "Avg. reply",
     customerReviews: "Customer reviews",
     socialProofPending: "Public social proof will appear after your first 3 completed customer intents.",
+    noDataYet: "No data yet — stats will appear once your store is active.",
 
     intentModalTitleProduct: "Order intent",
     intentModalTitleService: "Booking intent",
@@ -175,7 +176,7 @@ const dictionary = {
     ],
     planFoot: "PayPal checkout opens an external PayPal page. MyShop does not process or store card details in this MVP.",
     paypalInfo: "PayPal-ready: connect your plan manually after subscription confirmation.",
-    choosePlan: "Choose this plan",
+    choosePlan: "Coming soon",
 
     nextBtn: "Next",
     backBtn: "Back",
@@ -196,6 +197,7 @@ const dictionary = {
     cancelBtn: "Cancel",
     editBtn: "Edit",
     deleteBtn: "Delete",
+    deleteConfirm: "Are you sure you want to delete this item?",
     published: "Published",
     draft: "Draft",
 
@@ -252,6 +254,7 @@ const dictionary = {
     avgReply: "Resposta média",
     customerReviews: "Avaliações de clientes",
     socialProofPending: "A prova social pública aparece após os 3 primeiros intentos concluídos de clientes.",
+    noDataYet: "Ainda sem dados — as estatísticas aparecerão quando a loja estiver ativa.",
 
     intentModalTitleProduct: "Intenção de encomenda",
     intentModalTitleService: "Intenção de reserva",
@@ -276,7 +279,7 @@ const dictionary = {
     ],
     planFoot: "O checkout PayPal abre numa página externa do PayPal. O MyShop não processa nem guarda dados de cartão neste MVP.",
     paypalInfo: "Pronto para PayPal: conecte o plano manualmente após confirmação da subscrição.",
-    choosePlan: "Escolher este plano",
+    choosePlan: "Em breve",
 
     nextBtn: "Próximo",
     backBtn: "Voltar",
@@ -297,6 +300,7 @@ const dictionary = {
     cancelBtn: "Cancelar",
     editBtn: "Editar",
     deleteBtn: "Apagar",
+    deleteConfirm: "Tem a certeza que deseja apagar este item?",
     published: "Publicado",
     draft: "Rascunho",
 
@@ -743,7 +747,7 @@ export default function Home() {
                       {t.editBtn}
                     </button>
                     <button
-                      onClick={() => setCatalog((prev) => prev.filter((i) => i.id !== item.id))}
+                      onClick={() => { if (window.confirm(t.deleteConfirm)) setCatalog((prev) => prev.filter((i) => i.id !== item.id)); }}
                       className="inline-flex items-center gap-1 rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -772,19 +776,8 @@ export default function Home() {
                 <p className="text-slate-600">
                   {t.basedIn}: {setup.city || "Maputo"}
                 </p>
-                <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="rounded-md border border-slate-200 p-2">
-                    <p className="font-semibold">97%</p>
-                    <p className="text-slate-600">{t.responseRate}</p>
-                  </div>
-                  <div className="rounded-md border border-slate-200 p-2">
-                    <p className="font-semibold">18m</p>
-                    <p className="text-slate-600">{t.avgReply}</p>
-                  </div>
-                  <div className="rounded-md border border-slate-200 p-2">
-                    <p className="inline-flex items-center gap-0.5 font-semibold">4.8 <Star className="h-3 w-3 fill-amber-400 text-amber-400" /></p>
-                    <p className="text-slate-600">{t.customerReviews}</p>
-                  </div>
+                <div className="mt-2 rounded-md border border-slate-200 p-2 text-center text-xs text-slate-500">
+                  {t.noDataYet}
                 </div>
                 <p className="mt-2 text-xs text-slate-500">{t.socialProofPending}</p>
               </div>
@@ -843,7 +836,7 @@ export default function Home() {
               </ul>
               <p className="mt-4 rounded-lg border border-amber-300/40 bg-amber-50 p-2 text-xs text-amber-700">{t.planFoot}</p>
               <p className="mt-2 text-xs text-slate-600">{t.paypalInfo}</p>
-              <button className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-white">{t.choosePlan}</button>
+              <button disabled className="mt-3 rounded-lg bg-slate-300 px-3 py-2 text-sm font-semibold text-slate-500 cursor-not-allowed">{t.choosePlan}</button>
             </div>
           </article>
         </section>

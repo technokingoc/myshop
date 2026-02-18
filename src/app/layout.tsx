@@ -16,9 +16,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MyShop E-commerce Self-Service",
+  title: {
+    default: "MyShop — Create Your Online Store",
+    template: "%s | MyShop",
+  },
   description:
-    "MVP foundation for small businesses and informal sellers to build a professional storefront.",
+    "Build a professional storefront in minutes. Designed for small businesses and informal sellers in Mozambique and beyond.",
+  keywords: ["online store", "storefront", "small business", "e-commerce", "Mozambique"],
+  openGraph: {
+    title: "MyShop — Create Your Online Store",
+    description:
+      "Build a professional storefront in minutes. Designed for small businesses and informal sellers.",
+    type: "website",
+    locale: "en_US",
+  },
 };
 
 export default function RootLayout({
