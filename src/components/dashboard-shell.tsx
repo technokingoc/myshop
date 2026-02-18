@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import {
   LayoutDashboard,
@@ -78,25 +80,34 @@ function NavItem({
 }) {
   const active = item.key === activePage;
   return (
-    <a
+    <Link
       href={item.href}
       onClick={onClick}
-      className={`group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
+      className={`group relative flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors ${
         active
-          ? "bg-blue-50 text-blue-700"
+          ? "bg-slate-100 text-slate-900"
           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       }`}
     >
-      <span className={`absolute inset-y-2 left-0 w-0.5 rounded-full ${active ? "bg-blue-600" : "bg-transparent"}`} />
+      <span className={`absolute inset-y-2 left-0 w-0.5 rounded-full ${active ? "bg-slate-900" : "bg-transparent"}`} />
       <item.icon className="h-4 w-4" />
       <span>{item.label}</span>
-    </a>
+    </Link>
   );
 }
 
-export function DashboardShell({ activePage, children }: { activePage: string; children: React.ReactNode }) {
+export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { lang } = useLanguage();
+  const pathname = usePathname();
   const t = dict[lang];
+  const activePage = useMemo(() => {
+    if (pathname === "/dashboard") return "dashboard";
+    if (pathname.startsWith("/dashboard/orders")) return "orders";
+    if (pathname.startsWith("/dashboard/catalog")) return "catalog";
+    if (pathname.startsWith("/dashboard/settings")) return "settings";
+    if (pathname.startsWith("/dashboard/analytics")) return "analytics";
+    return "dashboard";
+  }, [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [setup, setSetup] = useState<SetupPersisted | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -269,6 +280,25 @@ export function DashboardShell({ activePage, children }: { activePage: string; c
           )}
 
           <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
+
+          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
+            <ul className="grid grid-cols-5">
+              {[...storeItems.slice(0, 3), ...accountItems].map((item) => {
+                const active = item.key === activePage;
+                return (
+                  <li key={item.key}>
+                    <Link
+                      href={item.href}
+                      className={`flex h-14 flex-col items-center justify-center gap-1 text-xs ${active ? "text-slate-900" : "text-slate-500"}`}
+                    >
+                      <item.icon className={`h-4 w-4 ${active ? "text-slate-900" : "text-slate-400"}`} />
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
         </main>
       </div>
     </AuthGate>

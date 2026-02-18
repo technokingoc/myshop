@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DashboardShell } from "@/components/dashboard-shell";
 import { useLanguage } from "@/lib/language";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 import { useToast } from "@/components/toast-provider";
@@ -341,7 +340,7 @@ export default function DashboardCatalogPage() {
   if (!hydrated) return null;
 
   return (
-    <DashboardShell activePage="catalog">
+    <>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
@@ -464,7 +463,7 @@ export default function DashboardCatalogPage() {
           </div>
         </div>
       )}
-    </DashboardShell>
+    </>
   );
 }
 

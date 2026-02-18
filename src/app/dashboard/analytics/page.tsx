@@ -1,7 +1,6 @@
 "use client";
 
 import { useLanguage } from "@/lib/language";
-import { DashboardShell } from "@/components/dashboard-shell";
 import { BarChart3, Eye, ShoppingCart, TrendingUp, Clock } from "lucide-react";
 
 const dict = {
@@ -49,7 +48,7 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <DashboardShell activePage="analytics">
+    <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
@@ -77,6 +76,6 @@ export default function AnalyticsPage() {
         <BarChart3 className="mx-auto h-10 w-10 text-slate-300" />
         <p className="mt-3 text-sm text-slate-500">{t.placeholder}</p>
       </div>
-    </DashboardShell>
+    </>
   );
 }

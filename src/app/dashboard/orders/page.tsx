@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/language";
 import { getOrders, updateOrderStatus, type OrderIntent } from "@/lib/orders";
-import { DashboardShell } from "@/components/dashboard-shell";
 import { DbMigrationGuard } from "@/components/db-migration-guard";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 import { Inbox, CheckCircle, Phone, Clock, X, Search, Download } from "lucide-react";
@@ -210,7 +209,7 @@ export default function OrdersPage() {
   ];
 
   return (
-    <DashboardShell activePage="orders">
+    <>
       <DbMigrationGuard health={dbHealth} onRetry={fetchOrders} />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
@@ -280,6 +279,6 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
-    </DashboardShell>
+    </>
   );
 }

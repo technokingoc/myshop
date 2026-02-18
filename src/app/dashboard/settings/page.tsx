@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/language";
-import { DashboardShell } from "@/components/dashboard-shell";
 import { Save } from "lucide-react";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
@@ -85,14 +84,14 @@ export default function SettingsPage() {
 
   if (!setup?.done || !form) {
     return (
-      <DashboardShell activePage="settings">
+    <>
         <div className="text-center py-16">
           <p className="text-slate-600">{t.notSetup}</p>
           <a href="/setup" className="mt-4 inline-block rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white">
             {t.goSetup}
           </a>
         </div>
-      </DashboardShell>
+    </>
     );
   }
 
@@ -135,7 +134,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <DashboardShell activePage="settings">
+      <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
@@ -175,7 +174,7 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
-    </DashboardShell>
+      </>
   );
 }
 
