@@ -21,6 +21,7 @@ type SetupData = {
   whatsapp?: string;
   instagram?: string;
   facebook?: string;
+  paymentLink?: string;
 };
 type SetupPersisted = { step: number; done: boolean; data: SetupData };
 
@@ -53,8 +54,7 @@ const dict = {
     checklistTodo: "Pending",
     checklistStore: "Store profile completed",
     checklistCatalog: "At least one published catalog item",
-    checklistOrder: "First customer order received",
-    checklistSocial: "At least one social contact added",
+    checklistPayment: "Payment link configured",
   },
   pt: {
     welcome: "Bem-vindo de volta",
@@ -84,8 +84,7 @@ const dict = {
     checklistTodo: "Pendente",
     checklistStore: "Perfil da loja concluído",
     checklistCatalog: "Pelo menos um item do catálogo publicado",
-    checklistOrder: "Primeiro pedido de cliente recebido",
-    checklistSocial: "Pelo menos um contacto social adicionado",
+    checklistPayment: "Link de pagamento configurado",
   },
 };
 
@@ -168,13 +167,12 @@ export default function DashboardPage() {
   const drafts = catalog.filter((i) => i.status === "Draft").length;
 
   const hasStoreProfile = Boolean(setup?.done && setup?.data?.storeName && setup?.data?.storefrontSlug);
-  const hasSocial = Boolean(setup?.data?.whatsapp || setup?.data?.instagram || setup?.data?.facebook);
+  const hasPaymentLink = Boolean(setup?.data?.paymentLink);
 
   const checklist = [
     { key: "store", label: t.checklistStore, done: hasStoreProfile },
     { key: "catalog", label: t.checklistCatalog, done: published > 0 },
-    { key: "order", label: t.checklistOrder, done: ordersCount > 0 },
-    { key: "social", label: t.checklistSocial, done: hasSocial },
+    { key: "payment", label: t.checklistPayment, done: hasPaymentLink },
   ];
 
   const copyStorefrontLink = () => {

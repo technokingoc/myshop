@@ -17,6 +17,7 @@ type SetupData = {
   whatsapp: string;
   instagram: string;
   facebook: string;
+  paymentLink: string;
   logoUrl?: string;
   description?: string;
 };
@@ -38,6 +39,7 @@ const dict = {
     whatsapp: "WhatsApp link",
     instagram: "Instagram link",
     facebook: "Facebook link",
+    paymentLink: "Payment link",
     save: "Save changes",
     saved: "Changes saved!",
     notSetup: "Complete store setup first.",
@@ -59,6 +61,7 @@ const dict = {
     whatsapp: "Link WhatsApp",
     instagram: "Link Instagram",
     facebook: "Link Facebook",
+    paymentLink: "Link de pagamento",
     save: "Guardar alterações",
     saved: "Alterações guardadas!",
     notSetup: "Conclua a configuração da loja primeiro.",
@@ -103,6 +106,7 @@ export default function SettingsPage() {
               whatsapp: s.socialLinks?.whatsapp ?? parsed.data.whatsapp,
               instagram: s.socialLinks?.instagram ?? parsed.data.instagram,
               facebook: s.socialLinks?.facebook ?? parsed.data.facebook,
+              paymentLink: s.socialLinks?.paymentLink ?? parsed.data.paymentLink ?? "",
             };
             setSetup({ ...parsed, data: merged });
             setForm(merged);
@@ -162,6 +166,7 @@ export default function SettingsPage() {
             whatsapp: form.whatsapp,
             instagram: form.instagram,
             facebook: form.facebook,
+            paymentLink: form.paymentLink,
           },
         }),
       });
@@ -202,6 +207,7 @@ export default function SettingsPage() {
             <Field label={t.whatsapp} value={form.whatsapp} field="whatsapp" update={update} />
             <Field label={t.instagram} value={form.instagram} field="instagram" update={update} />
             <Field label={t.facebook} value={form.facebook} field="facebook" update={update} />
+            <Field label={t.paymentLink} value={form.paymentLink} field="paymentLink" update={update} />
           </div>
         </section>
 
