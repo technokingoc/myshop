@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { orders, sellers } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { orders, sellers, catalogItems } from "@/lib/schema";
+import { and, desc, eq, gte, ilike, lte, or } from "drizzle-orm";
 import { checkDbReadiness, isMissingTableError } from "@/lib/db-readiness";
 import { withRetry } from "@/lib/retry";
+
+function isDbUnavailable(error: unknown) {
+  const text = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return text.includes("connect") || text.includes("timeout") || text.includes("econn") || text.includes("database");
+}
 
 function handleApiError(error: unknown) {
   if (isMissingTableError(error)) {
@@ -13,17 +18,50 @@ function handleApiError(error: unknown) {
     );
   }
 
-  return NextResponse.json({ error: "Database request failed" }, { status: 500 });
+  if (isDbUnavailable(error)) {
+    return NextResponse.json({ error: "Database is unavailable", errorCode: "DB_UNAVAILABLE" }, { status: 503 });
+  }
+
+  return NextResponse.json({ error: "Database request failed", errorCode: "REQUEST_FAILED" }, { status: 500 });
 }
 
 export async function GET(req: NextRequest) {
   try {
     const db = getDb();
     const sellerId = req.nextUrl.searchParams.get("sellerId");
+    const status = req.nextUrl.searchParams.get("status");
+    const q = req.nextUrl.searchParams.get("q");
+    const from = req.nextUrl.searchParams.get("from");
+    const to = req.nextUrl.searchParams.get("to");
     if (!sellerId) return NextResponse.json({ error: "sellerId required" }, { status: 400 });
 
+    const filters = [eq(orders.sellerId, Number(sellerId))];
+    if (status && ["new", "contacted", "completed"].includes(status)) filters.push(eq(orders.status, status));
+    if (q) {
+      filters.push(or(ilike(orders.customerName, `%${q}%`), ilike(orders.customerContact, `%${q}%`), ilike(orders.message, `%${q}%`))!);
+    }
+    if (from) filters.push(gte(orders.createdAt, new Date(`${from}T00:00:00`)));
+    if (to) filters.push(lte(orders.createdAt, new Date(`${to}T23:59:59`)));
+
     const rows = await withRetry(
-      () => db.select().from(orders).where(eq(orders.sellerId, Number(sellerId))).orderBy(desc(orders.createdAt)),
+      () =>
+        db
+          .select({
+            id: orders.id,
+            customerName: orders.customerName,
+            customerContact: orders.customerContact,
+            message: orders.message,
+            itemId: orders.itemId,
+            status: orders.status,
+            createdAt: orders.createdAt,
+            itemName: catalogItems.name,
+            itemType: catalogItems.type,
+            itemPrice: catalogItems.price,
+          })
+          .from(orders)
+          .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
+          .where(and(...filters))
+          .orderBy(desc(orders.createdAt)),
       3,
     );
 

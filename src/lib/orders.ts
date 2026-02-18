@@ -5,6 +5,8 @@ export type OrderIntent = {
   message: string;
   itemId: number | null;
   itemName: string;
+  itemType?: string;
+  itemPrice?: string;
   storeName: string;
   status: "new" | "contacted" | "completed";
   createdAt: string;

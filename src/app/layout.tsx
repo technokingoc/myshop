@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageSwitch } from "@/components/language-switch";
 import { LanguageProvider } from "@/lib/language";
 import { Footer } from "@/components/footer";
+import { ToastProvider } from "@/components/toast-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,16 +43,18 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} bg-slate-50 text-slate-900 antialiased`}>
         <LanguageProvider>
-          <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+          <ToastProvider>
+            <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
             <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-              <a href="/" className="text-sm font-semibold text-slate-700">MyShop</a>
+              <Link href="/" className="text-sm font-semibold text-slate-700">MyShop</Link>
               <div className="flex items-center gap-3">
                 <LanguageSwitch />
               </div>
             </div>
           </div>
-          {children}
-          <Footer />
+            {children}
+            <Footer />
+          </ToastProvider>
         </LanguageProvider>
       </body>
     </html>

@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { sellers } from "@/lib/schema";
 import { checkDbReadiness, isMissingTableError } from "@/lib/db-readiness";
+import { withRetry } from "@/lib/retry";
+
+function isDbUnavailable(error: unknown) {
+  const text = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return text.includes("connect") || text.includes("timeout") || text.includes("econn") || text.includes("database");
+}
 
 function handleApiError(error: unknown) {
   if (isMissingTableError(error)) {
@@ -11,13 +17,17 @@ function handleApiError(error: unknown) {
     );
   }
 
-  return NextResponse.json({ error: "Database request failed" }, { status: 500 });
+  if (isDbUnavailable(error)) {
+    return NextResponse.json({ error: "Database is unavailable", errorCode: "DB_UNAVAILABLE" }, { status: 503 });
+  }
+
+  return NextResponse.json({ error: "Database request failed", errorCode: "REQUEST_FAILED" }, { status: 500 });
 }
 
 export async function GET() {
   try {
     const db = getDb();
-    const rows = await db.select().from(sellers);
+    const rows = await withRetry(() => db.select().from(sellers), 3);
     return NextResponse.json(rows);
   } catch (error) {
     return handleApiError(error);
@@ -39,20 +49,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "slug and name are required" }, { status: 400 });
     }
 
-    const [row] = await db
-      .insert(sellers)
-      .values({
-        slug,
-        name,
-        description: description || "",
-        ownerName: ownerName || "",
-        businessType: businessType || "Retail",
-        currency: currency || "USD",
-        city: city || "",
-        logoUrl: logoUrl || "",
-        socialLinks: socialLinks || {},
-      })
-      .returning();
+    const [row] = await withRetry(
+      () =>
+        db
+          .insert(sellers)
+          .values({
+            slug,
+            name,
+            description: description || "",
+            ownerName: ownerName || "",
+            businessType: businessType || "Retail",
+            currency: currency || "USD",
+            city: city || "",
+            logoUrl: logoUrl || "",
+            socialLinks: socialLinks || {},
+          })
+          .returning(),
+      3,
+    );
 
     return NextResponse.json(row, { status: 201 });
   } catch (error) {

@@ -7,6 +7,8 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { DbMigrationGuard } from "@/components/db-migration-guard";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 import { Inbox, CheckCircle, Phone, Clock, X, Search, Download } from "lucide-react";
+import { useToast } from "@/components/toast-provider";
+import { getDict } from "@/lib/i18n";
 
 type DbOrder = {
   id: number;
@@ -14,69 +16,15 @@ type DbOrder = {
   customerContact: string;
   message: string;
   itemId: number | null;
+  itemName: string | null;
+  itemType: string | null;
+  itemPrice: string | null;
   status: "new" | "contacted" | "completed";
   createdAt: string;
 };
 
 type DbHealth = { ok: boolean; connected: boolean; missingTables: string[]; errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY" };
 type StatusNote = { text: string; createdAt: string };
-
-const dict = {
-  en: {
-    title: "Orders",
-    subtitle: "Manage customer order requests and booking intents.",
-    empty: "No orders yet. When customers submit order requests from your storefront, they'll appear here.",
-    item: "Item",
-    new: "New",
-    contacted: "Contacted",
-    completed: "Completed",
-    markContacted: "Mark contacted",
-    markCompleted: "Mark completed",
-    filterAll: "All",
-    filterNew: "New",
-    filterContacted: "Contacted",
-    filterCompleted: "Completed",
-    viewDetails: "View details",
-    detailsTitle: "Order details",
-    close: "Close",
-    statusNotes: "Status notes",
-    notePlaceholder: "Add a note (e.g. customer asked for delivery tomorrow)",
-    saveNote: "Save note",
-    noNotes: "No status notes yet.",
-    search: "Search customer",
-    from: "From",
-    to: "To",
-    exportCsv: "Export CSV",
-    dbBanner: "Could not sync with database. Showing local orders.",
-  },
-  pt: {
-    title: "Pedidos",
-    subtitle: "Gerir pedidos e intenções de reserva dos clientes.",
-    empty: "Ainda não há pedidos. Quando os clientes submeterem pedidos na sua loja, aparecerão aqui.",
-    item: "Item",
-    new: "Novo",
-    contacted: "Contactado",
-    completed: "Concluído",
-    markContacted: "Marcar contactado",
-    markCompleted: "Marcar concluído",
-    filterAll: "Todos",
-    filterNew: "Novos",
-    filterContacted: "Contactados",
-    filterCompleted: "Concluídos",
-    viewDetails: "Ver detalhes",
-    detailsTitle: "Detalhes do pedido",
-    close: "Fechar",
-    statusNotes: "Notas de estado",
-    notePlaceholder: "Adicionar nota (ex.: cliente pediu entrega amanhã)",
-    saveNote: "Guardar nota",
-    noNotes: "Ainda não existem notas de estado.",
-    search: "Pesquisar cliente",
-    from: "De",
-    to: "Até",
-    exportCsv: "Exportar CSV",
-    dbBanner: "Não foi possível sincronizar com a base de dados. A mostrar pedidos locais.",
-  },
-};
 
 const statusColors = {
   new: "bg-blue-100 text-blue-700",
@@ -92,7 +40,11 @@ const statusIcons = {
 
 export default function OrdersPage() {
   const { lang } = useLanguage();
-  const t = dict[lang];
+  const t = getDict(lang).orders;
+  const common = getDict(lang).common;
+  const toastText = getDict(lang).toast;
+  const toast = useToast();
+
   const [orders, setOrders] = useState<OrderIntent[]>([]);
   const [filter, setFilter] = useState<"all" | "new" | "contacted" | "completed">("all");
   const [search, setSearch] = useState("");
@@ -104,7 +56,6 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<OrderIntent | null>(null);
   const [notesByOrder, setNotesByOrder] = useState<Record<string, StatusNote[]>>({});
   const [noteText, setNoteText] = useState("");
-  const [banner, setBanner] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     const health = await fetch("/api/health/db").then((r) => r.json()).catch(() => null);
@@ -126,7 +77,7 @@ export default function OrdersPage() {
     }
 
     try {
-      const rows = await fetchJsonWithRetry<DbOrder[]>(`/api/orders?sellerId=${id}`);
+      const rows = await fetchJsonWithRetry<DbOrder[]>(`/api/orders?sellerId=${id}`, undefined, 3, "orders:list");
       setOrders(
         rows.map((o) => ({
           id: String(o.id),
@@ -134,16 +85,17 @@ export default function OrdersPage() {
           customerContact: o.customerContact,
           message: o.message || "",
           itemId: o.itemId,
-          itemName: "",
+          itemName: o.itemName || "",
+          itemType: o.itemType || "",
+          itemPrice: o.itemPrice || "",
           storeName: "",
           status: o.status,
           createdAt: o.createdAt,
         })),
       );
-      setBanner(null);
     } catch {
       setOrders(getOrders());
-      setBanner(t.dbBanner);
+      toast.info(t.dbBanner);
     } finally {
       setHydrated(true);
     }
@@ -179,16 +131,16 @@ export default function OrdersPage() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: Number(id), status }),
-        });
-        setBanner(null);
+        }, 3, "orders:update-status");
       } catch {
-        setBanner(t.dbBanner);
+        toast.info(toastText.syncFailed);
       }
     }
 
     updateOrderStatus(id, status);
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
     setSelectedOrder((prev) => (prev?.id === id ? { ...prev, status } : prev));
+    toast.success(toastText.statusUpdated);
   };
 
   const addNote = () => {
@@ -202,19 +154,23 @@ export default function OrdersPage() {
     };
     persistNotes(next);
     setNoteText("");
+    toast.success(toastText.noteSaved);
   };
 
   const exportCsv = () => {
-    const header = ["id", "customerName", "customerContact", "status", "createdAt", "message"];
-    const rows = filtered.map((o) => [o.id, o.customerName, o.customerContact, o.status, o.createdAt, (o.message || "").replaceAll('"', '""')]);
-    const csv = [header.join(","), ...rows.map((r) => r.map((v) => `"${String(v)}"`).join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!sellerId) return;
+    const params = new URLSearchParams({ sellerId: String(sellerId) });
+    if (filter !== "all") params.set("status", filter);
+    if (search.trim()) params.set("q", search.trim());
+    if (fromDate) params.set("from", fromDate);
+    if (toDate) params.set("to", toDate);
+
+    const url = `/api/orders/export.csv?${params.toString()}`;
+    try {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error(common.exportFailed);
+    }
   };
 
   if (!hydrated) return null;
@@ -233,8 +189,6 @@ export default function OrdersPage() {
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
       </div>
-
-      {banner && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{banner}</div>}
 
       <div className="mb-4 grid gap-2 md:grid-cols-4">
         <label className="md:col-span-2 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><Search className="h-4 w-4 text-slate-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.search} className="w-full outline-none" /></label>
@@ -258,7 +212,7 @@ export default function OrdersPage() {
             return (
               <div key={order.id} className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-semibold text-slate-900">{order.customerName}</p><p className="text-sm text-slate-600">{order.customerContact}</p></div><span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[order.status]}`}><StatusIcon className="h-3 w-3" />{t[order.status]}</span></div>
-                {order.itemName && <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t.item}:</span> {order.itemName}</p>}
+                {order.itemName && <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t.item}:</span> {order.itemName} {order.itemType ? `• ${order.itemType}` : ""} {order.itemPrice ? `• ${t.price}: ${order.itemPrice}` : ""}</p>}
                 {order.message && <p className="mt-1 text-sm text-slate-600">{order.message}</p>}
                 <div className="mt-3 flex flex-wrap items-center gap-2"><span className="text-xs text-slate-400">{new Date(order.createdAt).toLocaleString()}</span><span className="flex-1" /><button onClick={() => setSelectedOrder(order)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">{t.viewDetails}</button>{order.status === "new" && <button onClick={() => handleStatus(order.id, "contacted")} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">{t.markContacted}</button>}{(order.status === "new" || order.status === "contacted") && <button onClick={() => handleStatus(order.id, "completed")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700">{t.markCompleted}</button>}</div>
               </div>
@@ -272,6 +226,13 @@ export default function OrdersPage() {
           <div className="ml-auto h-full w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between"><h2 className="font-semibold text-slate-900">{t.detailsTitle}</h2><button onClick={() => setSelectedOrder(null)} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100"><X className="h-4 w-4" /></button></div>
             <p className="font-semibold text-slate-900">{selectedOrder.customerName}</p><p className="text-sm text-slate-600">{selectedOrder.customerContact}</p><p className="mt-2 text-sm text-slate-600">{selectedOrder.message || "-"}</p><p className="mt-1 text-xs text-slate-400">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
+            {!!selectedOrder.itemName && (
+              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm text-slate-700">
+                <p><span className="font-medium">{t.item}:</span> {selectedOrder.itemName}</p>
+                {selectedOrder.itemType && <p><span className="font-medium">{t.type}:</span> {selectedOrder.itemType}</p>}
+                {selectedOrder.itemPrice && <p><span className="font-medium">{t.price}:</span> {selectedOrder.itemPrice}</p>}
+              </div>
+            )}
             <div className="mt-4 flex gap-2">{selectedOrder.status !== "contacted" && selectedOrder.status !== "completed" && <button onClick={() => handleStatus(selectedOrder.id, "contacted")} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">{t.markContacted}</button>}{selectedOrder.status !== "completed" && <button onClick={() => handleStatus(selectedOrder.id, "completed")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white">{t.markCompleted}</button>}</div>
             <div className="mt-6"><h3 className="text-sm font-semibold text-slate-900">{t.statusNotes}</h3><div className="mt-2 flex gap-2"><input value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder={t.notePlaceholder} className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" /><button onClick={addNote} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">{t.saveNote}</button></div><div className="mt-3 space-y-2">{(notesByOrder[selectedOrder.id] || []).length === 0 ? <p className="text-sm text-slate-500">{t.noNotes}</p> : (notesByOrder[selectedOrder.id] || []).map((note, idx) => (<div key={`${selectedOrder.id}-${idx}`} className="rounded-lg border border-slate-200 bg-slate-50 p-2"><p className="text-sm text-slate-700">{note.text}</p><p className="mt-1 text-xs text-slate-400">{new Date(note.createdAt).toLocaleString()}</p></div>))}</div></div>
             <button onClick={() => setSelectedOrder(null)} className="mt-6 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">{t.close}</button>

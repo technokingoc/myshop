@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/language";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { Save, CheckCircle } from "lucide-react";
+import { Save } from "lucide-react";
+import { useToast } from "@/components/toast-provider";
+import { getDict } from "@/lib/i18n";
+import { fetchJsonWithRetry } from "@/lib/api-client";
 
 const STORAGE_SETUP = "myshop_setup_v2";
 
@@ -24,59 +27,13 @@ type SetupData = {
 
 type SetupPersisted = { step: number; done: boolean; data: SetupData };
 
-const dict = {
-  en: {
-    title: "Settings",
-    subtitle: "Update your store identity and business details.",
-    storeName: "Store name",
-    description: "Store description",
-    descriptionPh: "Tell customers about your business...",
-    currency: "Currency",
-    logoUrl: "Logo URL",
-    logoUrlPh: "https://example.com/logo.png",
-    ownerName: "Owner name",
-    city: "City",
-    whatsapp: "WhatsApp link",
-    instagram: "Instagram link",
-    facebook: "Facebook link",
-    paymentLink: "Payment link",
-    save: "Save changes",
-    saved: "Changes saved!",
-    notSetup: "Complete store setup first.",
-    goSetup: "Go to setup",
-    storeIdentity: "Store identity",
-    socialLinks: "Social links",
-  },
-  pt: {
-    title: "Configurações",
-    subtitle: "Atualize a identidade da loja e dados do negócio.",
-    storeName: "Nome da loja",
-    description: "Descrição da loja",
-    descriptionPh: "Conte aos clientes sobre o seu negócio...",
-    currency: "Moeda",
-    logoUrl: "URL do logotipo",
-    logoUrlPh: "https://exemplo.com/logo.png",
-    ownerName: "Nome do proprietário",
-    city: "Cidade",
-    whatsapp: "Link WhatsApp",
-    instagram: "Link Instagram",
-    facebook: "Link Facebook",
-    paymentLink: "Link de pagamento",
-    save: "Guardar alterações",
-    saved: "Alterações guardadas!",
-    notSetup: "Conclua a configuração da loja primeiro.",
-    goSetup: "Ir para configuração",
-    storeIdentity: "Identidade da loja",
-    socialLinks: "Links sociais",
-  },
-};
-
 export default function SettingsPage() {
   const { lang } = useLanguage();
-  const t = dict[lang];
+  const t = getDict(lang).settings;
+  const toastText = getDict(lang).toast;
+  const toast = useToast();
   const [setup, setSetup] = useState<SetupPersisted | null>(null);
   const [form, setForm] = useState<SetupData | null>(null);
-  const [saved, setSaved] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -141,7 +98,6 @@ export default function SettingsPage() {
 
   const update = (key: keyof SetupData, value: string) => {
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
-    setSaved(false);
   };
 
   const handleSave = async () => {
@@ -151,7 +107,7 @@ export default function SettingsPage() {
     localStorage.setItem(STORAGE_SETUP, JSON.stringify(updated));
 
     try {
-      await fetch(`/api/sellers/${form.storefrontSlug}`, {
+      await fetchJsonWithRetry(`/api/sellers/${form.storefrontSlug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -169,12 +125,13 @@ export default function SettingsPage() {
             paymentLink: form.paymentLink,
           },
         }),
-      });
-    } catch {}
+      }, 3, "settings:save");
+    } catch {
+      toast.info(toastText.syncFailed);
+    }
 
     setSetup(updated);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    toast.success(toastText.saved);
   };
 
   return (
@@ -216,12 +173,6 @@ export default function SettingsPage() {
             <Save className="h-4 w-4" />
             {t.save}
           </button>
-          {saved && (
-            <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-              <CheckCircle className="h-4 w-4" />
-              {t.saved}
-            </span>
-          )}
         </div>
       </div>
     </DashboardShell>

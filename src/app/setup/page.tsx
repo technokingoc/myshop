@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
+import { useToast } from "@/components/toast-provider";
+import { getDict } from "@/lib/i18n";
+import { fetchJsonWithRetry } from "@/lib/api-client";
 import {
   Store,
   ShoppingBag,
@@ -357,6 +360,9 @@ export default function Home() {
   })();
 
   const { lang } = useLanguage();
+  const common = getDict(lang).common;
+  const toastText = getDict(lang).toast;
+  const toast = useToast();
   const router = useRouter();
   const [step, setStep] = useState(() => Math.min(3, Math.max(1, initialSetupPersisted?.step || 1)));
   const [done, setDone] = useState(() => Boolean(initialSetupPersisted?.done));
@@ -469,22 +475,32 @@ export default function Home() {
     if (sellerId) {
       try {
         if (editingId !== null) {
-          const res = await fetch("/api/catalog", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: editingId, ...catalogForm }),
-          });
-          const row = await res.json();
+          const row = await fetchJsonWithRetry<{ id?: number }>(
+            "/api/catalog",
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: editingId, ...catalogForm }),
+            },
+            3,
+            "setup:catalog:update",
+          );
           setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm, id: row.id ?? editingId } : item)));
           setEditingId(null);
+          toast.success(toastText.updated);
         } else {
-          const res = await fetch("/api/catalog", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sellerId, ...catalogForm }),
-          });
-          const row = await res.json();
+          const row = await fetchJsonWithRetry<{ id?: number }>(
+            "/api/catalog",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sellerId, ...catalogForm }),
+            },
+            3,
+            "setup:catalog:create",
+          );
           setCatalog((prev) => [...prev, { id: row.id ?? (prev.length ? Math.max(...prev.map((i) => i.id)) + 1 : 1), ...catalogForm }]);
+          toast.success(toastText.created);
         }
       } catch {
         if (editingId !== null) {
@@ -494,14 +510,17 @@ export default function Home() {
           const nextId = catalog.length ? Math.max(...catalog.map((i) => i.id)) + 1 : 1;
           setCatalog((prev) => [...prev, { id: nextId, ...catalogForm }]);
         }
+        toast.info(toastText.syncFailed);
       }
     } else {
       if (editingId !== null) {
         setCatalog((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...catalogForm } : item)));
         setEditingId(null);
+        toast.success(toastText.updated);
       } else {
         const nextId = catalog.length ? Math.max(...catalog.map((i) => i.id)) + 1 : 1;
         setCatalog((prev) => [...prev, { id: nextId, ...catalogForm }]);
+        toast.success(toastText.created);
       }
     }
 
@@ -611,6 +630,7 @@ export default function Home() {
     );
 
     setDone(true);
+    toast.success(toastText.saved);
   };
 
   const openIntentModal = (item: CatalogItem) => {
@@ -669,7 +689,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                {lang === "en" ? "Go to Dashboard" : "Ir ao Painel"}
+                {common.goToDashboard}
               </button>
             ) : (
               <a href="#setup" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white">
@@ -824,7 +844,7 @@ export default function Home() {
                   className="ml-2 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
-                  {lang === "en" ? "Dashboard" : "Painel"}
+                  {common.dashboard}
                 </button>
               </div>
             )}
@@ -914,10 +934,13 @@ export default function Home() {
                         if (!window.confirm(t.deleteConfirm)) return;
                         if (sellerId) {
                           try {
-                            await fetch(`/api/catalog?id=${item.id}`, { method: "DELETE" });
-                          } catch {}
+                            await fetchJsonWithRetry(`/api/catalog?id=${item.id}`, { method: "DELETE" }, 3, "setup:catalog:delete");
+                          } catch {
+                            toast.info(toastText.syncFailed);
+                          }
                         }
                         setCatalog((prev) => prev.filter((i) => i.id !== item.id));
+                        toast.success(toastText.deleted);
                       }}
                       className="inline-flex items-center gap-1 rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
                     >

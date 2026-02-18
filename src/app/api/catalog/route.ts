@@ -3,6 +3,12 @@ import { getDb } from "@/lib/db";
 import { catalogItems, sellers } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { checkDbReadiness, isMissingTableError } from "@/lib/db-readiness";
+import { withRetry } from "@/lib/retry";
+
+function isDbUnavailable(error: unknown) {
+  const text = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return text.includes("connect") || text.includes("timeout") || text.includes("econn") || text.includes("database");
+}
 
 function handleApiError(error: unknown) {
   if (isMissingTableError(error)) {
@@ -12,7 +18,11 @@ function handleApiError(error: unknown) {
     );
   }
 
-  return NextResponse.json({ error: "Database request failed" }, { status: 500 });
+  if (isDbUnavailable(error)) {
+    return NextResponse.json({ error: "Database is unavailable", errorCode: "DB_UNAVAILABLE" }, { status: 503 });
+  }
+
+  return NextResponse.json({ error: "Database request failed", errorCode: "REQUEST_FAILED" }, { status: 500 });
 }
 
 export async function GET(req: NextRequest) {
@@ -22,14 +32,14 @@ export async function GET(req: NextRequest) {
     const sellerSlug = req.nextUrl.searchParams.get("sellerSlug");
 
     if (sellerSlug) {
-      const [seller] = await db.select().from(sellers).where(eq(sellers.slug, sellerSlug));
+      const [seller] = await withRetry(() => db.select().from(sellers).where(eq(sellers.slug, sellerSlug)), 3);
       if (!seller) return NextResponse.json([]);
-      const rows = await db.select().from(catalogItems).where(eq(catalogItems.sellerId, seller.id));
+      const rows = await withRetry(() => db.select().from(catalogItems).where(eq(catalogItems.sellerId, seller.id)), 3);
       return NextResponse.json(rows);
     }
 
     if (sellerId) {
-      const rows = await db.select().from(catalogItems).where(eq(catalogItems.sellerId, Number(sellerId)));
+      const rows = await withRetry(() => db.select().from(catalogItems).where(eq(catalogItems.sellerId, Number(sellerId))), 3);
       return NextResponse.json(rows);
     }
 
@@ -54,19 +64,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "sellerId and name required" }, { status: 400 });
     }
 
-    const [row] = await db
-      .insert(catalogItems)
-      .values({
-        sellerId: Number(sellerId),
-        name,
-        type: type || "Product",
-        price: String(price || "0"),
-        status: status || "Draft",
-        imageUrl: imageUrl || "",
-        shortDescription: shortDescription || "",
-        category: category || "",
-      })
-      .returning();
+    const [row] = await withRetry(
+      () =>
+        db
+          .insert(catalogItems)
+          .values({
+            sellerId: Number(sellerId),
+            name,
+            type: type || "Product",
+            price: String(price || "0"),
+            status: status || "Draft",
+            imageUrl: imageUrl || "",
+            shortDescription: shortDescription || "",
+            category: category || "",
+          })
+          .returning(),
+      3,
+    );
 
     return NextResponse.json(row, { status: 201 });
   } catch (error) {
@@ -96,11 +110,10 @@ export async function PUT(req: NextRequest) {
     if (updates.shortDescription !== undefined) setObj.shortDescription = updates.shortDescription;
     if (updates.category !== undefined) setObj.category = updates.category;
 
-    const [row] = await db
-      .update(catalogItems)
-      .set(setObj)
-      .where(eq(catalogItems.id, Number(id)))
-      .returning();
+    const [row] = await withRetry(
+      () => db.update(catalogItems).set(setObj).where(eq(catalogItems.id, Number(id))).returning(),
+      3,
+    );
 
     return NextResponse.json(row);
   } catch (error) {
@@ -118,7 +131,7 @@ export async function DELETE(req: NextRequest) {
     const db = getDb();
     const id = req.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    await db.delete(catalogItems).where(eq(catalogItems.id, Number(id)));
+    await withRetry(() => db.delete(catalogItems).where(eq(catalogItems.id, Number(id))), 3);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return handleApiError(error);
