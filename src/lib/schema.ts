@@ -16,6 +16,8 @@ export const sellers = pgTable("sellers", {
     facebook?: string;
   }>().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  email: varchar("email", { length: 256 }).unique(),
+  passwordHash: text("password_hash"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

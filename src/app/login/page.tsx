@@ -2,43 +2,44 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRememberedEmail, rememberEmail, setSession } from "@/lib/auth";
+import { getRememberedEmail, rememberEmail } from "@/lib/auth";
 import { useLanguage } from "@/lib/language";
+import Link from "next/link";
 
 const dict = {
   en: {
     title: "Seller login",
     subtitle: "Access your seller workspace",
-    authModeTitle: "Authentication mode",
-    authModeText: "Local/dev mode: sign-in is stored in this browser for testing. No external auth provider is used.",
     email: "Email",
-    emailHint: "Use the email you use for your seller setup.",
+    emailPh: "name@domain.com",
     password: "Password",
-    passwordHint: "Minimum 6 characters.",
+    passwordPh: "Enter your password",
     remember: "Remember email",
-    login: "Login",
+    login: "Log in",
     loading: "Signing in...",
+    noAccount: "Don't have an account?",
+    register: "Create one",
     invalidEmail: "Please enter a valid email address.",
-    invalidPassword: "Password must have at least 6 characters.",
-    continueSetup: "Continue to setup",
-    goStorefront: "Go to storefront",
+    invalidPassword: "Password is required.",
+    authFailed: "Invalid email or password.",
+    genericError: "Something went wrong. Please try again.",
   },
   pt: {
     title: "Login do vendedor",
     subtitle: "Aceda ao seu espaço de vendedor",
-    authModeTitle: "Modo de autenticação",
-    authModeText: "Modo local/dev: o login fica guardado neste browser para testes. Não há provedor externo de autenticação.",
     email: "Email",
-    emailHint: "Use o email que usa na configuração da loja.",
+    emailPh: "nome@dominio.com",
     password: "Palavra-passe",
-    passwordHint: "Mínimo de 6 caracteres.",
+    passwordPh: "Introduza a sua palavra-passe",
     remember: "Lembrar email",
     login: "Entrar",
     loading: "A entrar...",
+    noAccount: "Não tem conta?",
+    register: "Criar conta",
     invalidEmail: "Introduza um endereço de email válido.",
-    invalidPassword: "A palavra-passe deve ter pelo menos 6 caracteres.",
-    continueSetup: "Continuar para configuração",
-    goStorefront: "Ir para a loja",
+    invalidPassword: "A palavra-passe é obrigatória.",
+    authFailed: "Email ou palavra-passe inválidos.",
+    genericError: "Algo correu mal. Tente novamente.",
   },
 };
 
@@ -52,13 +53,8 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const rawSetup = typeof window !== "undefined" ? localStorage.getItem("myshop_setup_v2") : null;
-  let sellerSlug = "";
-  try {
-    sellerSlug = rawSetup ? JSON.parse(rawSetup)?.data?.storefrontSlug || "" : "";
-  } catch {}
 
   useEffect(() => {
     setEmail(getRememberedEmail());
@@ -66,33 +62,44 @@ export default function LoginPage() {
 
   const validate = () => {
     let ok = true;
-    if (!email.includes("@")) {
-      setEmailError(t.invalidEmail);
-      ok = false;
-    } else {
-      setEmailError("");
-    }
-
-    if (password.length < 6) {
-      setPasswordError(t.invalidPassword);
-      ok = false;
-    } else {
-      setPasswordError("");
-    }
-
+    if (!email.includes("@")) { setEmailError(t.invalidEmail); ok = false; } else setEmailError("");
+    if (!password) { setPasswordError(t.invalidPassword); ok = false; } else setPasswordError("");
     return ok;
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setLoading(true);
-    setSession({ email, sellerSlug: sellerSlug || undefined, loggedAt: new Date().toISOString() });
-    if (remember) rememberEmail(email);
+    setApiError("");
 
-    const redirect = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
-    router.replace(redirect || "/dashboard");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setApiError(data.error || t.authFailed);
+        setLoading(false);
+        return;
+      }
+
+      if (remember) rememberEmail(email);
+
+      const redirect = typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("redirect")
+        : null;
+      router.replace(redirect || "/dashboard");
+    } catch {
+      setApiError(t.genericError);
+      setLoading(false);
+    }
   };
 
   return (
@@ -101,37 +108,33 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
 
-        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm">
-          <p className="font-medium text-blue-700">{t.authModeTitle}</p>
-          <p className="mt-1 text-blue-700/90">{t.authModeText}</p>
-        </div>
+        {apiError && (
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{apiError}</div>
+        )}
 
         <form onSubmit={onSubmit} className="mt-5 grid gap-3">
-          <label className="text-sm">
+          <label className="grid gap-1 text-sm">
             <span className="text-slate-700">{t.email}</span>
             <input
-              className={`mt-1 w-full rounded-lg border px-3 py-2 ${emailError ? "border-rose-400" : "border-slate-300"}`}
+              type="email"
+              className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${emailError ? "border-rose-400" : "border-slate-300"}`}
               value={email}
-              placeholder="name@domain.com"
-              onBlur={validate}
+              placeholder={t.emailPh}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <span className="mt-1 block text-xs text-slate-500">{t.emailHint}</span>
-            {emailError && <span className="mt-1 block text-xs text-rose-600">{emailError}</span>}
+            {emailError && <span className="text-xs text-rose-600">{emailError}</span>}
           </label>
 
-          <label className="text-sm">
+          <label className="grid gap-1 text-sm">
             <span className="text-slate-700">{t.password}</span>
             <input
               type="password"
-              className={`mt-1 w-full rounded-lg border px-3 py-2 ${passwordError ? "border-rose-400" : "border-slate-300"}`}
+              className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${passwordError ? "border-rose-400" : "border-slate-300"}`}
               value={password}
-              placeholder="******"
-              onBlur={validate}
+              placeholder={t.passwordPh}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <span className="mt-1 block text-xs text-slate-500">{t.passwordHint}</span>
-            {passwordError && <span className="mt-1 block text-xs text-rose-600">{passwordError}</span>}
+            {passwordError && <span className="text-xs text-rose-600">{passwordError}</span>}
           </label>
 
           <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -139,15 +142,15 @@ export default function LoginPage() {
             {t.remember}
           </label>
 
-          <button disabled={loading} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+          <button disabled={loading} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
             {loading ? t.loading : t.login}
           </button>
         </form>
 
-        <div className="mt-4 flex flex-wrap gap-3 text-sm">
-          <a href="/setup" className="text-blue-600 underline underline-offset-2">{t.continueSetup}</a>
-          <a href={sellerSlug ? `/s/${sellerSlug}` : "/"} className="text-blue-600 underline underline-offset-2">{t.goStorefront}</a>
-        </div>
+        <p className="mt-4 text-center text-sm text-slate-600">
+          {t.noAccount}{" "}
+          <Link href="/register" className="text-blue-600 underline underline-offset-2">{t.register}</Link>
+        </p>
       </div>
     </main>
   );

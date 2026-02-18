@@ -1,32 +1,36 @@
+// Cookie-based auth session utilities
+
 export type AuthSession = {
+  sellerId: number;
   email: string;
-  sellerSlug?: string;
-  loggedAt: string;
+  sellerSlug: string;
+  storeName: string;
 };
 
-const KEY = "myshop_auth_v1";
-
-export function getSession(): AuthSession | null {
-  if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(KEY);
-  if (!raw) return null;
+// Client-side: fetch session from API
+export async function fetchSession(): Promise<AuthSession | null> {
   try {
-    return JSON.parse(raw) as AuthSession;
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.session ?? null;
   } catch {
     return null;
   }
 }
 
-export function setSession(session: AuthSession) {
-  localStorage.setItem(KEY, JSON.stringify(session));
+// Legacy compat — kept for components that still call these
+export function getSession(): AuthSession | null {
+  return null; // Now cookie-based, use fetchSession() instead
 }
 
 export function clearSession() {
-  localStorage.removeItem(KEY);
+  // Will be handled via /api/auth/logout
+  fetch("/api/auth/logout", { method: "POST", credentials: "include" });
 }
 
 export function rememberEmail(email: string) {
-  localStorage.setItem("myshop_last_email", email);
+  if (typeof window !== "undefined") localStorage.setItem("myshop_last_email", email);
 }
 
 export function getRememberedEmail() {

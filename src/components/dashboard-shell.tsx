@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
-import { clearSession } from "@/lib/auth";
+import { clearSession, fetchSession, type AuthSession } from "@/lib/auth";
 
 type SetupData = {
   storeName: string;
@@ -201,10 +201,29 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<LiveEvent[]>([]);
 
   useEffect(() => {
+    // Try localStorage first for legacy setup data
     try {
       const raw = localStorage.getItem(STORAGE_SETUP);
       if (raw) setSetup(JSON.parse(raw));
     } catch {}
+    // Also fetch from auth session for cookie-based auth
+    fetchSession().then((session) => {
+      if (session) {
+        setSetup((prev) => {
+          const base = prev ?? { step: 4, done: true, data: { storeName: "", storefrontSlug: "", ownerName: "" } };
+          return {
+            ...base,
+            sellerId: session.sellerId,
+            data: {
+              ...base.data,
+              storeName: base.data.storeName || session.storeName || "",
+              storefrontSlug: base.data.storefrontSlug || session.sellerSlug || "",
+              ownerName: base.data.ownerName || "",
+            },
+          };
+        });
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -375,8 +394,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <button
-                  onClick={() => {
-                    clearSession();
+                  onClick={async () => {
+                    await clearSession();
                     window.location.href = "/login";
                   }}
                   className="inline-flex h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
