@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/language";
 const dict = {
   en: {
     home: "Home",
+    stores: "Stores",
     pricing: "Pricing",
     login: "Login",
     register: "Register",
@@ -18,6 +19,7 @@ const dict = {
   },
   pt: {
     home: "Início",
+    stores: "Lojas",
     pricing: "Preços",
     login: "Entrar",
     register: "Criar conta",
@@ -50,6 +52,7 @@ export function PublicHeader() {
 
   const navLinks = [
     { href: "/", label: t.home },
+    { href: "/stores", label: t.stores },
     { href: "/pricing", label: t.pricing },
   ];
 

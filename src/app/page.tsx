@@ -1,167 +1,264 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language";
-import { Store, Share2, Zap, ArrowRight, Check, Sparkles } from "lucide-react";
+import { StoreCard } from "@/components/store-card";
+import { Footer } from "@/components/footer";
+import {
+  ArrowRight,
+  UserPlus,
+  Package,
+  Rocket,
+  Store,
+  ShoppingBag,
+  ClipboardCheck,
+  Users,
+} from "lucide-react";
 
 const dict = {
   en: {
-    heroBadge: "Built for informal sellers & micro businesses",
-    heroTitle: "A premium storefront presence, ready in minutes",
-    heroSub:
-      "MyShop helps small sellers build trusted online storefronts, organize products, and capture order intent with a clean, professional customer experience.",
-    heroCta: "Get started free",
-    heroSecondary: "See pricing",
-    vpTitle: "Everything you need to sell online",
-    vpSub: "Simple tools with professional execution.",
-    vp1Title: "Premium storefront",
-    vp1Desc: "Launch a clean product catalog with images, descriptions, pricing and clear ordering actions.",
-    vp2Title: "Social-first conversion",
-    vp2Desc: "Connect WhatsApp, Instagram and Facebook so buyers can contact you instantly.",
-    vp3Title: "Fast onboarding",
-    vp3Desc: "Set up your store in guided steps without technical complexity.",
-    pricingTitle: "Simple, transparent pricing",
-    pricingSub: "Start free. Upgrade only when growth demands it.",
-    free: "Free",
-    freePrice: "$0",
-    freePeriod: "forever",
-    freeBullets: ["1 storefront", "Up to 10 products", "Social CTA buttons", "Shareable link"],
-    starter: "Starter",
-    starterPrice: "$9",
-    starterPeriod: "/ month",
-    starterBullets: ["Up to 50 products/services", "Custom slug", "PayPal link", "Priority support"],
-    starterBadge: "Popular",
-    pro: "Pro",
-    proPrice: "$29",
-    proPeriod: "/ month",
-    proBullets: ["Unlimited storefronts", "Unlimited products/services", "Custom domain", "Analytics + dedicated support"],
-    ctaTitle: "Ready to start selling?",
-    ctaSub: "Join sellers who want a cleaner, more trusted online presence.",
-    ctaBtn: "Create your store",
+    heroTitle: "Your store, online in minutes",
+    heroSub: "Create a professional storefront, showcase products, and connect with customers — no technical skills needed.",
+    heroCta: "Create your store",
+    heroBrowse: "Browse stores",
+    featuredTitle: "Featured Stores",
+    featuredSub: "Discover stores already thriving on MyShop",
+    howTitle: "How it works",
+    howSub: "Three simple steps to start selling",
+    step1Title: "Create your account",
+    step1Desc: "Sign up in seconds with just your name and email.",
+    step2Title: "Add your products",
+    step2Desc: "Upload photos, set prices, and organize your catalog.",
+    step3Title: "Start selling",
+    step3Desc: "Share your store link and receive orders instantly.",
+    statsTitle: "Trusted by sellers everywhere",
+    statSellers: "Sellers",
+    statProducts: "Products",
+    statOrders: "Orders fulfilled",
+    viewAll: "View all stores",
+    noStores: "Be the first to create a store!",
   },
   pt: {
-    heroBadge: "Feito para vendedores informais e micro negócios",
-    heroTitle: "Uma presença premium para a sua loja, pronta em minutos",
-    heroSub:
-      "O MyShop ajuda pequenos vendedores a criar vitrines online confiáveis, organizar produtos e captar intenções de compra com uma experiência profissional.",
-    heroCta: "Começar grátis",
-    heroSecondary: "Ver preços",
-    vpTitle: "Tudo o que precisa para vender online",
-    vpSub: "Ferramentas simples com execução profissional.",
-    vp1Title: "Vitrine premium",
-    vp1Desc: "Lance um catálogo limpo com imagens, descrições, preços e ações claras de pedido.",
-    vp2Title: "Conversão social",
-    vp2Desc: "Conecte WhatsApp, Instagram e Facebook para contacto imediato dos clientes.",
-    vp3Title: "Onboarding rápido",
-    vp3Desc: "Configure a sua loja em passos guiados sem complexidade técnica.",
-    pricingTitle: "Preços simples e transparentes",
-    pricingSub: "Comece grátis. Faça upgrade apenas quando crescer.",
-    free: "Grátis",
-    freePrice: "$0",
-    freePeriod: "para sempre",
-    freeBullets: ["1 vitrine", "Até 10 produtos", "Botões CTA sociais", "Link partilhável"],
-    starter: "Inicial",
-    starterPrice: "$9",
-    starterPeriod: "/ mês",
-    starterBullets: ["Até 50 produtos/serviços", "Slug personalizado", "Link PayPal", "Suporte prioritário"],
-    starterBadge: "Popular",
-    pro: "Pro",
-    proPrice: "$29",
-    proPeriod: "/ mês",
-    proBullets: ["Vitrines ilimitadas", "Produtos/serviços ilimitados", "Domínio próprio", "Analytics + suporte dedicado"],
-    ctaTitle: "Pronto para começar a vender?",
-    ctaSub: "Junte-se a vendedores que querem uma presença online mais confiável.",
-    ctaBtn: "Criar a sua loja",
+    heroTitle: "Sua loja, online em minutos",
+    heroSub: "Crie uma vitrine profissional, mostre produtos e conecte-se com clientes — sem precisar de habilidades técnicas.",
+    heroCta: "Criar sua loja",
+    heroBrowse: "Explorar lojas",
+    featuredTitle: "Lojas em Destaque",
+    featuredSub: "Descubra lojas que já prosperam no MyShop",
+    howTitle: "Como funciona",
+    howSub: "Três passos simples para começar a vender",
+    step1Title: "Crie sua conta",
+    step1Desc: "Cadastre-se em segundos com seu nome e email.",
+    step2Title: "Adicione produtos",
+    step2Desc: "Envie fotos, defina preços e organize o catálogo.",
+    step3Title: "Comece a vender",
+    step3Desc: "Compartilhe o link da loja e receba pedidos instantaneamente.",
+    statsTitle: "Confiado por vendedores em todo lugar",
+    statSellers: "Vendedores",
+    statProducts: "Produtos",
+    statOrders: "Pedidos realizados",
+    viewAll: "Ver todas as lojas",
+    noStores: "Seja o primeiro a criar uma loja!",
   },
 };
 
-export default function LandingPage() {
+interface StoreData {
+  slug: string;
+  name: string;
+  description?: string;
+  city?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  businessType?: string;
+  productCount: number;
+  avgRating: number;
+  reviewCount: number;
+}
+
+interface Stats {
+  sellers: number;
+  products: number;
+  orders: number;
+}
+
+export default function HomePage() {
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
+  const [stores, setStores] = useState<StoreData[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
-  const valueProps = [
-    { icon: Store, title: t.vp1Title, desc: t.vp1Desc },
-    { icon: Share2, title: t.vp2Title, desc: t.vp2Desc },
-    { icon: Zap, title: t.vp3Title, desc: t.vp3Desc },
-  ];
+  useEffect(() => {
+    fetch("/api/stores?limit=6")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d) {
+          setStores(d.stores || []);
+          setCategories(d.categories || []);
+        }
+      })
+      .catch(() => {});
 
-  const plans = [
-    { name: t.free, price: t.freePrice, period: t.freePeriod, bullets: t.freeBullets, badge: null, accent: false },
-    { name: t.starter, price: t.starterPrice, period: t.starterPeriod, bullets: t.starterBullets, badge: t.starterBadge, accent: true },
-    { name: t.pro, price: t.proPrice, period: t.proPeriod, bullets: t.proBullets, badge: null, accent: false },
+    fetch("/api/stores/stats")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setStats(d))
+      .catch(() => {});
+  }, []);
+
+  const steps = [
+    { icon: UserPlus, title: t.step1Title, desc: t.step1Desc },
+    { icon: Package, title: t.step2Title, desc: t.step2Desc },
+    { icon: Rocket, title: t.step3Title, desc: t.step3Desc },
   ];
 
   return (
     <div className="min-h-screen text-slate-900">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/60 via-white to-white">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.12),transparent)]" />
+        <div className="relative mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-24">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+            {t.heroTitle}
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            {t.heroSub}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/register"
+              className="ui-btn ui-btn-primary"
+            >
+              {t.heroCta}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href="#stores"
+              className="ui-btn ui-btn-secondary"
+            >
+              {t.heroBrowse}
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Bar */}
+      {stats && (stats.sellers > 0 || stats.products > 0) && (
+        <section className="border-y border-slate-200/60 bg-slate-50/50">
+          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-8 px-4 py-6 sm:gap-16">
+            {[
+              { val: stats.sellers, label: t.statSellers, icon: Users },
+              { val: stats.products, label: t.statProducts, icon: ShoppingBag },
+              { val: stats.orders, label: t.statOrders, icon: ClipboardCheck },
+            ].map((s) => (
+              <div key={s.label} className="flex items-center gap-2.5 text-center">
+                <s.icon className="h-5 w-5 text-indigo-500" />
+                <div>
+                  <p className="text-xl font-bold text-slate-900">{s.val}</p>
+                  <p className="text-xs text-slate-500">{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* How it Works */}
       <section className="ui-section">
-        <div className="ui-container">
-          <div className="ui-panel mx-auto max-w-5xl px-6 py-14 text-center sm:px-10 sm:py-20">
-            <p className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-              <Sparkles className="h-3.5 w-3.5" />
-              {t.heroBadge}
-            </p>
-            <h1 className="ui-h1 mx-auto max-w-4xl">{t.heroTitle}</h1>
-            <p className="ui-lead mx-auto mt-6 max-w-2xl">{t.heroSub}</p>
-            <div className="mt-9 flex flex-wrap justify-center gap-3">
-              <Link href="/setup" className="ui-btn ui-btn-primary">{t.heroCta}<ArrowRight className="h-4 w-4" /></Link>
-              <Link href="/pricing" className="ui-btn ui-btn-secondary">{t.heroSecondary}</Link>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="text-center">
+            <h2 className="ui-h2">{t.howTitle}</h2>
+            <p className="ui-lead mt-2">{t.howSub}</p>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            {steps.map((step, i) => (
+              <div key={step.title} className="relative text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <step.icon className="h-6 w-6" />
+                </div>
+                <span className="mb-1 block text-xs font-semibold text-indigo-500">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="text-sm font-semibold text-slate-900">{step.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Stores */}
+      <section id="stores" className="ui-section pt-0">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="text-center">
+            <h2 className="ui-h2">{t.featuredTitle}</h2>
+            <p className="ui-lead mt-2">{t.featuredSub}</p>
+          </div>
+
+          {/* Category pills */}
+          {categories.length > 1 && (
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {categories.map((cat) => (
+                <Link
+                  key={cat}
+                  href={`/stores?category=${encodeURIComponent(cat!)}`}
+                  className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  {cat}
+                </Link>
+              ))}
             </div>
+          )}
+
+          {stores.length > 0 ? (
+            <>
+              <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {stores.map((store) => (
+                  <StoreCard key={store.slug} store={store} />
+                ))}
+              </div>
+              <div className="mt-8 text-center">
+                <Link
+                  href="/stores"
+                  className="ui-btn ui-btn-secondary"
+                >
+                  {t.viewAll}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="mt-10 text-center">
+              <Store className="mx-auto h-10 w-10 text-slate-300" />
+              <p className="mt-3 text-sm text-slate-500">{t.noStores}</p>
+              <Link href="/register" className="ui-btn ui-btn-primary mt-4">
+                {t.heroCta}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="ui-section pt-0">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <div className="ui-panel px-6 py-12 text-center sm:px-10">
+            <h2 className="ui-h2">{lang === "pt" ? "Pronto para começar a vender?" : "Ready to start selling?"}</h2>
+            <p className="ui-lead mx-auto mt-3 max-w-2xl">
+              {lang === "pt"
+                ? "Junte-se a vendedores que querem uma presença online mais profissional."
+                : "Join sellers who want a cleaner, more professional online presence."}
+            </p>
+            <Link href="/register" className="ui-btn ui-btn-primary mt-8">
+              {t.heroCta}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="ui-section pt-0">
-        <div className="ui-container">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="ui-h2">{t.vpTitle}</h2>
-            <p className="ui-lead mt-3">{t.vpSub}</p>
-          </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {valueProps.map((vp) => (
-              <article key={vp.title} className="ui-card p-6">
-                <div className="mb-4 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-3"><vp.icon className="h-5 w-5 text-slate-700" /></div>
-                <h3 className="text-base font-semibold text-slate-900">{vp.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{vp.desc}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="ui-section pt-0">
-        <div className="ui-container">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="ui-h2">{t.pricingTitle}</h2>
-            <p className="ui-lead mt-3">{t.pricingSub}</p>
-          </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {plans.map((plan) => (
-              <article key={plan.name} className={`relative rounded-2xl border p-6 ${plan.accent ? "border-indigo-200 bg-indigo-50/50" : "border-slate-200 bg-white"}`}>
-                {plan.badge && <span className="absolute -top-3 left-6 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">{plan.badge}</span>}
-                <h3 className="font-semibold text-slate-900">{plan.name}</h3>
-                <p className="mt-2"><span className="text-3xl font-semibold text-slate-900">{plan.price}</span><span className="ml-1 text-sm text-slate-500">{plan.period}</span></p>
-                <ul className="mt-5 space-y-2.5">
-                  {plan.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm text-slate-600"><Check className="mt-0.5 h-4 w-4 text-emerald-600" />{b}</li>
-                  ))}
-                </ul>
-                <Link href="/setup" className={`mt-6 inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold ${plan.accent ? "bg-slate-900 text-white" : "border border-slate-300 text-slate-700"}`}>{t.heroCta}</Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="ui-section pt-0">
-        <div className="ui-container">
-          <div className="ui-panel mx-auto max-w-4xl px-6 py-12 text-center sm:px-10">
-            <h2 className="ui-h2">{t.ctaTitle}</h2>
-            <p className="ui-lead mx-auto mt-3 max-w-2xl">{t.ctaSub}</p>
-            <Link href="/setup" className="ui-btn ui-btn-primary mt-8">{t.ctaBtn}<ArrowRight className="h-4 w-4" /></Link>
-          </div>
-        </div>
-      </section>
+      <Footer />
     </div>
   );
 }
