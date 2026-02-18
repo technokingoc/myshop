@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
+import { OrderForm } from "@/components/order-form";
 import {
   Store,
   MapPin,
@@ -15,6 +16,7 @@ import {
   Clock,
   BarChart3,
   AlertCircle,
+  Send,
 } from "lucide-react";
 
 type CatalogItem = {
@@ -56,6 +58,9 @@ const text = {
     social: "Social links",
     emptyProducts: "No published products yet.",
     emptyServices: "No published services yet.",
+    order: "Order",
+    book: "Book",
+    orderGeneral: "Place an order",
   },
   pt: {
     missing: "Loja não encontrada",
@@ -65,6 +70,9 @@ const text = {
     social: "Links sociais",
     emptyProducts: "Ainda não há produtos publicados.",
     emptyServices: "Ainda não há serviços publicados.",
+    order: "Encomendar",
+    book: "Reservar",
+    orderGeneral: "Fazer um pedido",
   },
 };
 
@@ -114,8 +122,19 @@ export default function StorefrontPage() {
   const publishedProducts = catalog.filter((item) => item.status === "Published" && item.type === "Product");
   const publishedServices = catalog.filter((item) => item.status === "Published" && item.type === "Service");
 
+  const [orderItem, setOrderItem] = useState<{ id: number | null; name: string } | null>(null);
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {orderItem && (
+        <OrderForm
+          storeName={setup.storeName}
+          itemId={orderItem.id}
+          itemName={orderItem.name}
+          onClose={() => setOrderItem(null)}
+        />
+      )}
+
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-3">
           <Store className="h-7 w-7 text-indigo-600" />
@@ -126,6 +145,16 @@ export default function StorefrontPage() {
           <MapPin className="h-4 w-4 text-slate-400" />
           {setup.ownerName || "Owner"} · {setup.businessType || "Business"} · {setup.city || "Maputo"}
         </p>
+
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setOrderItem({ id: null, name: "" })}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            <Send className="h-4 w-4" />
+            {t.orderGeneral}
+          </button>
+        </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <SocialLink label="WhatsApp" href={setup.whatsapp} icon={MessageCircle} />
@@ -140,12 +169,16 @@ export default function StorefrontPage() {
           emptyLabel={t.emptyProducts}
           items={publishedProducts}
           currency={setup.currency || "USD"}
+          ctaLabel={t.order}
+          onOrder={(item) => setOrderItem({ id: item.id, name: item.name })}
         />
         <CatalogSection
           title={t.services}
           emptyLabel={t.emptyServices}
           items={publishedServices}
           currency={setup.currency || "USD"}
+          ctaLabel={t.book}
+          onOrder={(item) => setOrderItem({ id: item.id, name: item.name })}
         />
       </section>
 
@@ -166,11 +199,15 @@ function CatalogSection({
   items,
   emptyLabel,
   currency,
+  ctaLabel,
+  onOrder,
 }: {
   title: string;
   items: CatalogItem[];
   emptyLabel: string;
   currency: string;
+  ctaLabel: string;
+  onOrder: (item: CatalogItem) => void;
 }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -186,9 +223,18 @@ function CatalogSection({
                 <p className="text-xs text-slate-500">{item.category || "General"}</p>
                 <p className="font-semibold text-slate-900">{item.name}</p>
                 <p className="mt-1 text-sm text-slate-600">{item.shortDescription}</p>
-                <p className="mt-2 text-sm font-semibold text-slate-800">
-                  {currency} {item.price}
-                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-800">
+                    {currency} {item.price}
+                  </p>
+                  <button
+                    onClick={() => onOrder(item)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                  >
+                    <Send className="h-3 w-3" />
+                    {ctaLabel}
+                  </button>
+                </div>
               </div>
             </div>
           ))}

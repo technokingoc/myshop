@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
+import { DashboardShell } from "@/components/dashboard-shell";
 import {
   BarChart3,
   Package,
@@ -118,7 +119,6 @@ export default function DashboardPage() {
   const { lang } = useLanguage();
   const router = useRouter();
   const t = useMemo(() => dict[lang], [lang]);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const [setup, setSetup] = useState<SetupPersisted | null>(null);
@@ -174,87 +174,13 @@ export default function DashboardPage() {
     });
   };
 
-  const navItems = [
-    { label: t.nav.dashboard, icon: LayoutDashboard, href: "/dashboard", active: true },
-    { label: t.nav.catalog, icon: Package, href: "/#catalog" },
-    { label: t.nav.storefront, icon: Store, href: storefrontUrl },
-    { label: t.nav.settings, icon: Settings, href: "/#setup" },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile nav overlay */}
-      {mobileNavOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/30 lg:hidden" onClick={() => setMobileNavOpen(false)}>
-          <nav
-            className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
-              <span className="font-semibold text-slate-900">MyShop</span>
-              <button onClick={() => setMobileNavOpen(false)} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <ul className="mt-2 space-y-1 px-2">
-              {navItems.map((item) => (
-                <li key={item.label}>
-                  <a
-                    href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                      item.active
-                        ? "bg-slate-100 text-slate-900"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    }`}
-                    onClick={() => setMobileNavOpen(false)}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-      )}
-
-      {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-[57px] hidden h-[calc(100vh-57px)] w-56 border-r border-slate-200 bg-white lg:block">
-        <ul className="mt-4 space-y-1 px-2">
-          {navItems.map((item) => (
-            <li key={item.label}>
-              <a
-                href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  item.active
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </aside>
-
-      {/* Main content */}
-      <main className="lg:ml-56">
-        {/* Mobile top bar with hamburger */}
-        <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
-          <button onClick={() => setMobileNavOpen(true)} className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100">
-            <Menu className="h-5 w-5" />
-          </button>
-          <h1 className="font-semibold text-slate-900">{t.dashboard}</h1>
-        </div>
-
-        <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <DashboardShell activePage="dashboard">
           <div className="mb-6">
-            <h1 className="hidden text-2xl font-bold text-slate-900 lg:block">
+            <h1 className="text-2xl font-bold text-slate-900">
               {t.welcome}, {data.ownerName || "Seller"}
             </h1>
-            <p className="mt-1 text-sm text-slate-600 lg:block hidden">
+            <p className="mt-1 text-sm text-slate-600">
               {data.storeName} — @{slug}
             </p>
           </div>
@@ -327,16 +253,14 @@ export default function DashboardPage() {
               <h3 className="mt-3 font-semibold text-slate-900">{t.settings}</h3>
               <p className="mt-1 text-sm text-slate-600">{t.settingsDesc}</p>
               <a
-                href="/#setup"
+                href="/dashboard/settings"
                 className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700"
               >
                 {t.editSettings}
               </a>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+    </DashboardShell>
   );
 }
 
