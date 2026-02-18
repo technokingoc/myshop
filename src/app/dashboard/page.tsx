@@ -4,17 +4,89 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { BarChart3, Package, ShoppingCart, ExternalLink, Store, TrendingUp, Clock, Users } from "lucide-react";
+import { DbMigrationGuard } from "@/components/db-migration-guard";
+import { BarChart3, Package, ShoppingCart, ExternalLink, Store, TrendingUp, Clock, Users, CheckSquare } from "lucide-react";
 
 type Seller = { id: number; slug: string; name: string; ownerName?: string };
 type CatalogItem = { id: number; status: "Draft" | "Published" };
+type DbHealth = { ok: boolean; connected: boolean; missingTables: string[]; errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY" };
 
-type SetupData = { storeName: string; storefrontSlug: string };
+type SetupData = {
+  storeName: string;
+  storefrontSlug: string;
+  ownerName?: string;
+  businessType?: string;
+  currency?: string;
+  city?: string;
+  whatsapp?: string;
+  instagram?: string;
+  facebook?: string;
+};
 type SetupPersisted = { step: number; done: boolean; data: SetupData };
 
 const dict = {
-  en: { welcome: "Welcome back", storeStats: "Store overview", totalProducts: "Total products", publishedItems: "Published", draftItems: "Drafts", totalViews: "Page views", recentOrders: "Recent orders", noOrders: "No orders yet. Share your storefront to start receiving order intents.", catalogMgmt: "Catalog management", catalogDesc: "Add, edit, or remove products and services from your store.", manageCatalog: "Manage catalog", storefront: "Your storefront", storefrontDesc: "View and share your public store page with customers.", viewStorefront: "View storefront", copyLink: "Copy link", settings: "Settings", settingsDesc: "Update your store identity, business details, and social channels.", editSettings: "Edit settings", notSetup: "Store not configured", notSetupHint: "Complete the store setup first.", goSetup: "Go to setup", linkCopied: "Link copied!" },
-  pt: { welcome: "Bem-vindo de volta", storeStats: "Visão geral da loja", totalProducts: "Total de produtos", publishedItems: "Publicados", draftItems: "Rascunhos", totalViews: "Visualizações", recentOrders: "Pedidos recentes", noOrders: "Nenhum pedido ainda. Partilhe a sua loja para começar a receber intenções de compra.", catalogMgmt: "Gestão de catálogo", catalogDesc: "Adicione, edite ou remova produtos e serviços da sua loja.", manageCatalog: "Gerir catálogo", storefront: "A sua loja", storefrontDesc: "Veja e partilhe a página pública da sua loja com clientes.", viewStorefront: "Ver loja", copyLink: "Copiar link", settings: "Configurações", settingsDesc: "Atualize a identidade da loja, dados do negócio e canais sociais.", editSettings: "Editar configurações", notSetup: "Loja não configurada", notSetupHint: "Conclua a configuração da loja primeiro.", goSetup: "Ir para configuração", linkCopied: "Link copiado!" },
+  en: {
+    welcome: "Welcome back",
+    storeStats: "Store overview",
+    totalProducts: "Total products",
+    publishedItems: "Published",
+    draftItems: "Drafts",
+    totalViews: "Page views",
+    recentOrders: "Recent orders",
+    noOrders: "No orders yet. Share your storefront to start receiving order intents.",
+    catalogMgmt: "Catalog management",
+    catalogDesc: "Add, edit, or remove products and services from your store.",
+    manageCatalog: "Manage catalog",
+    storefront: "Your storefront",
+    storefrontDesc: "View and share your public store page with customers.",
+    viewStorefront: "View storefront",
+    copyLink: "Copy link",
+    settings: "Settings",
+    settingsDesc: "Update your store identity, business details, and social channels.",
+    editSettings: "Edit settings",
+    notSetup: "Store not configured",
+    notSetupHint: "Complete the store setup first.",
+    goSetup: "Go to setup",
+    linkCopied: "Link copied!",
+    checklistTitle: "Seller onboarding checklist",
+    checklistDone: "Done",
+    checklistTodo: "Pending",
+    checklistStore: "Store profile completed",
+    checklistCatalog: "At least one published catalog item",
+    checklistOrder: "First customer order received",
+    checklistSocial: "At least one social contact added",
+  },
+  pt: {
+    welcome: "Bem-vindo de volta",
+    storeStats: "Visão geral da loja",
+    totalProducts: "Total de produtos",
+    publishedItems: "Publicados",
+    draftItems: "Rascunhos",
+    totalViews: "Visualizações",
+    recentOrders: "Pedidos recentes",
+    noOrders: "Nenhum pedido ainda. Partilhe a sua loja para começar a receber intenções de compra.",
+    catalogMgmt: "Gestão de catálogo",
+    catalogDesc: "Adicione, edite ou remova produtos e serviços da sua loja.",
+    manageCatalog: "Gerir catálogo",
+    storefront: "A sua loja",
+    storefrontDesc: "Veja e partilhe a página pública da sua loja com clientes.",
+    viewStorefront: "Ver loja",
+    copyLink: "Copiar link",
+    settings: "Configurações",
+    settingsDesc: "Atualize a identidade da loja, dados do negócio e canais sociais.",
+    editSettings: "Editar configurações",
+    notSetup: "Loja não configurada",
+    notSetupHint: "Conclua a configuração da loja primeiro.",
+    goSetup: "Ir para configuração",
+    linkCopied: "Link copiado!",
+    checklistTitle: "Checklist de onboarding do vendedor",
+    checklistDone: "Concluído",
+    checklistTodo: "Pendente",
+    checklistStore: "Perfil da loja concluído",
+    checklistCatalog: "Pelo menos um item do catálogo publicado",
+    checklistOrder: "Primeiro pedido de cliente recebido",
+    checklistSocial: "Pelo menos um contacto social adicionado",
+  },
 };
 
 export default function DashboardPage() {
@@ -27,29 +99,51 @@ export default function DashboardPage() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [ordersCount, setOrdersCount] = useState(0);
   const [hydrated, setHydrated] = useState(false);
+  const [dbHealth, setDbHealth] = useState<DbHealth | null>(null);
 
-  useEffect(() => {
+  const fetchDashboardData = async () => {
     const rawSetup = localStorage.getItem("myshop_setup_v2");
-    if (!rawSetup) return setHydrated(true);
+    if (!rawSetup) {
+      setHydrated(true);
+      return;
+    }
 
     let parsed: SetupPersisted | null = null;
-    try { parsed = JSON.parse(rawSetup); setSetup(parsed); } catch { setHydrated(true); return; }
+    try {
+      parsed = JSON.parse(rawSetup);
+      setSetup(parsed);
+    } catch {
+      setHydrated(true);
+      return;
+    }
+
+    const health = await fetch("/api/health/db").then((r) => r.json()).catch(() => null);
+    setDbHealth(health);
 
     const slug = parsed?.data?.storefrontSlug;
-    if (!slug) return setHydrated(true);
+    if (!slug || (health && !health.ok)) {
+      setHydrated(true);
+      return;
+    }
 
     Promise.all([
       fetch(`/api/sellers/${slug}`).then((r) => (r.ok ? r.json() : null)),
       fetch(`/api/catalog?sellerSlug=${slug}`).then((r) => r.json()),
-    ]).then(async ([s, c]) => {
-      if (s?.id) {
-        setSeller(s);
-        localStorage.setItem("myshop_seller_id", String(s.id));
-        const o = await fetch(`/api/orders?sellerId=${s.id}`).then((r) => r.json());
-        if (Array.isArray(o)) setOrdersCount(o.length);
-      }
-      if (Array.isArray(c)) setCatalog(c);
-    }).finally(() => setHydrated(true));
+    ])
+      .then(async ([s, c]) => {
+        if (s?.id) {
+          setSeller(s);
+          localStorage.setItem("myshop_seller_id", String(s.id));
+          const o = await fetch(`/api/orders?sellerId=${s.id}`).then((r) => r.json());
+          if (Array.isArray(o)) setOrdersCount(o.length);
+        }
+        if (Array.isArray(c)) setCatalog(c);
+      })
+      .finally(() => setHydrated(true));
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
 
   if (!hydrated) return null;
@@ -73,6 +167,16 @@ export default function DashboardPage() {
   const published = catalog.filter((i) => i.status === "Published").length;
   const drafts = catalog.filter((i) => i.status === "Draft").length;
 
+  const hasStoreProfile = Boolean(setup?.done && setup?.data?.storeName && setup?.data?.storefrontSlug);
+  const hasSocial = Boolean(setup?.data?.whatsapp || setup?.data?.instagram || setup?.data?.facebook);
+
+  const checklist = [
+    { key: "store", label: t.checklistStore, done: hasStoreProfile },
+    { key: "catalog", label: t.checklistCatalog, done: published > 0 },
+    { key: "order", label: t.checklistOrder, done: ordersCount > 0 },
+    { key: "social", label: t.checklistSocial, done: hasSocial },
+  ];
+
   const copyStorefrontLink = () => {
     navigator.clipboard.writeText(fullUrl).then(() => {
       setLinkCopied(true);
@@ -82,9 +186,23 @@ export default function DashboardPage() {
 
   return (
     <DashboardShell activePage="dashboard">
+      <DbMigrationGuard health={dbHealth} onRetry={fetchDashboardData} />
       <div className="mb-6"><h1 className="text-2xl font-bold text-slate-900">{t.welcome}, {owner}</h1><p className="mt-1 text-sm text-slate-600">{storeName} — @{slug}</p></div>
       <section className="mb-8"><h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700"><BarChart3 className="h-4 w-4" />{t.storeStats}</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-4"><StatCard icon={Package} label={t.totalProducts} value={String(catalog.length)} /><StatCard icon={TrendingUp} label={t.publishedItems} value={String(published)} /><StatCard icon={Clock} label={t.draftItems} value={String(drafts)} /><StatCard icon={Users} label={t.totalViews} value="—" muted /></div></section>
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5"><h2 className="flex items-center gap-2 font-semibold text-slate-900"><ShoppingCart className="h-4 w-4" />{t.recentOrders}</h2><p className="mt-3 text-sm text-slate-500">{ordersCount > 0 ? `${ordersCount} ${lang === "pt" ? "pedidos" : "orders"}` : t.noOrders}</p></section>
+      <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5">
+        <h2 className="flex items-center gap-2 font-semibold text-slate-900"><CheckSquare className="h-4 w-4" />{t.checklistTitle}</h2>
+        <ul className="mt-3 space-y-2">
+          {checklist.map((item) => (
+            <li key={item.key} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
+              <span className="text-slate-700">{item.label}</span>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${item.done ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                {item.done ? t.checklistDone : t.checklistTodo}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-5"><Package className="h-5 w-5 text-indigo-600" /><h3 className="mt-3 font-semibold text-slate-900">{t.catalogMgmt}</h3><p className="mt-1 text-sm text-slate-600">{t.catalogDesc}</p><a href="/#catalog" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white">{t.manageCatalog}</a></div>
         <div className="rounded-xl border border-slate-200 bg-white p-5"><Store className="h-5 w-5 text-emerald-600" /><h3 className="mt-3 font-semibold text-slate-900">{t.storefront}</h3><p className="mt-1 text-sm text-slate-600">{t.storefrontDesc}</p><div className="mt-4 flex flex-wrap gap-2"><a href={storefrontUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white"><ExternalLink className="h-3.5 w-3.5" />{t.viewStorefront}</a><button onClick={copyStorefrontLink} className="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700">{linkCopied ? t.linkCopied : t.copyLink}</button></div></div>

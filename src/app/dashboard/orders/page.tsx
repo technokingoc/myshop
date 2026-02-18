@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/language";
 import { getOrders, updateOrderStatus, type OrderIntent } from "@/lib/orders";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { Inbox, CheckCircle, Phone, Clock } from "lucide-react";
+import { DbMigrationGuard } from "@/components/db-migration-guard";
+import { Inbox, CheckCircle, Phone, Clock, X } from "lucide-react";
 
 type DbOrder = {
   id: number;
@@ -15,6 +16,9 @@ type DbOrder = {
   status: "new" | "contacted" | "completed";
   createdAt: string;
 };
+
+type DbHealth = { ok: boolean; connected: boolean; missingTables: string[]; errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY" };
+type StatusNote = { text: string; createdAt: string };
 
 const dict = {
   en: {
@@ -31,6 +35,13 @@ const dict = {
     filterNew: "New",
     filterContacted: "Contacted",
     filterCompleted: "Completed",
+    viewDetails: "View details",
+    detailsTitle: "Order details",
+    close: "Close",
+    statusNotes: "Status notes",
+    notePlaceholder: "Add a note (e.g. customer asked for delivery tomorrow)",
+    saveNote: "Save note",
+    noNotes: "No status notes yet.",
   },
   pt: {
     title: "Pedidos",
@@ -46,6 +57,13 @@ const dict = {
     filterNew: "Novos",
     filterContacted: "Contactados",
     filterCompleted: "Concluídos",
+    viewDetails: "Ver detalhes",
+    detailsTitle: "Detalhes do pedido",
+    close: "Fechar",
+    statusNotes: "Notas de estado",
+    notePlaceholder: "Adicionar nota (ex.: cliente pediu entrega amanhã)",
+    saveNote: "Guardar nota",
+    noNotes: "Ainda não existem notas de estado.",
   },
 };
 
@@ -68,13 +86,25 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState<"all" | "new" | "contacted" | "completed">("all");
   const [hydrated, setHydrated] = useState(false);
   const [sellerId, setSellerId] = useState<number | null>(null);
+  const [dbHealth, setDbHealth] = useState<DbHealth | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderIntent | null>(null);
+  const [notesByOrder, setNotesByOrder] = useState<Record<string, StatusNote[]>>({});
+  const [noteText, setNoteText] = useState("");
 
-  useEffect(() => {
+  const fetchOrders = async () => {
+    const health = await fetch("/api/health/db").then((r) => r.json()).catch(() => null);
+    setDbHealth(health);
+
     const raw = localStorage.getItem("myshop_seller_id");
     const id = raw ? Number(raw) : null;
     setSellerId(id);
 
-    if (!id) {
+    try {
+      const storedNotes = localStorage.getItem("myshop_order_notes");
+      if (storedNotes) setNotesByOrder(JSON.parse(storedNotes));
+    } catch {}
+
+    if (!id || (health && !health.ok)) {
       setOrders(getOrders());
       setHydrated(true);
       return;
@@ -103,6 +133,10 @@ export default function OrdersPage() {
       })
       .catch(() => setOrders(getOrders()))
       .finally(() => setHydrated(true));
+  };
+
+  useEffect(() => {
+    fetchOrders();
   }, []);
 
   const filtered = useMemo(
@@ -110,8 +144,13 @@ export default function OrdersPage() {
     [orders, filter],
   );
 
+  const persistNotes = (next: Record<string, StatusNote[]>) => {
+    setNotesByOrder(next);
+    localStorage.setItem("myshop_order_notes", JSON.stringify(next));
+  };
+
   const handleStatus = async (id: string, status: OrderIntent["status"]) => {
-    if (sellerId) {
+    if (sellerId && (!dbHealth || dbHealth.ok)) {
       try {
         await fetch("/api/orders", {
           method: "PUT",
@@ -123,6 +162,20 @@ export default function OrdersPage() {
 
     updateOrderStatus(id, status);
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+    setSelectedOrder((prev) => (prev?.id === id ? { ...prev, status } : prev));
+  };
+
+  const addNote = () => {
+    if (!selectedOrder || !noteText.trim()) return;
+    const next = {
+      ...notesByOrder,
+      [selectedOrder.id]: [
+        { text: noteText.trim(), createdAt: new Date().toISOString() },
+        ...(notesByOrder[selectedOrder.id] || []),
+      ],
+    };
+    persistNotes(next);
+    setNoteText("");
   };
 
   if (!hydrated) return null;
@@ -136,6 +189,7 @@ export default function OrdersPage() {
 
   return (
     <DashboardShell activePage="orders">
+      <DbMigrationGuard health={dbHealth} onRetry={fetchOrders} />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
@@ -185,6 +239,7 @@ export default function OrdersPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-xs text-slate-400">{new Date(order.createdAt).toLocaleString()}</span>
                   <span className="flex-1" />
+                  <button onClick={() => setSelectedOrder(order)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">{t.viewDetails}</button>
                   {order.status === "new" && (
                     <button
                       onClick={() => handleStatus(order.id, "contacted")}
@@ -205,6 +260,57 @@ export default function OrdersPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 p-4" onClick={() => setSelectedOrder(null)}>
+          <div className="ml-auto h-full w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900">{t.detailsTitle}</h2>
+              <button onClick={() => setSelectedOrder(null)} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="font-semibold text-slate-900">{selectedOrder.customerName}</p>
+            <p className="text-sm text-slate-600">{selectedOrder.customerContact}</p>
+            <p className="mt-2 text-sm text-slate-600">{selectedOrder.message || "-"}</p>
+            <p className="mt-1 text-xs text-slate-400">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
+
+            <div className="mt-4 flex gap-2">
+              {selectedOrder.status !== "contacted" && selectedOrder.status !== "completed" && (
+                <button onClick={() => handleStatus(selectedOrder.id, "contacted")} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">{t.markContacted}</button>
+              )}
+              {selectedOrder.status !== "completed" && (
+                <button onClick={() => handleStatus(selectedOrder.id, "completed")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white">{t.markCompleted}</button>
+              )}
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-slate-900">{t.statusNotes}</h3>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder={t.notePlaceholder}
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+                <button onClick={addNote} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">{t.saveNote}</button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {(notesByOrder[selectedOrder.id] || []).length === 0 ? (
+                  <p className="text-sm text-slate-500">{t.noNotes}</p>
+                ) : (
+                  (notesByOrder[selectedOrder.id] || []).map((note, idx) => (
+                    <div key={`${selectedOrder.id}-${idx}`} className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                      <p className="text-sm text-slate-700">{note.text}</p>
+                      <p className="mt-1 text-xs text-slate-400">{new Date(note.createdAt).toLocaleString()}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <button onClick={() => setSelectedOrder(null)} className="mt-6 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">{t.close}</button>
+          </div>
         </div>
       )}
     </DashboardShell>
