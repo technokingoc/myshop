@@ -8,6 +8,7 @@ type CatalogStatus = "Draft" | "Published";
 
 type SetupData = {
   storeName: string;
+  storefrontSlug: string;
   ownerName: string;
   businessType: string;
   currency: string;
@@ -21,6 +22,9 @@ type CatalogItem = {
   id: number;
   name: string;
   type: CatalogType;
+  category: string;
+  shortDescription: string;
+  imageUrl: string;
   price: string;
   status: CatalogStatus;
 };
@@ -33,12 +37,13 @@ type SetupPersisted = {
 
 const STORAGE = {
   lang: "myshop_lang",
-  setup: "myshop_setup_v1",
-  catalog: "myshop_catalog_v1",
+  setup: "myshop_setup_v2",
+  catalog: "myshop_catalog_v2",
 };
 
 const defaultSetup: SetupData = {
   storeName: "",
+  storefrontSlug: "",
   ownerName: "",
   businessType: "Retail",
   currency: "USD",
@@ -49,9 +54,36 @@ const defaultSetup: SetupData = {
 };
 
 const defaultCatalog: CatalogItem[] = [
-  { id: 1, name: "Sample Product A", type: "Product", price: "15", status: "Published" },
-  { id: 2, name: "Sample Service B", type: "Service", price: "25", status: "Draft" },
-  { id: 3, name: "Sample Product C", type: "Product", price: "8", status: "Published" },
+  {
+    id: 1,
+    name: "Sample Product A",
+    type: "Product",
+    category: "Beauty",
+    shortDescription: "Hydrating serum for daily use.",
+    imageUrl: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600",
+    price: "15",
+    status: "Published",
+  },
+  {
+    id: 2,
+    name: "Sample Service B",
+    type: "Service",
+    category: "Consulting",
+    shortDescription: "30-minute onboarding call.",
+    imageUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600",
+    price: "25",
+    status: "Published",
+  },
+  {
+    id: 3,
+    name: "Sample Product C",
+    type: "Product",
+    category: "Food",
+    shortDescription: "Fresh homemade snack box.",
+    imageUrl: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600",
+    price: "8",
+    status: "Draft",
+  },
 ];
 
 const dictionary = {
@@ -68,6 +100,8 @@ const dictionary = {
     setupSubtitle: "3-step onboarding persisted in your browser local storage.",
     stepLabel: "Step",
     completed: "Completed",
+    slugHint: "Use lowercase letters/numbers and dashes only.",
+    previewRoute: "Storefront route mock",
 
     catalogTitle: "Catalog management",
     catalogSubtitle: "Mock CRUD with add/edit/delete persisted locally.",
@@ -79,18 +113,22 @@ const dictionary = {
     servicesSection: "Services",
     emptyProducts: "No published products yet.",
     emptyServices: "No published services yet.",
+    cardCTAProduct: "Order now",
+    cardCTAService: "Book now",
 
     pricingTitle: "Affordable pricing",
-    pricingSubtitle: "PayPal-ready messaging only. No live charge execution in this MVP.",
+    pricingSubtitle: "Simple plans with clear PayPal checkout messaging.",
     planName: "Starter",
     planPrice: "$9 / month",
     planBullets: [
-      "1 storefront",
-      "Catalog up to 50 items",
-      "Share links via WhatsApp / Instagram / Facebook",
-      "PayPal-ready checkout messaging (integration next phase)",
+      "1 storefront with custom slug",
+      "Catalog up to 50 products/services",
+      "Social CTA buttons (WhatsApp / Instagram / Facebook)",
+      "PayPal payment link support (manual link in MVP)",
     ],
-    planFoot: "No payment processing is executed in this release.",
+    planFoot: "PayPal checkout opens an external PayPal page. MyShop does not process or store card details in this MVP.",
+    paypalInfo: "PayPal-ready: connect your plan manually after subscription confirmation.",
+    choosePlan: "Choose this plan",
 
     nextBtn: "Next",
     backBtn: "Back",
@@ -101,6 +139,9 @@ const dictionary = {
     catalogFormTitle: "Add / edit item",
     itemName: "Item name",
     itemType: "Type",
+    itemCategory: "Category",
+    itemDescription: "Short description",
+    itemImageUrl: "Image URL",
     itemPrice: "Price",
     itemStatus: "Status",
     addBtn: "Add item",
@@ -113,6 +154,7 @@ const dictionary = {
 
     labels: {
       storeName: "Store name",
+      storefrontSlug: "Storefront slug",
       ownerName: "Owner name",
       businessType: "Business type",
       currency: "Preferred currency",
@@ -135,6 +177,8 @@ const dictionary = {
     setupSubtitle: "Onboarding em 3 etapas persistido no armazenamento local.",
     stepLabel: "Etapa",
     completed: "Concluído",
+    slugHint: "Use apenas minúsculas/números e hífen.",
+    previewRoute: "Mock da rota da loja",
 
     catalogTitle: "Gestão de catálogo",
     catalogSubtitle: "CRUD mock com adicionar/editar/apagar persistido localmente.",
@@ -146,18 +190,22 @@ const dictionary = {
     servicesSection: "Serviços",
     emptyProducts: "Ainda não há produtos publicados.",
     emptyServices: "Ainda não há serviços publicados.",
+    cardCTAProduct: "Encomendar",
+    cardCTAService: "Reservar",
 
     pricingTitle: "Preço acessível",
-    pricingSubtitle: "Mensagem preparada para PayPal. Sem cobrança real neste MVP.",
+    pricingSubtitle: "Planos simples com mensagem clara sobre checkout PayPal.",
     planName: "Inicial",
     planPrice: "$9 / mês",
     planBullets: [
-      "1 loja virtual",
-      "Catálogo até 50 itens",
-      "Partilha de links via WhatsApp / Instagram / Facebook",
-      "Mensagem de checkout pronta para PayPal (integração na próxima fase)",
+      "1 loja virtual com slug personalizado",
+      "Catálogo até 50 produtos/serviços",
+      "Botões CTA sociais (WhatsApp / Instagram / Facebook)",
+      "Suporte a link de pagamento PayPal (manual no MVP)",
     ],
-    planFoot: "Nenhum processamento de pagamento é executado nesta versão.",
+    planFoot: "O checkout PayPal abre numa página externa do PayPal. O MyShop não processa nem guarda dados de cartão neste MVP.",
+    paypalInfo: "Pronto para PayPal: conecte o plano manualmente após confirmação da subscrição.",
+    choosePlan: "Escolher este plano",
 
     nextBtn: "Próximo",
     backBtn: "Voltar",
@@ -168,6 +216,9 @@ const dictionary = {
     catalogFormTitle: "Adicionar / editar item",
     itemName: "Nome do item",
     itemType: "Tipo",
+    itemCategory: "Categoria",
+    itemDescription: "Descrição curta",
+    itemImageUrl: "URL da imagem",
     itemPrice: "Preço",
     itemStatus: "Estado",
     addBtn: "Adicionar item",
@@ -180,6 +231,7 @@ const dictionary = {
 
     labels: {
       storeName: "Nome da loja",
+      storefrontSlug: "Slug da loja",
       ownerName: "Nome do responsável",
       businessType: "Tipo de negócio",
       currency: "Moeda preferida",
@@ -194,6 +246,9 @@ const dictionary = {
 const blankCatalogForm: Omit<CatalogItem, "id"> = {
   name: "",
   type: "Product",
+  category: "",
+  shortDescription: "",
+  imageUrl: "",
   price: "",
   status: "Draft",
 };
@@ -254,7 +309,8 @@ export default function Home() {
   const t = useMemo(() => dictionary[lang], [lang]);
 
   const updateSetup = (key: keyof SetupData, value: string) => {
-    setSetup((prev) => ({ ...prev, [key]: value }));
+    const next = key === "storefrontSlug" ? sanitizeSlug(value) : value;
+    setSetup((prev) => ({ ...prev, [key]: next }));
   };
 
   const resetSetup = () => {
@@ -287,6 +343,9 @@ export default function Home() {
     setCatalogForm({
       name: item.name,
       type: item.type,
+      category: item.category,
+      shortDescription: item.shortDescription,
+      imageUrl: item.imageUrl,
       price: item.price,
       status: item.status,
     });
@@ -297,14 +356,19 @@ export default function Home() {
     setCatalogForm(blankCatalogForm);
   };
 
+  const slug = setup.storefrontSlug || sanitizeSlug(setup.storeName) || "myshop-demo";
+  const previewPath = `/s/${slug}`;
+  const previewUrl = `https://myshop-amber.vercel.app${previewPath}?preview=1`;
+
   const publishedProducts = catalog.filter((i) => i.type === "Product" && i.status === "Published");
   const publishedServices = catalog.filter((i) => i.type === "Service" && i.status === "Published");
+  const publishedCatalog = catalog.filter((i) => i.status === "Published");
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="rounded-2xl border border-white/10 bg-gradient-to-b from-indigo-500/20 to-transparent p-6 sm:p-10">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between gap-2">
             <p className="rounded-full border border-indigo-300/40 bg-indigo-400/20 px-3 py-1 text-xs sm:text-sm">{t.badge}</p>
             <div className="flex gap-2 text-sm">
               <button
@@ -342,15 +406,27 @@ export default function Home() {
             {t.stepLabel} {step}/3 {done && `• ${t.completed}`}
           </p>
 
+          <div className="rounded-xl border border-indigo-300/30 bg-indigo-500/10 p-3 text-sm">
+            <p className="font-medium text-indigo-200">{t.previewRoute}</p>
+            <p className="mt-1 break-all text-slate-200">{previewPath}</p>
+            <a href={previewUrl} className="mt-2 inline-block text-indigo-300 underline underline-offset-2" target="_blank" rel="noreferrer">
+              {previewUrl}
+            </a>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             {step === 1 && (
               <>
                 <Input label={t.labels.storeName} value={setup.storeName} onChange={(v) => updateSetup("storeName", v)} />
-                <Input label={t.labels.ownerName} value={setup.ownerName} onChange={(v) => updateSetup("ownerName", v)} />
+                <div className="grid gap-1 text-sm">
+                  <Input label={t.labels.storefrontSlug} value={setup.storefrontSlug} onChange={(v) => updateSetup("storefrontSlug", v)} />
+                  <span className="text-xs text-slate-400">{t.slugHint}</span>
+                </div>
               </>
             )}
             {step === 2 && (
               <>
+                <Input label={t.labels.ownerName} value={setup.ownerName} onChange={(v) => updateSetup("ownerName", v)} />
                 <Input label={t.labels.businessType} value={setup.businessType} onChange={(v) => updateSetup("businessType", v)} />
                 <Input label={t.labels.currency} value={setup.currency} onChange={(v) => updateSetup("currency", v)} />
                 <Input label={t.labels.city} value={setup.city} onChange={(v) => updateSetup("city", v)} />
@@ -396,6 +472,9 @@ export default function Home() {
           <div className="mb-4 grid gap-3 rounded-xl border border-white/10 bg-slate-900/30 p-3 sm:grid-cols-2">
             <h3 className="sm:col-span-2 font-medium">{t.catalogFormTitle}</h3>
             <Input label={t.itemName} value={catalogForm.name} onChange={(v) => onCatalogField("name", v)} />
+            <Input label={t.itemCategory} value={catalogForm.category} onChange={(v) => onCatalogField("category", v)} />
+            <Input label={t.itemDescription} value={catalogForm.shortDescription} onChange={(v) => onCatalogField("shortDescription", v)} />
+            <Input label={t.itemImageUrl} value={catalogForm.imageUrl} onChange={(v) => onCatalogField("imageUrl", v)} />
             <Input label={t.itemPrice} value={catalogForm.price} onChange={(v) => onCatalogField("price", v)} />
 
             <label className="grid gap-1 text-sm">
@@ -437,9 +516,15 @@ export default function Home() {
           <div className="grid gap-3">
             {catalog.map((item) => (
               <article key={item.id} className="grid grid-cols-[72px_1fr] gap-3 rounded-xl border border-white/10 p-3 sm:grid-cols-[96px_1fr]">
-                <div className="h-[72px] w-[72px] rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 sm:h-[96px] sm:w-[96px]" />
+                <img
+                  src={item.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"}
+                  alt={item.name}
+                  className="h-[72px] w-[72px] rounded-lg object-cover sm:h-[96px] sm:w-[96px]"
+                />
                 <div>
                   <h3 className="font-medium">{item.name}</h3>
+                  <p className="text-xs text-slate-400">{item.category || "General"}</p>
+                  <p className="text-sm text-slate-300">{item.shortDescription || "-"}</p>
                   <p className="text-sm text-slate-300">
                     {item.type} • {setup.currency} {item.price}
                   </p>
@@ -469,7 +554,7 @@ export default function Home() {
             <p className="mb-4 text-sm text-slate-300">{t.previewSubtitle}</p>
             <div className="rounded-xl border border-white/10 bg-slate-900/80 p-4">
               <h3 className="font-semibold">{setup.storeName || "MyShop Demo Store"}</h3>
-              <p className="text-sm text-slate-300">@{(setup.storeName || "myshop").toLowerCase().replace(/\s+/g, "")}</p>
+              <p className="text-sm text-slate-300">@{slug}</p>
 
               <h4 className="mt-4 text-sm font-medium text-slate-300">{t.socialLinks}</h4>
               <ul className="mt-2 space-y-1 text-sm">
@@ -523,9 +608,45 @@ export default function Home() {
                   <li key={b}>{b}</li>
                 ))}
               </ul>
-              <p className="mt-4 text-xs text-amber-200">{t.planFoot}</p>
+              <p className="mt-4 rounded-lg border border-amber-300/40 bg-amber-400/10 p-2 text-xs text-amber-200">{t.planFoot}</p>
+              <p className="mt-2 text-xs text-slate-200">{t.paypalInfo}</p>
+              <button className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black">{t.choosePlan}</button>
             </div>
           </article>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="mb-4 text-xl font-semibold">{t.previewTitle} • Cards</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {publishedCatalog.map((item) => (
+              <article key={`card-${item.id}`} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                <img
+                  src={item.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800"}
+                  alt={item.name}
+                  className="h-40 w-full object-cover"
+                />
+                <div className="p-4">
+                  <p className="text-xs text-indigo-300">{item.category || "General"}</p>
+                  <h3 className="font-semibold">{item.name}</h3>
+                  <p className="mt-1 text-sm text-slate-300">{item.shortDescription || "-"}</p>
+                  <p className="mt-2 text-sm font-medium">
+                    {setup.currency} {item.price}
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <a
+                      href={setup.whatsapp || "https://wa.me/your-number"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg bg-emerald-400 px-3 py-2 text-xs font-semibold text-black"
+                    >
+                      {item.type === "Product" ? t.cardCTAProduct : t.cardCTAService}
+                    </a>
+                    <button className="rounded-lg border border-white/20 px-3 py-2 text-xs">PayPal</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
       </main>
     </div>
@@ -552,4 +673,13 @@ function LinkOrText({ href, fallback }: { href: string; fallback: string }) {
       {value}
     </a>
   );
+}
+
+function sanitizeSlug(raw: string) {
+  return raw
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 }
