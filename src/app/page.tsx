@@ -138,14 +138,14 @@ export default function HomePage() {
 
   // Flatten categories for display
   const categoryPills = useMemo(() => {
-    const result: { slug: string; label: string }[] = [];
+    const result: { slug: string; label: string; icon?: string | null }[] = [];
     for (const cat of dbCategories) {
       const name = lang === "pt" ? cat.namePt : cat.nameEn;
-      result.push({ slug: cat.slug, label: name });
+      result.push({ slug: cat.slug, label: name, icon: cat.icon });
       if (cat.children) {
         for (const child of cat.children) {
           const childName = lang === "pt" ? child.namePt : child.nameEn;
-          result.push({ slug: child.slug, label: childName });
+          result.push({ slug: child.slug, label: childName, icon: child.icon || cat.icon });
         }
       }
     }
@@ -197,7 +197,7 @@ export default function HomePage() {
           {categoryPills.length > 0 && (
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {categoryPills.map((cat) => {
-                const Icon = resolveCategoryIcon((dbCategories.find((c) => c.slug === cat.slug)?.icon) || null);
+                const Icon = resolveCategoryIcon(cat.icon || null);
                 return (
                   <Link
                     key={cat.slug}
