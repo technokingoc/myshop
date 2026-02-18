@@ -43,6 +43,7 @@ export async function GET(
         address: seller.address || "",
         country: seller.country || "",
         storeTemplate: seller.storeTemplate || "classic",
+        headerTemplate: seller.headerTemplate || "compact",
       },
       products,
     });

@@ -71,6 +71,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
             address: body.address ?? existing.address,
             country: body.country ?? existing.country,
             storeTemplate: body.storeTemplate ?? existing.storeTemplate,
+            headerTemplate: body.headerTemplate ?? existing.headerTemplate,
             updatedAt: new Date(),
           })
           .where(eq(sellers.id, existing.id))

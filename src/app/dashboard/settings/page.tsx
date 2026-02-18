@@ -32,6 +32,37 @@ const COUNTRIES = [
   "Zambia", "Eswatini", "Kenya", "Angola", "Portugal", "Brazil", "Other",
 ];
 
+const HEADER_TEMPLATES = [
+  {
+    id: "compact",
+    nameEn: "Compact",
+    namePt: "Compacto",
+    descEn: "Dense header row with quick stats and actions.",
+    descPt: "Cabeçalho denso com estatísticas e ações rápidas.",
+  },
+  {
+    id: "hero",
+    nameEn: "Hero",
+    namePt: "Hero",
+    descEn: "Banner-first layout with overlaid key details.",
+    descPt: "Layout com destaque para banner e detalhes sobrepostos.",
+  },
+  {
+    id: "split",
+    nameEn: "Split",
+    namePt: "Dividido",
+    descEn: "Left identity, right actions and storefront stats.",
+    descPt: "Identidade à esquerda, ações e estatísticas à direita.",
+  },
+  {
+    id: "minimal-sticky",
+    nameEn: "Minimal Sticky",
+    namePt: "Minimal Fixo",
+    descEn: "Slim sticky bar plus a lightweight hero block.",
+    descPt: "Barra fixa compacta com bloco hero leve.",
+  },
+] as const;
+
 type SetupData = {
   storeName: string;
   storefrontSlug: string;
@@ -123,6 +154,7 @@ export default function SettingsPage() {
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("");
   const [storeTemplate, setStoreTemplate] = useState("classic");
+  const [headerTemplate, setHeaderTemplate] = useState("compact");
 
   // Collapsible sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -166,6 +198,7 @@ export default function SettingsPage() {
             setAddress(s.address || "");
             setCountry(s.country || "");
             setStoreTemplate(s.storeTemplate || "classic");
+            setHeaderTemplate(s.headerTemplate || "compact");
             try {
               const statsRes = await fetch("/api/dashboard/stats", { credentials: "include" });
               if (statsRes.ok) {
@@ -242,6 +275,7 @@ export default function SettingsPage() {
           address,
           country,
           storeTemplate,
+          headerTemplate,
         }),
       }, 3, "settings:save");
     } catch {
@@ -383,6 +417,33 @@ export default function SettingsPage() {
                     )}
                   </div>
                   <p className="text-sm font-semibold text-slate-800">{lang === "pt" ? tmpl.namePt : tmpl.nameEn}</p>
+                  <p className="mt-0.5 text-[10px] leading-tight text-slate-500">{lang === "pt" ? tmpl.descPt : tmpl.descEn}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Header Template */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-1">
+              <LayoutTemplate className="h-4 w-4 text-slate-500" />
+              <label className="text-sm font-medium text-slate-700">{lang === "pt" ? "Modelo do Cabeçalho" : "Header Template"}</label>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">{lang === "pt" ? "Escolha o estilo do cabeçalho da sua loja (independente do modelo de produtos)." : "Choose your storefront header style (independent from product layout template)."}</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {HEADER_TEMPLATES.map((tmpl) => (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  onClick={() => setHeaderTemplate(tmpl.id)}
+                  className={`rounded-xl border-2 p-3 text-left transition ${
+                    headerTemplate === tmpl.id
+                      ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <HeaderTemplatePreview id={tmpl.id} />
+                  <p className="mt-2 text-sm font-semibold text-slate-800">{lang === "pt" ? tmpl.namePt : tmpl.nameEn}</p>
                   <p className="mt-0.5 text-[10px] leading-tight text-slate-500">{lang === "pt" ? tmpl.descPt : tmpl.descEn}</p>
                 </button>
               ))}
@@ -574,6 +635,58 @@ function CollapsibleSection({
       </button>
       {open && <div className="border-t border-slate-100 px-5 pb-5 pt-4">{children}</div>}
     </section>
+  );
+}
+
+function HeaderTemplatePreview({ id }: { id: string }) {
+  if (id === "hero") {
+    return (
+      <div className="h-16 rounded-lg border border-slate-200 bg-gradient-to-br from-slate-200 via-slate-100 to-white p-2">
+        <div className="mt-6 rounded bg-white/85 p-1.5 shadow-sm">
+          <div className="h-2 w-1/2 rounded bg-slate-300" />
+          <div className="mt-1 h-1.5 w-1/3 rounded bg-slate-200" />
+        </div>
+      </div>
+    );
+  }
+
+  if (id === "split") {
+    return (
+      <div className="flex h-16 gap-2 rounded-lg border border-slate-200 bg-white p-2">
+        <div className="flex-1 rounded bg-slate-100 p-1.5">
+          <div className="h-2 w-2/3 rounded bg-slate-300" />
+          <div className="mt-1 h-1.5 w-1/2 rounded bg-slate-200" />
+        </div>
+        <div className="w-16 rounded bg-slate-50 p-1.5">
+          <div className="h-2 w-full rounded bg-slate-200" />
+          <div className="mt-1 h-2 w-3/4 rounded bg-slate-200" />
+        </div>
+      </div>
+    );
+  }
+
+  if (id === "minimal-sticky") {
+    return (
+      <div className="h-16 rounded-lg border border-slate-200 bg-white p-2">
+        <div className="mb-2 h-2.5 w-full rounded bg-slate-800" />
+        <div className="rounded bg-slate-100 p-1.5">
+          <div className="h-2 w-1/2 rounded bg-slate-300" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-16 rounded-lg border border-slate-200 bg-white p-2">
+      <div className="flex items-center gap-2 rounded bg-slate-100 p-1.5">
+        <div className="h-6 w-6 rounded bg-slate-300" />
+        <div className="flex-1">
+          <div className="h-2 w-1/2 rounded bg-slate-300" />
+          <div className="mt-1 h-1.5 w-1/3 rounded bg-slate-200" />
+        </div>
+        <div className="h-2 w-8 rounded bg-slate-200" />
+      </div>
+    </div>
   );
 }
 

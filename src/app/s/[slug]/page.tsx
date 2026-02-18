@@ -31,6 +31,7 @@ type Seller = {
   themeColor: string; address: string; country: string;
   businessHours: Record<string, { open: string; close: string }>;
   storeTemplate: string;
+  headerTemplate?: "compact" | "hero" | "split" | "minimal-sticky";
   createdAt?: string;
 };
 type Product = {
@@ -258,13 +259,13 @@ export default function StorefrontPage() {
     { id: "contact" as const, label: t.tabContact, icon: Phone },
   ];
   const memberYear = seller.createdAt ? new Date(seller.createdAt).getFullYear() : null;
+  const headerTemplate = seller.headerTemplate || "compact";
 
   return (
     <div className="min-h-screen bg-slate-50/50">
       <StoreJsonLd name={seller.name} description={seller.description || ""} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} logo={seller.logoUrl || undefined} image={seller.bannerUrl || undefined} address={seller.address || undefined} city={seller.city || undefined} country={seller.country || undefined} />
       {products.map((p) => <ProductJsonLd key={p.id} name={p.name} description={p.shortDescription || undefined} image={p.imageUrl || undefined} price={p.price} currency={seller.currency || "USD"} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} seller={seller.name} />)}
 
-      {/* Top bar — breadcrumb style */}
       <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-1.5 text-sm">
@@ -272,117 +273,27 @@ export default function StorefrontPage() {
             <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
             <span className="font-semibold text-slate-800 truncate max-w-[150px] sm:max-w-none">{seller.name}</span>
           </div>
-          <div className="flex items-center gap-1">
-            {social.whatsapp && (
-              <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition">
-                <MessageCircle className="h-4 w-4" />
-              </a>
-            )}
-            {social.instagram && (
-              <a href={social.instagram} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-pink-50 hover:text-pink-600 transition">
-                <Instagram className="h-4 w-4" />
-              </a>
-            )}
-            {social.facebook && (
-              <a href={social.facebook} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition">
-                <Facebook className="h-4 w-4" />
-              </a>
-            )}
-            <div className="mx-1 h-4 w-px bg-slate-200" />
-            {customer ? (
-              <>
-                <Link href="/customer/wishlist" className="relative rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 transition">
-                  <Heart className={`h-4 w-4 ${wishlistIds.size > 0 ? "fill-red-500 text-red-500" : ""}`} />
-                  {wishlistIds.size > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{wishlistIds.size}</span>}
-                </Link>
-                <Link href="/customer/profile" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">{customer.name.charAt(0).toUpperCase()}</div>
-                  <span className="hidden sm:inline max-w-[80px] truncate">{customer.name.split(" ")[0]}</span>
-                </Link>
-              </>
-            ) : (
-              <Link href={`/customer/login?redirect=/s/${slug}`} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
-                <LogIn className="h-3.5 w-3.5" /> {t.login}
-              </Link>
-            )}
-          </div>
+          <StorefrontActions social={social} customer={customer} slug={slug} t={t} wishlistCount={wishlistIds.size} />
         </div>
       </header>
 
-      {/* Store header — compact redesign */}
-      <div className="bg-white pb-1">
-        <div className="mx-auto max-w-5xl px-4">
-          {/* Banner — max 140px */}
-          <div className="relative mt-0 h-[110px] overflow-hidden rounded-b-2xl sm:h-[140px]">
-            {seller.bannerUrl ? (
-              <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} />
-            ) : (
-              <div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}>
-                <span className="text-2xl font-bold text-white/80">{seller.name}</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-          </div>
-
-          {/* Store info bar — avatar overlapping banner */}
-          <div className="relative -mt-8 flex items-end gap-3 px-2 sm:px-4">
-            <div className={`${template.avatarSize} shrink-0 overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-lg`}>
-              {seller.logoUrl ? (
-                <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />} />
-              ) : (
-                <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1 pb-1">
-              <div className="flex items-center gap-2">
-                <h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>
-                {isVerified && (
-                  <span title={t.verified}><BadgeCheck className="h-4 w-4 shrink-0 text-blue-500" /></span>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-slate-500">
-                {ratingInfo.count > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                    <span className="font-semibold text-slate-700">{ratingInfo.avg}</span>
-                    <span>({ratingInfo.count})</span>
-                  </span>
-                )}
-                {seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}
-                {seller.businessType && seller.businessType !== "Retail" && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium">{seller.businessType}</span>
-                )}
-              </div>
-            </div>
-            {/* Action buttons — compact */}
-            <div className="hidden sm:flex items-center gap-1 pb-1">
-              {social.whatsapp && (
-                <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition" title="WhatsApp">
-                  <MessageCircle className="h-4 w-4" />
-                </a>
-              )}
-              <button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" title={t.shareStore}>
-                <Share2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Stats mini-bar */}
-          <div className="mt-2 flex items-center gap-3 px-2 text-xs text-slate-400 sm:px-4">
-            <span>{products.length} {t.products}</span>
-            <span>·</span>
-            <span>{storeComments.length} {t.reviews}</span>
-            {memberYear && <><span>·</span><span>{t.memberSince} {memberYear}</span></>}
-            {/* Business-type specific hints */}
-            {isFood && seller.businessHours && Object.keys(seller.businessHours).length > 0 && (
-              <><span>·</span><span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{t.openNow}</span></>
-            )}
-          </div>
-        </div>
-      </div>
+      <StoreHeaderTemplates
+        seller={seller}
+        theme={theme}
+        template={template}
+        t={t}
+        social={social}
+        productsCount={products.length}
+        reviewsCount={storeComments.length}
+        ratingInfo={ratingInfo}
+        memberYear={memberYear}
+        isFood={isFood}
+        isVerified={isVerified}
+        headerTemplate={headerTemplate}
+      />
 
       {/* Tab bar */}
-      <div className="sticky top-12 z-20 border-b border-slate-200 bg-white shadow-sm">
+      <div className={`sticky z-20 border-b border-slate-200 bg-white shadow-sm ${headerTemplate === "minimal-sticky" ? "top-24" : "top-12"}`}>
         <div className="mx-auto flex max-w-5xl px-4">
           {tabs.map((tb) => (
             <button
@@ -444,6 +355,102 @@ export default function StorefrontPage() {
       )}
     </div>
   );
+}
+
+function StorefrontActions({
+  social,
+  customer,
+  slug,
+  t,
+  wishlistCount,
+}: {
+  social: Seller["socialLinks"];
+  customer: CustomerInfo;
+  slug: string;
+  t: Record<string, string>;
+  wishlistCount: number;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      {social.whatsapp && (
+        <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition">
+          <MessageCircle className="h-4 w-4" />
+        </a>
+      )}
+      {social.instagram && (
+        <a href={social.instagram} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-pink-50 hover:text-pink-600 transition">
+          <Instagram className="h-4 w-4" />
+        </a>
+      )}
+      {social.facebook && (
+        <a href={social.facebook} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition">
+          <Facebook className="h-4 w-4" />
+        </a>
+      )}
+      <div className="mx-1 h-4 w-px bg-slate-200" />
+      {customer ? (
+        <>
+          <Link href="/customer/wishlist" className="relative rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 transition">
+            <Heart className={`h-4 w-4 ${wishlistCount > 0 ? "fill-red-500 text-red-500" : ""}`} />
+            {wishlistCount > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{wishlistCount}</span>}
+          </Link>
+          <Link href="/customer/profile" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">{customer.name.charAt(0).toUpperCase()}</div>
+            <span className="hidden sm:inline max-w-[80px] truncate">{customer.name.split(" ")[0]}</span>
+          </Link>
+        </>
+      ) : (
+        <Link href={`/customer/login?redirect=/s/${slug}`} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+          <LogIn className="h-3.5 w-3.5" /> {t.login}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function StoreHeaderTemplates({
+  seller, theme, template, t, social, productsCount, reviewsCount, ratingInfo, memberYear, isFood, isVerified, headerTemplate,
+}: {
+  seller: Seller;
+  theme: ReturnType<typeof getTheme>;
+  template: StoreTemplate;
+  t: Record<string, string>;
+  social: Seller["socialLinks"];
+  productsCount: number;
+  reviewsCount: number;
+  ratingInfo: { avg: number; count: number };
+  memberYear: number | null;
+  isFood: boolean;
+  isVerified: boolean;
+  headerTemplate: "compact" | "hero" | "split" | "minimal-sticky";
+}) {
+  const stats = <div className="mt-2 flex items-center gap-3 text-xs text-slate-400"><span>{productsCount} {t.products}</span><span>·</span><span>{reviewsCount} {t.reviews}</span>{memberYear && <><span>·</span><span>{t.memberSince} {memberYear}</span></>}{isFood && seller.businessHours && Object.keys(seller.businessHours).length > 0 && <><span>·</span><span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{t.openNow}</span></>}</div>;
+
+  if (headerTemplate === "minimal-sticky") {
+    return (
+      <>
+        <div className="sticky top-12 z-20 border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0"><div className="h-7 w-7 overflow-hidden rounded-lg bg-slate-100">{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-[10px]" />}</div><p className="truncate text-sm font-semibold text-slate-800">{seller.name}</p></div>
+            <button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button>
+          </div>
+        </div>
+        <div className="bg-white"><div className="mx-auto max-w-5xl px-4 py-3"><div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-3"><div className={`${template.avatarSize} overflow-hidden rounded-xl bg-white shadow-sm`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h1 className="truncate text-base font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-blue-500" />}</div><p className="line-clamp-1 text-xs text-slate-500">{seller.description || seller.businessType}</p></div></div>{stats}</div></div></div>
+      </>
+    );
+  }
+
+  const banner = <div className="relative h-[120px] overflow-hidden rounded-2xl sm:h-[150px]">{seller.bannerUrl ? <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} /> : <div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>}<div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" /></div>;
+
+  if (headerTemplate === "hero") {
+    return <div className="bg-white"><div className="mx-auto max-w-5xl px-4 pb-2 pt-1"><div className="relative">{banner}<div className="absolute inset-x-3 bottom-3 rounded-xl bg-white/90 p-3 backdrop-blur"><div className="flex items-center gap-3"><div className={`${template.avatarSize} overflow-hidden rounded-xl border border-white/60 bg-white shadow`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-blue-500" />}</div><div className="flex items-center gap-2 text-xs text-slate-500">{ratingInfo.count > 0 && <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" />{ratingInfo.avg} ({ratingInfo.count})</span>}{seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}</div></div><div className="hidden sm:flex items-center gap-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button></div></div>{stats}</div></div></div></div>;
+  }
+
+  if (headerTemplate === "split") {
+    return <div className="bg-white"><div className="mx-auto max-w-5xl px-4 py-3"><div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:grid-cols-[1.7fr,1fr]">{banner}<div className="rounded-xl bg-slate-50 p-3"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-blue-500" />}</div><p className="mt-1 line-clamp-2 text-xs text-slate-500">{seller.description || seller.businessType}</p><div className="mt-3 grid grid-cols-2 gap-2 text-xs"><div className="rounded-lg bg-white p-2"><p className="text-slate-400">{t.products}</p><p className="font-semibold text-slate-800">{productsCount}</p></div><div className="rounded-lg bg-white p-2"><p className="text-slate-400">{t.reviews}</p><p className="font-semibold text-slate-800">{reviewsCount}</p></div></div><div className="mt-3 flex items-center gap-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button></div>{stats}</div></div></div></div>;
+  }
+
+  return <div className="bg-white pb-1"><div className="mx-auto max-w-5xl px-4"><div className="relative mt-0 h-[110px] overflow-hidden rounded-b-2xl sm:h-[140px]">{seller.bannerUrl ? <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} /> : <div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>}<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" /></div><div className="relative -mt-8 flex items-end gap-3 px-2 sm:px-4"><div className={`${template.avatarSize} shrink-0 overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-lg`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />} /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1 pb-1"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <span title={t.verified}><BadgeCheck className="h-4 w-4 shrink-0 text-blue-500" /></span>}</div><div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-slate-500">{ratingInfo.count > 0 && <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /><span className="font-semibold text-slate-700">{ratingInfo.avg}</span><span>({ratingInfo.count})</span></span>}{seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}{seller.businessType && seller.businessType !== "Retail" && <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium">{seller.businessType}</span>}</div></div><div className="hidden sm:flex items-center gap-1 pb-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition" title="WhatsApp"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" title={t.shareStore}><Share2 className="h-4 w-4" /></button></div></div><div className="mt-2 px-2 sm:px-4">{stats}</div></div></div>;
 }
 
 /* ── Price Display with compare_at_price ── */

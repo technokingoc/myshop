@@ -28,6 +28,7 @@ export const sellers = pgTable("sellers", {
   address: text("address").default(""),
   country: varchar("country", { length: 64 }).default(""),
   storeTemplate: varchar("store_template", { length: 32 }).default("classic"),
+  headerTemplate: varchar("header_template", { length: 32 }).default("compact"),
 });
 
 export const platformSettings = pgTable("platform_settings", {
