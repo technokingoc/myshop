@@ -2,361 +2,342 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
-import { DbMigrationGuard } from "@/components/db-migration-guard";
+import { fetchSession, type AuthSession } from "@/lib/auth";
 import {
-  Package,
   ShoppingCart,
+  DollarSign,
+  Package,
+  Eye,
+  Plus,
   ExternalLink,
-  Store,
-  TrendingUp,
+  Download,
+  CheckCircle2,
+  AlertCircle,
   Clock,
-  Users,
-  CheckSquare,
-  Database,
-  ShieldAlert,
   ArrowRight,
-  TriangleAlert,
-  X,
-  Compass,
-  Sparkles,
-  BookOpen,
+  Loader2,
+  Store,
 } from "lucide-react";
 
-type Seller = { id: number; slug: string; name: string; ownerName?: string };
-type CatalogItem = { id: number; status: "Draft" | "Published" };
-type DbHealth = {
-  ok: boolean;
-  connected: boolean;
-  missingTables: string[];
-  errorCode?: "DB_UNAVAILABLE" | "DB_TABLES_NOT_READY";
-  suggestion?: string;
-  checkedAt?: string;
+type DashboardStats = {
+  orderCount: number;
+  revenue: number;
+  productCount: number;
+  publishedCount: number;
+  storeViews: number;
+  recentOrders: {
+    id: number;
+    customerName: string;
+    customerContact: string;
+    message: string;
+    itemId: number | null;
+    status: string;
+    createdAt: string;
+    itemName: string | null;
+    itemPrice: string | null;
+  }[];
 };
-
-type SetupData = {
-  storeName: string;
-  storefrontSlug: string;
-  ownerName?: string;
-  paymentLink?: string;
-};
-type SetupPersisted = { step: number; done: boolean; data: SetupData };
 
 const dict = {
   en: {
-    hello: "Hello",
-    subtitle: "Here's a clean view of your store operations and next best actions.",
-    totalProducts: "Total products",
-    publishedItems: "Published",
-    draftItems: "Drafts",
-    totalViews: "Page views",
+    welcome: "Welcome back",
+    overview: "Business overview",
+    totalOrders: "Total Orders",
+    revenue: "Revenue",
+    activeProducts: "Active Products",
+    storeViews: "Store Views",
+    recentOrders: "Recent Orders",
+    noOrders: "No orders yet. Share your storefront to start receiving orders.",
+    customer: "Customer",
+    item: "Item",
+    status: "Status",
+    date: "Date",
+    viewAll: "View all orders",
+    quickActions: "Quick Actions",
+    addProduct: "Add Product",
+    viewStorefront: "View Storefront",
+    exportOrders: "Export Orders",
+    storeHealth: "Store Health",
+    profileComplete: "Profile complete",
+    hasProducts: "Has published products",
+    hasOrders: "Has received orders",
+    complete: "Complete",
+    incomplete: "Incomplete",
+    healthGood: "Your store is fully set up!",
+    healthNeeds: "Complete these to improve your store",
+    loading: "Loading dashboard...",
     notSetup: "Store not configured",
-    notSetupHint: "Complete the store setup first.",
-    goSetup: "Go to setup",
-    linkCopied: "Link copied!",
-    pendingTitle: "Pending setup tasks",
-    pendingSubtitle: "Finish these to unlock a complete storefront experience.",
-    checklistDone: "Done",
-    checklistTodo: "Pending",
-    checklistStore: "Store profile completed",
-    checklistCatalog: "At least one published catalog item",
-    checklistPayment: "Payment link configured",
-    thingsToDo: "Things to do",
-    quickTour: "Take a quick tour",
-    quickTourHint: "Explore key areas and keep your storefront sharp.",
-    openOrders: "Open orders",
-    openCatalog: "Open catalog",
-    openSettings: "Open settings",
-    viewStorefront: "View storefront",
-    copyLink: "Copy link",
-    discoverTitle: "Discover features",
-    discoverSub: "Lightweight improvements that make your seller workflow smoother.",
-    dbPanelTitle: "Database diagnostics",
-    dbHealthy: "All critical tables are available.",
-    dbIssue: "There is a database readiness issue affecting operations.",
-    dbMissing: "Missing tables",
-    dbSuggestion: "Suggested action",
-    cards: {
-      analytics: {
-        title: "Track performance",
-        desc: "Review trends and spot what customers engage with the most.",
-        cta: "Go to analytics",
-      },
-      trust: {
-        title: "Improve trust signals",
-        desc: "Add better product descriptions and images to improve conversion.",
-        cta: "Update catalog",
-      },
-      response: {
-        title: "Respond faster",
-        desc: "Keep response times low by checking notifications and order notes daily.",
-        cta: "Open orders",
-      },
-    },
+    notSetupHint: "Log in to access your dashboard.",
+    goLogin: "Go to login",
+    statusNew: "New",
+    statusContacted: "Contacted",
+    statusCompleted: "Completed",
+    na: "N/A",
   },
   pt: {
-    hello: "Olá",
-    subtitle: "Aqui está uma visão limpa das operações da sua loja e próximos passos.",
-    totalProducts: "Total de produtos",
-    publishedItems: "Publicados",
-    draftItems: "Rascunhos",
-    totalViews: "Visualizações",
+    welcome: "Bem-vindo de volta",
+    overview: "Visão geral do negócio",
+    totalOrders: "Total de Pedidos",
+    revenue: "Receita",
+    activeProducts: "Produtos Activos",
+    storeViews: "Visitas à Loja",
+    recentOrders: "Pedidos Recentes",
+    noOrders: "Ainda sem pedidos. Partilhe a sua loja para começar a receber pedidos.",
+    customer: "Cliente",
+    item: "Item",
+    status: "Estado",
+    date: "Data",
+    viewAll: "Ver todos os pedidos",
+    quickActions: "Acções Rápidas",
+    addProduct: "Adicionar Produto",
+    viewStorefront: "Ver Loja",
+    exportOrders: "Exportar Pedidos",
+    storeHealth: "Saúde da Loja",
+    profileComplete: "Perfil completo",
+    hasProducts: "Tem produtos publicados",
+    hasOrders: "Recebeu pedidos",
+    complete: "Concluído",
+    incomplete: "Pendente",
+    healthGood: "A sua loja está totalmente configurada!",
+    healthNeeds: "Complete estes itens para melhorar a sua loja",
+    loading: "A carregar painel...",
     notSetup: "Loja não configurada",
-    notSetupHint: "Conclua a configuração da loja primeiro.",
-    goSetup: "Ir para configuração",
-    linkCopied: "Link copiado!",
-    pendingTitle: "Tarefas pendentes de configuração",
-    pendingSubtitle: "Conclua estas tarefas para desbloquear uma experiência completa da loja.",
-    checklistDone: "Concluído",
-    checklistTodo: "Pendente",
-    checklistStore: "Perfil da loja concluído",
-    checklistCatalog: "Pelo menos um item do catálogo publicado",
-    checklistPayment: "Link de pagamento configurado",
-    thingsToDo: "Coisas para fazer",
-    quickTour: "Faça um tour rápido",
-    quickTourHint: "Explore as áreas principais e mantenha a sua loja afiada.",
-    openOrders: "Abrir pedidos",
-    openCatalog: "Abrir catálogo",
-    openSettings: "Abrir configurações",
-    viewStorefront: "Ver loja",
-    copyLink: "Copiar link",
-    discoverTitle: "Descobrir funcionalidades",
-    discoverSub: "Melhorias leves que tornam o fluxo do vendedor mais eficiente.",
-    dbPanelTitle: "Diagnóstico da base de dados",
-    dbHealthy: "Todas as tabelas críticas estão disponíveis.",
-    dbIssue: "Existe um problema de prontidão da base de dados que afeta operações.",
-    dbMissing: "Tabelas em falta",
-    dbSuggestion: "Ação sugerida",
-    cards: {
-      analytics: {
-        title: "Acompanhar desempenho",
-        desc: "Veja tendências e identifique o que os clientes mais procuram.",
-        cta: "Ir para análises",
-      },
-      trust: {
-        title: "Melhorar sinais de confiança",
-        desc: "Adicione melhores descrições e imagens para aumentar conversão.",
-        cta: "Atualizar catálogo",
-      },
-      response: {
-        title: "Responder mais rápido",
-        desc: "Mantenha tempos de resposta baixos verificando notificações diariamente.",
-        cta: "Abrir pedidos",
-      },
-    },
+    notSetupHint: "Faça login para aceder ao seu painel.",
+    goLogin: "Ir para login",
+    statusNew: "Novo",
+    statusContacted: "Contactado",
+    statusCompleted: "Concluído",
+    na: "N/D",
   },
+};
+
+const statusColors: Record<string, string> = {
+  new: "bg-blue-100 text-blue-700",
+  contacted: "bg-amber-100 text-amber-700",
+  completed: "bg-emerald-100 text-emerald-700",
 };
 
 export default function DashboardPage() {
   const { lang } = useLanguage();
-  const router = useRouter();
   const t = useMemo(() => dict[lang], [lang]);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [setup, setSetup] = useState<SetupPersisted | null>(null);
-  const [seller, setSeller] = useState<Seller | null>(null);
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [ordersCount, setOrdersCount] = useState(0);
-  const [hydrated, setHydrated] = useState(false);
-  const [dbHealth, setDbHealth] = useState<DbHealth | null>(null);
-  const [dismissed, setDismissed] = useState<string[]>([]);
-
-  const fetchDashboardData = async () => {
-    const rawSetup = localStorage.getItem("myshop_setup_v2");
-    if (!rawSetup) {
-      setHydrated(true);
-      return;
-    }
-
-    let parsed: SetupPersisted | null = null;
-    try {
-      parsed = JSON.parse(rawSetup);
-      setSetup(parsed);
-    } catch {
-      setHydrated(true);
-      return;
-    }
-
-    const health = await fetch("/api/health/db").then((r) => r.json()).catch(() => null);
-    setDbHealth(health);
-
-    const slug = parsed?.data?.storefrontSlug;
-    if (!slug || (health && !health.ok)) {
-      setHydrated(true);
-      return;
-    }
-
-    Promise.all([
-      fetch(`/api/sellers/${slug}`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`/api/catalog?sellerSlug=${slug}`).then((r) => r.json()),
-    ])
-      .then(async ([s, c]) => {
-        if (s?.id) {
-          setSeller(s);
-          localStorage.setItem("myshop_seller_id", String(s.id));
-          const o = await fetch(`/api/orders?sellerId=${s.id}`).then((r) => r.json());
-          if (Array.isArray(o)) setOrdersCount(o.length);
-        }
-        if (Array.isArray(c)) setCatalog(c);
-      })
-      .finally(() => setHydrated(true));
-  };
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchSession().then(async (s) => {
+      setSession(s);
+      if (s) {
+        try {
+          const res = await fetch("/api/dashboard/stats", { credentials: "include" });
+          if (res.ok) setStats(await res.json());
+        } catch {}
+      }
+      setLoading(false);
+    });
   }, []);
 
-  if (!hydrated) return null;
-
-  if (!setup?.done) {
+  if (loading) {
     return (
-      <main className="shell-empty">
-        <div className="shell-empty-card">
-          <Store className="shell-empty-icon" />
-          <h1 className="shell-empty-title">{t.notSetup}</h1>
-          <p className="shell-empty-subtitle">{t.notSetupHint}</p>
-          <button onClick={() => router.push("/")} className="ui-btn ui-btn-primary shell-empty-cta">
-            {t.goSetup}
-          </button>
-        </div>
-      </main>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        <span className="ml-2 text-sm text-slate-500">{t.loading}</span>
+      </div>
     );
   }
 
-  const slug = seller?.slug || setup.data.storefrontSlug || "myshop-demo";
-  const owner = seller?.ownerName || setup.data.ownerName || "Seller";
-  const storefrontUrl = `/s/${slug}`;
-  const fullUrl = `https://myshop-amber.vercel.app${storefrontUrl}`;
-  const published = catalog.filter((i) => i.status === "Published").length;
-  const drafts = catalog.filter((i) => i.status === "Draft").length;
+  if (!session) {
+    return (
+      <div className="mx-auto max-w-md py-20 text-center">
+        <Store className="mx-auto h-10 w-10 text-slate-400" />
+        <h1 className="mt-4 text-xl font-bold text-slate-900">{t.notSetup}</h1>
+        <p className="mt-2 text-sm text-slate-600">{t.notSetupHint}</p>
+        <Link href="/login" className="ui-btn ui-btn-primary mt-6 inline-flex">
+          {t.goLogin}
+        </Link>
+      </div>
+    );
+  }
 
-  const checklist = [
-    { key: "store", label: t.checklistStore, done: Boolean(setup?.data?.storeName && setup?.data?.storefrontSlug) },
-    { key: "catalog", label: t.checklistCatalog, done: published > 0 },
-    { key: "payment", label: t.checklistPayment, done: Boolean(setup?.data?.paymentLink) },
-  ];
-
-  const pendingCount = checklist.filter((i) => !i.done).length;
-
-  const copyStorefrontLink = () => {
-    navigator.clipboard.writeText(fullUrl).then(() => {
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 1800);
-    });
+  const slug = session.sellerSlug;
+  const storeName = session.storeName;
+  const data = stats ?? {
+    orderCount: 0,
+    revenue: 0,
+    productCount: 0,
+    publishedCount: 0,
+    storeViews: 0,
+    recentOrders: [],
   };
 
-  const discoveryCards = [
-    { key: "analytics", icon: TrendingUp, ...t.cards.analytics, href: "/dashboard/analytics" },
-    { key: "trust", icon: Sparkles, ...t.cards.trust, href: "/dashboard/catalog" },
-    { key: "response", icon: BookOpen, ...t.cards.response, href: "/dashboard/orders" },
-  ].filter((card) => !dismissed.includes(card.key));
+  const healthChecks = [
+    { label: t.profileComplete, done: Boolean(storeName && slug) },
+    { label: t.hasProducts, done: data.publishedCount > 0 },
+    { label: t.hasOrders, done: data.orderCount > 0 },
+  ];
+  const healthScore = healthChecks.filter((h) => h.done).length;
+  const allHealthy = healthScore === healthChecks.length;
+
+  const statusLabel = (s: string) => {
+    if (s === "new") return t.statusNew;
+    if (s === "contacted") return t.statusContacted;
+    if (s === "completed") return t.statusCompleted;
+    return s;
+  };
 
   return (
     <>
-      <DbMigrationGuard health={dbHealth} onRetry={fetchDashboardData} />
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">
+          {t.welcome}, {storeName} 👋
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">{t.overview}</p>
+      </div>
 
-      <section className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{t.hello}, {owner} 👋</h1>
-        <p className="mt-2 text-sm text-slate-600">{t.subtitle}</p>
-      </section>
+      {/* Stats row */}
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard icon={ShoppingCart} label={t.totalOrders} value={String(data.orderCount)} color="text-blue-600 bg-blue-50" />
+        <StatCard icon={DollarSign} label={t.revenue} value={`$${data.revenue.toFixed(2)}`} color="text-emerald-600 bg-emerald-50" />
+        <StatCard icon={Package} label={t.activeProducts} value={String(data.publishedCount)} color="text-indigo-600 bg-indigo-50" />
+        <StatCard icon={Eye} label={t.storeViews} value={data.storeViews > 0 ? String(data.storeViews) : "—"} color="text-slate-500 bg-slate-50" />
+      </div>
 
-      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Package} label={t.totalProducts} value={String(catalog.length)} />
-        <StatCard icon={TrendingUp} label={t.publishedItems} value={String(published)} />
-        <StatCard icon={Clock} label={t.draftItems} value={String(drafts)} />
-        <StatCard icon={Users} label={t.totalViews} value="—" muted />
-      </section>
-
-      <section className="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3.5">
-        <div className="flex items-start gap-3">
-          <TriangleAlert className="mt-0.5 h-4 w-4 text-slate-500" />
-          <div>
-            <p className="text-sm font-semibold text-slate-900">{t.pendingTitle} ({pendingCount})</p>
-            <p className="mt-1 text-sm text-slate-600">{t.pendingSubtitle}</p>
+      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+        {/* Recent orders */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-900">{t.recentOrders}</h2>
+            <Link href="/dashboard/orders" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+              {t.viewAll} →
+            </Link>
           </div>
+          {data.recentOrders.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-500">{t.noOrders}</p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {data.recentOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-800">
+                      {order.customerName}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
+                      {order.itemName || t.na} · {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span
+                    className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      statusColors[order.status] || "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {statusLabel(order.status)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </section>
 
-      <section className="mb-8 grid gap-4 lg:grid-cols-5">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-3">
-          <h2 className="text-base font-semibold text-slate-900">{t.thingsToDo}</h2>
-          <ul className="mt-4 space-y-2">
-            {checklist.map((item) => (
-              <li key={item.key} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="text-slate-700">{item.label}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${item.done ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                  {item.done ? t.checklistDone : t.checklistTodo}
+        {/* Store Health */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <h2 className="text-sm font-semibold text-slate-900">{t.storeHealth}</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            {allHealthy ? t.healthGood : t.healthNeeds}
+          </p>
+          <div className="mt-3 space-y-2">
+            {healthChecks.map((check) => (
+              <div
+                key={check.label}
+                className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  {check.done ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                  )}
+                  <span className="text-slate-700">{check.label}</span>
+                </div>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    check.done
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  {check.done ? t.complete : t.incomplete}
                 </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-2">
-          <h2 className="text-base font-semibold text-slate-900">{t.quickTour}</h2>
-          <p className="mt-1 text-sm text-slate-600">{t.quickTourHint}</p>
-          <div className="mt-4 grid gap-2">
-            <Link href="/dashboard/orders" className="inline-flex h-10 items-center justify-between rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">{t.openOrders}<ArrowRight className="h-4 w-4" /></Link>
-            <Link href="/dashboard/catalog" className="inline-flex h-10 items-center justify-between rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">{t.openCatalog}<ArrowRight className="h-4 w-4" /></Link>
-            <Link href="/dashboard/settings" className="inline-flex h-10 items-center justify-between rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">{t.openSettings}<ArrowRight className="h-4 w-4" /></Link>
-            <a href={storefrontUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-between rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">{t.viewStorefront}<ExternalLink className="h-4 w-4" /></a>
-            <button onClick={copyStorefrontLink} className="inline-flex h-10 items-center justify-between rounded-md border border-transparent px-3 text-sm font-medium text-slate-600 hover:bg-slate-100">{linkCopied ? t.linkCopied : t.copyLink}<Compass className="h-4 w-4" /></button>
-          </div>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-base font-semibold text-slate-900">{t.discoverTitle}</h2>
-        <p className="mt-1 text-sm text-slate-600">{t.discoverSub}</p>
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          {discoveryCards.map((card) => (
-            <article key={card.key} className="rounded-lg border border-slate-200 bg-white p-5">
-              <div className="flex items-start justify-between gap-2">
-                <card.icon className="h-5 w-5 text-blue-600" />
-                <button onClick={() => setDismissed((prev) => [...prev, card.key])} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Dismiss card">
-                  <X className="h-4 w-4" />
-                </button>
               </div>
-              <h3 className="mt-3 font-semibold text-slate-900">{card.title}</h3>
-              <p className="mt-1 text-sm text-slate-600">{card.desc}</p>
-              <Link href={card.href} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-800 hover:text-slate-900">
-                {card.cta}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {dbHealth && (
-        <section className="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 className="flex items-center gap-2 font-semibold text-slate-900">
-            <Database className="h-4 w-4" />
-            {t.dbPanelTitle}
-          </h2>
-          <div className={`mt-3 rounded-lg border p-3 text-sm ${dbHealth.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
-            <p className="flex items-center gap-2 font-medium">
-              {dbHealth.ok ? <CheckSquare className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
-              {dbHealth.ok ? t.dbHealthy : t.dbIssue}
-            </p>
-            {!dbHealth.ok && (
-              <>
-                <p className="mt-2"><span className="font-semibold">{t.dbMissing}:</span> {dbHealth.missingTables.join(", ") || "-"}</p>
-                <p className="mt-1"><span className="font-semibold">{t.dbSuggestion}:</span> {dbHealth.suggestion || "-"}</p>
-              </>
-            )}
+            ))}
           </div>
-        </section>
-      )}
+          {/* Progress bar */}
+          <div className="mt-3">
+            <div className="h-2 rounded-full bg-slate-100">
+              <div
+                className="h-2 rounded-full bg-emerald-500 transition-all"
+                style={{ width: `${(healthScore / healthChecks.length) * 100}%` }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              {healthScore}/{healthChecks.length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-3 gap-3">
+        <Link
+          href="/dashboard/catalog"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50"
+        >
+          <Plus className="h-4 w-4 text-indigo-600" />
+          {t.addProduct}
+        </Link>
+        <a
+          href={`/s/${slug}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50"
+        >
+          <ExternalLink className="h-4 w-4 text-indigo-600" />
+          {t.viewStorefront}
+        </a>
+        <Link
+          href="/api/orders/export.csv"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50"
+        >
+          <Download className="h-4 w-4 text-indigo-600" />
+          {t.exportOrders}
+        </Link>
+      </div>
     </>
   );
 }
 
-function StatCard({ icon: Icon, label, value, muted }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; muted?: boolean }) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  color: string;
+}) {
+  const [iconColor, bgColor] = color.split(" ");
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <Icon className="h-4 w-4 text-slate-400" />
-      <p className={`mt-2 text-2xl font-semibold ${muted ? "text-slate-400" : "text-slate-900"}`}>{value}</p>
+      <div className={`inline-flex rounded-lg p-2 ${bgColor}`}>
+        <Icon className={`h-4 w-4 ${iconColor}`} />
+      </div>
+      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
       <p className="mt-0.5 text-xs text-slate-500">{label}</p>
     </div>
   );

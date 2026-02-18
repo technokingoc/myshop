@@ -1,11 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { useLanguage } from "@/lib/language";
-import { OrderFormDB } from "@/components/order-form-db";
-import { Store, MapPin, MessageCircle, Instagram, Facebook, AlertCircle, Send, Loader2, ShieldCheck, Clock3 } from "lucide-react";
+import {
+  Store,
+  MapPin,
+  MessageCircle,
+  Instagram,
+  Facebook,
+  AlertCircle,
+  Loader2,
+  ShoppingBag,
+  X,
+  Send,
+  CheckCircle,
+  Home,
+  ChevronRight,
+  Package,
+  Image as ImageIcon,
+} from "lucide-react";
 
+/* ── Types ── */
 type Seller = {
   id: number;
   slug: string;
@@ -16,411 +33,537 @@ type Seller = {
   currency: string;
   city: string;
   logoUrl: string;
-  socialLinks: { whatsapp: string; instagram: string; facebook: string };
+  socialLinks: { whatsapp?: string; instagram?: string; facebook?: string };
 };
 
-type CatalogItem = {
+type Product = {
   id: number;
   sellerId: number;
   name: string;
-  type: "Product" | "Service";
+  type: string;
   category: string;
   shortDescription: string;
   imageUrl: string;
   price: string;
-  status: "Draft" | "Published";
+  status: string;
 };
 
-type LocalSetup = {
-  done?: boolean;
-  data?: {
-    storeName?: string;
-    storefrontSlug?: string;
-    ownerName?: string;
-    businessType?: string;
-    currency?: string;
-    city?: string;
-    whatsapp?: string;
-    instagram?: string;
-    facebook?: string;
-    description?: string;
-    logoUrl?: string;
-  };
-};
-
-const SAFE_TYPES: CatalogItem["type"][] = ["Product", "Service"];
-const SAFE_STATUS: CatalogItem["status"][] = ["Draft", "Published"];
-
-function asString(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value === null || value === undefined) return "";
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return "";
-}
-
-function asNumber(value: unknown): number {
-  const num = Number(value);
-  return Number.isFinite(num) ? num : 0;
-}
-
-function asSafeEnum<T extends string>(value: unknown, allowed: T[], fallback: T): T {
-  const candidate = asString(value).trim();
-  return allowed.includes(candidate as T) ? (candidate as T) : fallback;
-}
-
-function parseSocialLinks(value: unknown): Seller["socialLinks"] {
-  let parsed: unknown = value;
-
-  if (typeof value === "string") {
-    try {
-      parsed = JSON.parse(value);
-    } catch {
-      parsed = null;
-    }
-  }
-
-  const obj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
-
-  return {
-    whatsapp: asString(obj.whatsapp),
-    instagram: asString(obj.instagram),
-    facebook: asString(obj.facebook),
-  };
-}
-
-function normalizeSeller(input: unknown): Seller | null {
-  if (!input || typeof input !== "object") return null;
-  const row = input as Record<string, unknown>;
-
-  const slug = asString(row.slug).trim();
-  const name = asString(row.name).trim();
-  if (!slug || !name) return null;
-
-  return {
-    id: asNumber(row.id),
-    slug,
-    name,
-    description: asString(row.description),
-    ownerName: asString(row.ownerName),
-    businessType: asString(row.businessType),
-    currency: asString(row.currency),
-    city: asString(row.city),
-    logoUrl: asString(row.logoUrl),
-    socialLinks: parseSocialLinks(row.socialLinks),
-  };
-}
-
-function normalizeCatalog(input: unknown): CatalogItem[] {
-  if (!Array.isArray(input)) return [];
-  return input.map((raw) => {
-    const row = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-    return {
-      id: asNumber(row.id),
-      sellerId: asNumber(row.sellerId),
-      name: asString(row.name),
-      type: asSafeEnum(row.type, SAFE_TYPES, "Product"),
-      category: asString(row.category),
-      shortDescription: asString(row.shortDescription),
-      imageUrl: asString(row.imageUrl),
-      price: asString(row.price),
-      status: asSafeEnum(row.status, SAFE_STATUS, "Draft"),
-    };
-  });
-}
-
-function logStorefrontIssue(event: string, details: Record<string, unknown>) {
-  if (process.env.NODE_ENV !== "production") {
-    console.warn(`[storefront] ${event}`, details);
-  }
-}
-
-function loadLocalStorefront(slug: string): { seller: Seller | null; catalog: CatalogItem[] } {
-  if (typeof window === "undefined") return { seller: null, catalog: [] };
-
-  try {
-    const rawSetup = localStorage.getItem("myshop_setup_v2");
-    const rawCatalog = localStorage.getItem("myshop_catalog_v2");
-    if (!rawSetup) return { seller: null, catalog: [] };
-
-    const setup = JSON.parse(rawSetup) as LocalSetup;
-    const data = setup?.data;
-    if (!data) return { seller: null, catalog: [] };
-
-    const localSlug = asString(data.storefrontSlug).trim();
-    if (!localSlug || localSlug !== slug) return { seller: null, catalog: [] };
-
-    const seller = normalizeSeller({
-      id: localStorage.getItem("myshop_seller_id") || 0,
-      slug: localSlug,
-      name: data.storeName,
-      description: data.description,
-      ownerName: data.ownerName,
-      businessType: data.businessType,
-      currency: data.currency,
-      city: data.city,
-      logoUrl: data.logoUrl,
-      socialLinks: {
-        whatsapp: data.whatsapp,
-        instagram: data.instagram,
-        facebook: data.facebook,
-      },
-    });
-
-    let parsedCatalog: unknown[] = [];
-    if (rawCatalog) {
-      try {
-        parsedCatalog = JSON.parse(rawCatalog);
-      } catch {
-        parsedCatalog = [];
-      }
-    }
-
-    return {
-      seller,
-      catalog: normalizeCatalog(parsedCatalog),
-    };
-  } catch {
-    return { seller: null, catalog: [] };
-  }
-}
-
-async function safeFetchJson(url: string): Promise<{ ok: boolean; status: number; data: unknown | null }> {
-  try {
-    const res = await fetch(url);
-    const data = await res.json().catch(() => null);
-    return { ok: res.ok, status: res.status, data };
-  } catch {
-    return { ok: false, status: 0, data: null };
-  }
-}
-
-const text = {
+/* ── i18n ── */
+const dict = {
   en: {
-    missing: "Store not found",
-    hint: "This store doesn't exist or hasn't been set up yet.",
     loading: "Loading store...",
+    notFound: "Store not found",
+    notFoundHint: "This store doesn't exist or hasn't been set up yet.",
+    goHome: "Go home",
     products: "Products",
-    services: "Services",
-    emptyProducts: "No published products yet.",
-    emptyServices: "No published services yet.",
-    order: "Order",
-    book: "Book",
-    orderGeneral: "Place an order",
-    trustTitle: "Why customers trust this seller",
-    trustSummary: "Business summary",
-    trustResponse: "Typical response time",
-    trustPolicy: "Order policy",
-    responsePlaceholder: "Usually replies within a few hours",
-    policyPlaceholder: "Orders are confirmed via direct message and fulfilled per seller availability.",
-    emptyCatalogTitle: "Catalog is being prepared",
-    emptyCatalogHint: "This seller has not published products or services yet. You can still contact them directly.",
-    contactSeller: "Contact seller",
-    dbBanner: "Temporary connection issue. Showing available fallback content.",
-    discover: "Find items quickly",
-    search: "Search products/services",
-    all: "All",
-    infoTitle: "Important info",
-    delivery: "Delivery",
-    policy: "Policy",
-    payment: "Payment",
-    deliveryText: "Delivery/collection is agreed directly with the seller.",
-    policyText: "Orders are confirmed by direct contact and stock availability.",
-    paymentText: "Payments happen via external safe links. MyShop does not capture cards.",
+    allCategories: "All",
+    noProducts: "No products yet",
+    noProductsHint: "This seller hasn't published any products yet. Check back soon!",
+    addToOrder: "Order",
+    viewDetails: "View details",
+    orderTitle: "Place an Order",
+    orderName: "Your name",
+    orderNamePh: "Full name",
+    orderContact: "Email or phone",
+    orderContactPh: "email@example.com or +258...",
+    orderQty: "Quantity",
+    orderNotes: "Notes (optional)",
+    orderNotesPh: "Any details or questions...",
+    orderSubmit: "Send order",
+    orderSending: "Sending...",
+    orderSuccess: "Order placed successfully!",
+    orderRef: "Reference",
+    orderSuccessHint: "The seller will contact you soon.",
+    close: "Close",
+    item: "Item",
+    about: "About",
+    contact: "Contact",
+    storeBy: "Store by",
   },
   pt: {
-    missing: "Loja não encontrada",
-    hint: "Esta loja não existe ou ainda não foi configurada.",
     loading: "A carregar loja...",
+    notFound: "Loja não encontrada",
+    notFoundHint: "Esta loja não existe ou ainda não foi configurada.",
+    goHome: "Ir para início",
     products: "Produtos",
-    services: "Serviços",
-    emptyProducts: "Ainda não há produtos publicados.",
-    emptyServices: "Ainda não há serviços publicados.",
-    order: "Encomendar",
-    book: "Reservar",
-    orderGeneral: "Fazer um pedido",
-    trustTitle: "Porque os clientes confiam neste vendedor",
-    trustSummary: "Resumo do negócio",
-    trustResponse: "Tempo de resposta típico",
-    trustPolicy: "Política de pedidos",
-    responsePlaceholder: "Normalmente responde em poucas horas",
-    policyPlaceholder: "Pedidos são confirmados por mensagem direta e cumpridos conforme disponibilidade do vendedor.",
-    emptyCatalogTitle: "Catálogo em preparação",
-    emptyCatalogHint: "Este vendedor ainda não publicou produtos ou serviços. Ainda pode contactá-lo diretamente.",
-    contactSeller: "Contactar vendedor",
-    dbBanner: "Falha temporária de ligação. A mostrar conteúdo de fallback disponível.",
-    discover: "Encontre itens rapidamente",
-    search: "Pesquisar produtos/serviços",
-    all: "Todos",
-    infoTitle: "Informações importantes",
-    delivery: "Entrega",
-    policy: "Política",
-    payment: "Pagamento",
-    deliveryText: "Entrega/recolha é combinada diretamente com o vendedor.",
-    policyText: "Pedidos são confirmados por contacto direto e disponibilidade de stock.",
-    paymentText: "Pagamentos acontecem por links externos seguros. O MyShop não captura cartões.",
+    allCategories: "Todos",
+    noProducts: "Ainda sem produtos",
+    noProductsHint: "Este vendedor ainda não publicou produtos. Volte em breve!",
+    addToOrder: "Encomendar",
+    viewDetails: "Ver detalhes",
+    orderTitle: "Fazer um Pedido",
+    orderName: "Seu nome",
+    orderNamePh: "Nome completo",
+    orderContact: "Email ou telefone",
+    orderContactPh: "email@exemplo.com ou +258...",
+    orderQty: "Quantidade",
+    orderNotes: "Notas (opcional)",
+    orderNotesPh: "Detalhes ou perguntas...",
+    orderSubmit: "Enviar pedido",
+    orderSending: "A enviar...",
+    orderSuccess: "Pedido feito com sucesso!",
+    orderRef: "Referência",
+    orderSuccessHint: "O vendedor entrará em contacto em breve.",
+    close: "Fechar",
+    item: "Item",
+    about: "Sobre",
+    contact: "Contacto",
+    storeBy: "Loja de",
   },
 };
 
 export default function StorefrontPage() {
   const { lang } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
-  const t = text[lang];
+  const t = useMemo(() => dict[lang], [lang]);
+
   const [seller, setSeller] = useState<Seller | null>(null);
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [orderItem, setOrderItem] = useState<{ id: number | null; name: string } | null>(null);
-  const [banner, setBanner] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const [orderProduct, setOrderProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     if (!slug) return;
-
-    const hydrateStorefront = async () => {
-      setLoading(true);
-      setNotFound(false);
-      setBanner(null);
-
-      const [sellerRes, catalogRes] = await Promise.all([
-        safeFetchJson(`/api/sellers/${slug}`),
-        safeFetchJson(`/api/catalog?sellerSlug=${slug}`),
-      ]);
-
-      const normalizedSeller = sellerRes.ok ? normalizeSeller(sellerRes.data) : null;
-      const normalizedCatalog = catalogRes.ok ? normalizeCatalog(catalogRes.data) : [];
-
-      if (normalizedSeller) {
-        setSeller(normalizedSeller);
-        setCatalog(normalizedCatalog);
-        if (!sellerRes.ok || !catalogRes.ok) setBanner(t.dbBanner);
+    setLoading(true);
+    fetch(`/api/storefront/${slug}`)
+      .then((r) => {
+        if (r.status === 404) { setNotFound(true); setLoading(false); return null; }
+        return r.json();
+      })
+      .then((data) => {
+        if (!data) return;
+        setSeller(data.seller);
+        setProducts((data.products || []).filter((p: Product) => p.status === "Published"));
         setLoading(false);
-        return;
-      }
+      })
+      .catch(() => { setNotFound(true); setLoading(false); });
+  }, [slug]);
 
-      if (sellerRes.status === 404) {
-        setSeller(null);
-        setCatalog([]);
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
+  const categories = useMemo(() => {
+    const cats = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
+    return ["all", ...cats];
+  }, [products]);
 
-      logStorefrontIssue("db hydrate fallback", { slug, sellerStatus: sellerRes.status, catalogStatus: catalogRes.status });
-      const local = loadLocalStorefront(slug);
+  const filtered = useMemo(() => {
+    if (category === "all") return products;
+    return products.filter((p) => p.category === category);
+  }, [products, category]);
 
-      if (local.seller) {
-        setSeller(local.seller);
-        setCatalog(local.catalog);
-        setBanner(t.dbBanner);
-      } else {
-        setSeller(null);
-        setCatalog([]);
-        setNotFound(true);
-      }
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <span className="ml-3 text-slate-500">{t.loading}</span>
+      </div>
+    );
+  }
 
-      setLoading(false);
-    };
+  if (notFound || !seller) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
+        <AlertCircle className="h-12 w-12 text-slate-400" />
+        <h1 className="mt-4 text-2xl font-bold text-slate-900">{t.notFound}</h1>
+        <p className="mt-2 text-slate-600">{t.notFoundHint}</p>
+        <Link href="/" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+          <Home className="h-4 w-4" />
+          {t.goHome}
+        </Link>
+      </div>
+    );
+  }
 
-    hydrateStorefront();
-  }, [slug, t.dbBanner]);
-
-  const published = catalog.filter((i) => i.status === "Published");
-  const categories = ["all", ...Array.from(new Set(published.map((i) => asString(i.category).trim()).filter(Boolean)))];
-  const discovered = published.filter((i) => {
-    if (category !== "all" && i.category !== category) return false;
-    const query = asString(search).trim().toLowerCase();
-    if (!query) return true;
-    return asString(i.name).toLowerCase().includes(query) || asString(i.shortDescription).toLowerCase().includes(query);
-  });
-  const publishedProducts = discovered.filter((i) => i.type === "Product");
-  const publishedServices = discovered.filter((i) => i.type === "Service");
-
-  if (loading) return <main className="mx-auto w-full max-w-6xl px-4 py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-400" /><p className="mt-3 text-slate-500">{t.loading}</p></main>;
-  if (notFound || !seller) return <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm"><AlertCircle className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-2xl font-bold text-slate-900">{t.missing}</h1><p className="mt-2 text-slate-600">{t.hint}</p></section></main>;
-
-  const hasCatalog = published.length > 0;
-  const social = seller.socialLinks;
-  const contactHref = social.whatsapp || social.instagram || social.facebook || "";
+  const social = seller.socialLinks || {};
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 pb-24 sm:px-6 lg:px-8">
-      {orderItem && <OrderFormDB sellerSlug={seller.slug} sellerId={seller.id} storeName={seller.name} itemId={orderItem.id} itemName={orderItem.name} onClose={() => setOrderItem(null)} />}
-      {banner && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">{banner}</div>}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <div className="flex items-center gap-3">{seller.logoUrl ? <img src={seller.logoUrl} alt={seller.name} className="h-10 w-10 rounded-full object-cover" /> : <Store className="h-7 w-7 text-indigo-600" />}<h1 className="text-3xl font-bold text-slate-900">{seller.name}</h1></div>
-        <p className="mt-1 text-slate-600">@{seller.slug}</p>
-        {seller.description && <p className="mt-2 text-slate-700">{seller.description}</p>}
-        <p className="mt-2 flex items-center gap-1.5 text-slate-700"><MapPin className="h-4 w-4 text-slate-400" />{seller.ownerName || "Owner"} · {seller.businessType || "Business"} · {seller.city || "—"}</p>
-
-        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <h2 className="flex items-center gap-2 font-semibold text-slate-900"><ShieldCheck className="h-4 w-4 text-emerald-600" />{t.trustTitle}</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm">
-            <div><p className="text-slate-500">{t.trustSummary}</p><p className="font-medium text-slate-800">{seller.businessType || "Micro business"} · {seller.city || "—"}</p></div>
-            <div><p className="text-slate-500">{t.trustResponse}</p><p className="font-medium text-slate-800 flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" />{t.responsePlaceholder}</p></div>
-            <div><p className="text-slate-500">{t.trustPolicy}</p><p className="font-medium text-slate-800">{t.policyPlaceholder}</p></div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Minimal top bar */}
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+          <Link href="/" className="text-sm font-semibold text-slate-500 hover:text-slate-700">
+            MyShop
+          </Link>
+          <div className="flex items-center gap-2">
+            {social.whatsapp && (
+              <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-emerald-600">
+                <MessageCircle className="h-4 w-4" />
+              </a>
+            )}
+            {social.instagram && (
+              <a href={social.instagram} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-pink-600">
+                <Instagram className="h-4 w-4" />
+              </a>
+            )}
+            {social.facebook && (
+              <a href={social.facebook} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600">
+                <Facebook className="h-4 w-4" />
+              </a>
+            )}
           </div>
         </div>
+      </header>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <SocialLink label="WhatsApp" href={social.whatsapp} icon={MessageCircle} />
-          <SocialLink label="Instagram" href={social.instagram} icon={Instagram} />
-          <SocialLink label="Facebook" href={social.facebook} icon={Facebook} />
-        </div>
-
-        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">{t.infoTitle}</h3>
-          <div className="mt-2 grid gap-3 sm:grid-cols-3 text-sm">
-            <div><p className="font-medium text-slate-800">{t.delivery}</p><p className="text-slate-600">{t.deliveryText}</p></div>
-            <div><p className="font-medium text-slate-800">{t.policy}</p><p className="text-slate-600">{t.policyText}</p></div>
-            <div><p className="font-medium text-slate-800">{t.payment}</p><p className="text-slate-600">{t.paymentText}</p></div>
+      <main className="mx-auto max-w-5xl px-4 py-6 pb-24 sm:pb-8">
+        {/* Hero — compact */}
+        <section className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5">
+          {seller.logoUrl ? (
+            <img src={seller.logoUrl} alt={seller.name} className="h-14 w-14 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-100">
+              <Store className="h-6 w-6 text-indigo-600" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl font-bold text-slate-900">{seller.name}</h1>
+            {seller.description && (
+              <p className="mt-0.5 text-sm text-slate-600 line-clamp-2">{seller.description}</p>
+            )}
+            <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+              <MapPin className="h-3 w-3" />
+              {[seller.city, seller.businessType].filter(Boolean).join(" · ") || "—"}
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {hasCatalog && (
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-900">{t.discover}</h2>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.search} className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <div className="mt-3 flex flex-wrap gap-2">
+        {/* Category filter */}
+        {categories.length > 1 && (
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
             {categories.map((cat) => (
-              <button key={cat} onClick={() => setCategory(cat)} className={`rounded-full border px-3 py-1 text-xs ${category === cat ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-300 text-slate-700"}`}>
-                {cat === "all" ? t.all : cat}
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                  category === cat
+                    ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                }`}
+              >
+                {cat === "all" ? t.allCategories : cat}
               </button>
             ))}
           </div>
-        </section>
-      )}
+        )}
 
-      {!hasCatalog ? (
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">{t.emptyCatalogTitle}</h2>
-          <p className="mt-2 text-slate-600">{t.emptyCatalogHint}</p>
-          {contactHref && <a href={contactHref} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><MessageCircle className="h-4 w-4" />{t.contactSeller}</a>}
-        </section>
-      ) : (
-        <section className="mt-6 grid gap-6 lg:grid-cols-2">
-          <CatalogSection title={t.products} emptyLabel={t.emptyProducts} items={publishedProducts} currency={seller.currency || "USD"} ctaLabel={t.order} onOrder={(item) => setOrderItem({ id: item.id, name: item.name })} />
-          <CatalogSection title={t.services} emptyLabel={t.emptyServices} items={publishedServices} currency={seller.currency || "USD"} ctaLabel={t.book} onOrder={(item) => setOrderItem({ id: item.id, name: item.name })} />
-        </section>
-      )}
+        {/* Product grid */}
+        {filtered.length === 0 ? (
+          <section className="mt-6 rounded-xl border border-slate-200 bg-white p-8 text-center">
+            <Package className="mx-auto h-10 w-10 text-slate-300" />
+            <h2 className="mt-3 text-lg font-semibold text-slate-800">{t.noProducts}</h2>
+            <p className="mt-1 text-sm text-slate-500">{t.noProductsHint}</p>
+          </section>
+        ) : (
+          <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {filtered.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                currency={seller.currency || "USD"}
+                ctaLabel={t.addToOrder}
+                onOrder={() => setOrderProduct(product)}
+                onClick={() => setDetailProduct(product)}
+              />
+            ))}
+          </section>
+        )}
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur sm:hidden">
-        <div className="mx-auto flex w-full max-w-6xl gap-2">
-          <button onClick={() => setOrderItem({ id: null, name: "" })} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white"><Send className="h-4 w-4" />{t.orderGeneral}</button>
-          {contactHref && <a href={contactHref} target="_blank" rel="noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700"><MessageCircle className="h-4 w-4" />{t.contactSeller}</a>}
+        {/* Store footer */}
+        <footer className="mt-8 rounded-xl border border-slate-200 bg-white p-4 text-center text-xs text-slate-500">
+          {t.storeBy} <span className="font-medium text-slate-700">{seller.ownerName || seller.name}</span>
+          {seller.city && <span> · {seller.city}</span>}
+        </footer>
+      </main>
+
+      {/* Mobile sticky order bar */}
+      {products.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur sm:hidden">
+          <button
+            onClick={() => setOrderProduct(products[0])}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            {t.addToOrder}
+          </button>
         </div>
-      </div>
-    </main>
+      )}
+
+      {/* Product detail drawer */}
+      {detailProduct && (
+        <ProductDetailDrawer
+          product={detailProduct}
+          currency={seller.currency || "USD"}
+          t={t}
+          onClose={() => setDetailProduct(null)}
+          onOrder={() => {
+            setOrderProduct(detailProduct);
+            setDetailProduct(null);
+          }}
+        />
+      )}
+
+      {/* Order modal */}
+      {orderProduct && (
+        <OrderModal
+          product={orderProduct}
+          slug={seller.slug}
+          currency={seller.currency || "USD"}
+          t={t}
+          onClose={() => setOrderProduct(null)}
+        />
+      )}
+    </div>
   );
 }
 
-function CatalogSection({ title, items, emptyLabel, currency, ctaLabel, onOrder }: { title: string; items: CatalogItem[]; emptyLabel: string; currency: string; ctaLabel: string; onOrder: (item: CatalogItem) => void }) {
-  return <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><h2 className="text-xl font-semibold text-slate-900">{title}</h2>{items.length === 0 ? <p className="mt-2 text-slate-600">{emptyLabel}</p> : <div className="mt-4 grid gap-3 sm:grid-cols-2">{items.map((item) => <div key={item.id} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">{item.imageUrl && <img src={item.imageUrl} alt={item.name} className="h-36 w-full object-cover" />}<div className="p-3"><p className="text-xs text-slate-500">{item.category || "General"}</p><p className="font-semibold text-slate-900">{item.name}</p><p className="mt-1 text-sm text-slate-600">{item.shortDescription}</p><div className="mt-2 flex items-center justify-between"><p className="text-sm font-semibold text-slate-800">{currency} {item.price}</p><button onClick={() => onOrder(item)} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"><Send className="h-3 w-3" />{ctaLabel}</button></div></div></div>)}</div>}</article>;
+/* ── Product Card ── */
+function ProductCard({
+  product,
+  currency,
+  ctaLabel,
+  onOrder,
+  onClick,
+}: {
+  product: Product;
+  currency: string;
+  ctaLabel: string;
+  onOrder: () => void;
+  onClick: () => void;
+}) {
+  return (
+    <article className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:shadow-md">
+      <button onClick={onClick} className="w-full text-left">
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" />
+        ) : (
+          <div className="flex aspect-square w-full items-center justify-center bg-slate-100">
+            <ImageIcon className="h-8 w-8 text-slate-300" />
+          </div>
+        )}
+        <div className="p-3">
+          <p className="text-sm font-semibold text-slate-900 line-clamp-1">{product.name}</p>
+          {product.shortDescription && (
+            <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{product.shortDescription}</p>
+          )}
+          <p className="mt-1.5 text-sm font-bold text-indigo-600">
+            {currency} {product.price}
+          </p>
+        </div>
+      </button>
+      <div className="px-3 pb-3">
+        <button
+          onClick={(e) => { e.stopPropagation(); onOrder(); }}
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+        >
+          <ShoppingBag className="h-3.5 w-3.5" />
+          {ctaLabel}
+        </button>
+      </div>
+    </article>
+  );
 }
 
-function SocialLink({ label, href, icon: Icon }: { label: string; href?: string; icon: React.ComponentType<{ className?: string }> }) {
-  if (!href) return <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500"><Icon className="h-4 w-4" />{label}: —</div>;
-  return <a href={href} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-indigo-700 underline underline-offset-2"><Icon className="h-4 w-4" />{label}</a>;
+/* ── Product Detail Drawer ── */
+function ProductDetailDrawer({
+  product,
+  currency,
+  t,
+  onClose,
+  onOrder,
+}: {
+  product: Product;
+  currency: string;
+  t: Record<string, string>;
+  onClose: () => void;
+  onOrder: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 sm:items-center" onClick={onClose}>
+      <div
+        className="w-full max-w-lg rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl sm:m-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <h2 className="text-lg font-bold text-slate-900">{product.name}</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {product.imageUrl && (
+          <img src={product.imageUrl} alt={product.name} className="mt-3 aspect-video w-full rounded-lg object-cover" />
+        )}
+
+        <p className="mt-3 text-xl font-bold text-indigo-600">
+          {currency} {product.price}
+        </p>
+
+        {product.category && (
+          <p className="mt-1 text-xs text-slate-500">{product.category}</p>
+        )}
+
+        {product.shortDescription && (
+          <p className="mt-2 text-sm text-slate-700">{product.shortDescription}</p>
+        )}
+
+        <button
+          onClick={onOrder}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+        >
+          <ShoppingBag className="h-4 w-4" />
+          {t.addToOrder}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Order Modal ── */
+function OrderModal({
+  product,
+  slug,
+  currency,
+  t,
+  onClose,
+}: {
+  product: Product;
+  slug: string;
+  currency: string;
+  t: Record<string, string>;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [contact, setContact] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [notes, setNotes] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ reference: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      const res = await fetch(`/api/storefront/${slug}/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: product.id,
+          customerName: name.trim(),
+          customerContact: contact.trim(),
+          quantity,
+          message: notes.trim(),
+        }),
+      });
+      const data = await res.json();
+      setResult({ reference: data.reference || `ORD-${data.id}` });
+    } catch {
+      setResult({ reference: "—" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 sm:items-center" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl sm:m-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900">{t.orderTitle}</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {result ? (
+          <div className="mt-6 text-center">
+            <CheckCircle className="mx-auto h-12 w-12 text-emerald-500" />
+            <p className="mt-3 text-lg font-semibold text-slate-900">{t.orderSuccess}</p>
+            <p className="mt-1 text-sm text-slate-600">
+              {t.orderRef}: <span className="font-mono font-semibold">{result.reference}</span>
+            </p>
+            <p className="mt-1 text-sm text-slate-500">{t.orderSuccessHint}</p>
+            <button
+              onClick={onClose}
+              className="mt-5 w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white"
+            >
+              {t.close}
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+            {/* Item summary */}
+            <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+              {product.imageUrl ? (
+                <img src={product.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200">
+                  <Package className="h-4 w-4 text-slate-400" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
+                <p className="text-xs font-semibold text-indigo-600">{currency} {product.price}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">{t.orderName}</label>
+              <input
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t.orderNamePh}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">{t.orderContact}</label>
+              <input
+                required
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                placeholder={t.orderContactPh}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">{t.orderQty}</label>
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="mt-1 w-20 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">{t.orderNotes}</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t.orderNotesPh}
+                rows={2}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={sending}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+              {sending ? t.orderSending : t.orderSubmit}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
 }

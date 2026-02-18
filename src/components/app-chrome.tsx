@@ -2,19 +2,20 @@
 
 import { usePathname } from "next/navigation";
 import { Footer } from "@/components/footer";
-import { SiteHeader } from "@/components/site-header";
+import { PublicHeader } from "@/components/public-header";
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isSellerArea = pathname?.startsWith("/dashboard");
+  const isStorefront = pathname?.startsWith("/s/");
 
-  if (isSellerArea) {
+  if (isSellerArea || isStorefront) {
     return <>{children}</>;
   }
 
   return (
     <>
-      <SiteHeader />
+      <PublicHeader />
       {children}
       <Footer />
     </>
