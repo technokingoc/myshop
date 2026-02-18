@@ -1,4 +1,4 @@
-import { pgTable, serial, text, varchar, numeric, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, varchar, numeric, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 
 export const sellers = pgTable("sellers", {
   id: serial("id").primaryKey(),
@@ -21,6 +21,7 @@ export const sellers = pgTable("sellers", {
   passwordHash: text("password_hash"),
   role: varchar("role", { length: 32 }).default("seller"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  emailNotifications: boolean("email_notifications").default(true),
 });
 
 export const platformSettings = pgTable("platform_settings", {
@@ -62,5 +63,7 @@ export const orders = pgTable("orders", {
   customerContact: varchar("customer_contact", { length: 512 }).notNull(),
   message: text("message").default(""),
   status: varchar("status", { length: 32 }).notNull().default("new"),
+  notes: text("notes").default(""),
+  statusHistory: jsonb("status_history").$type<Array<{ status: string; at: string; note?: string }>>().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });

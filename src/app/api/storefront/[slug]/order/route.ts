@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { orders, sellers } from "@/lib/schema";
+import { orders, sellers, catalogItems } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { sendOrderConfirmation, sendNewOrderAlert } from "@/lib/email-service";
 
 export async function POST(
   req: NextRequest,
@@ -44,6 +45,31 @@ export async function POST(
         status: "new",
       })
       .returning();
+
+    // Fetch item name for email
+    let itemName = "";
+    if (row.itemId) {
+      const [item] = await db.select({ name: catalogItems.name }).from(catalogItems).where(eq(catalogItems.id, row.itemId));
+      if (item) itemName = item.name;
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
+    const orderDetails = {
+      ref: `ORD-${row.id}`,
+      customerName,
+      items: itemName || undefined,
+      trackUrl: `${baseUrl}/track/ORD-${row.id}`,
+    };
+
+    // Send confirmation to customer if contact is email
+    if (customerContact.includes("@")) {
+      await sendOrderConfirmation(customerContact, orderDetails).catch(() => {});
+    }
+
+    // Send alert to seller if they have email and notifications enabled
+    if (seller.email) {
+      await sendNewOrderAlert(seller.email, orderDetails).catch(() => {});
+    }
 
     return NextResponse.json(
       {

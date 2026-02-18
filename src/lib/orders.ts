@@ -8,7 +8,7 @@ export type OrderIntent = {
   itemType?: string;
   itemPrice?: string;
   storeName: string;
-  status: "new" | "contacted" | "completed";
+  status: "new" | "contacted" | "processing" | "shipped" | "completed" | "cancelled";
   createdAt: string;
 };
 

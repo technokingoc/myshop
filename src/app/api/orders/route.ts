@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     if (!sellerId) return NextResponse.json({ error: "sellerId required" }, { status: 400 });
 
     const filters = [eq(orders.sellerId, Number(sellerId))];
-    if (status && ["new", "contacted", "completed"].includes(status)) filters.push(eq(orders.status, status));
+    if (status && ["new", "contacted", "processing", "shipped", "completed", "cancelled"].includes(status)) filters.push(eq(orders.status, status));
     if (q) {
       filters.push(or(ilike(orders.customerName, `%${q}%`), ilike(orders.customerContact, `%${q}%`), ilike(orders.message, `%${q}%`))!);
     }
@@ -55,6 +55,8 @@ export async function GET(req: NextRequest) {
             message: orders.message,
             itemId: orders.itemId,
             status: orders.status,
+            notes: orders.notes,
+            statusHistory: orders.statusHistory,
             createdAt: orders.createdAt,
             itemName: catalogItems.name,
             itemType: catalogItems.type,
@@ -137,8 +139,16 @@ export async function PUT(req: NextRequest) {
     const { id, status } = body;
     if (!id || !status) return NextResponse.json({ error: "id and status required" }, { status: 400 });
 
+    // Get existing to build history
+    const [existing] = await withRetry(
+      () => db.select().from(orders).where(eq(orders.id, Number(id))),
+      3,
+    );
+    const currentHistory = (existing?.statusHistory as Array<{ status: string; at: string }>) || [];
+    const newHistory = [...currentHistory, { status, at: new Date().toISOString() }];
+
     const [row] = await withRetry(
-      () => db.update(orders).set({ status }).where(eq(orders.id, Number(id))).returning(),
+      () => db.update(orders).set({ status, statusHistory: newHistory }).where(eq(orders.id, Number(id))).returning(),
       3,
     );
 

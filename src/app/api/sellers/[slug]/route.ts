@@ -65,6 +65,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
             logoUrl: body.logoUrl ?? existing.logoUrl,
             bannerUrl: body.bannerUrl ?? existing.bannerUrl,
             socialLinks: body.socialLinks ?? existing.socialLinks,
+            emailNotifications: body.emailNotifications !== undefined ? body.emailNotifications : existing.emailNotifications,
             updatedAt: new Date(),
           })
           .where(eq(sellers.id, existing.id))

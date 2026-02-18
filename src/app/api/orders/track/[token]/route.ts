@@ -20,10 +20,14 @@ export async function GET(_: Request, context: { params: Promise<{ token: string
       .select({
         id: orders.id,
         status: orders.status,
+        statusHistory: orders.statusHistory,
         createdAt: orders.createdAt,
         customerName: orders.customerName,
         itemName: catalogItems.name,
+        itemPrice: catalogItems.price,
         sellerName: sellers.name,
+        sellerSocialLinks: sellers.socialLinks,
+        sellerEmail: sellers.email,
       })
       .from(orders)
       .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
@@ -34,6 +38,8 @@ export async function GET(_: Request, context: { params: Promise<{ token: string
     if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const payment = await getPaymentStatus(orderId);
 
+    const socialLinks = (row.sellerSocialLinks || {}) as { whatsapp?: string };
+
     return NextResponse.json({
       token,
       orderId,
@@ -41,8 +47,12 @@ export async function GET(_: Request, context: { params: Promise<{ token: string
       paymentStatus: payment?.status || "pending",
       createdAt: row.createdAt,
       itemName: row.itemName || "-",
+      itemPrice: row.itemPrice || null,
       sellerName: row.sellerName || "MyShop seller",
+      sellerWhatsapp: socialLinks.whatsapp || null,
+      sellerEmail: row.sellerEmail || null,
       customerName: row.customerName,
+      statusHistory: row.statusHistory || [],
     });
   } catch {
     return NextResponse.json({ error: "Could not load tracking info" }, { status: 503 });

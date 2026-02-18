@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/language";
-import { Save } from "lucide-react";
+import { Save, Bell } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [setup, setSetup] = useState<SetupPersisted | null>(null);
   const [form, setForm] = useState<SetupData | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -69,6 +70,7 @@ export default function SettingsPage() {
             };
             setSetup({ ...parsed, data: merged });
             setForm(merged);
+            if (s.emailNotifications !== undefined) setEmailNotifications(s.emailNotifications);
             setHydrated(true);
             return;
           }
@@ -127,6 +129,7 @@ export default function SettingsPage() {
             facebook: form.facebook,
             paymentLink: form.paymentLink,
           },
+          emailNotifications,
         }),
       }, 3, "settings:save");
     } catch {
@@ -178,6 +181,26 @@ export default function SettingsPage() {
             <Field label={t.facebook} value={form.facebook} field="facebook" update={update} />
             <Field label={t.paymentLink} value={form.paymentLink} field="paymentLink" update={update} />
           </div>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="mb-4 font-semibold text-slate-900 flex items-center gap-2"><Bell className="h-4 w-4" />{(t as Record<string, string>).notifications || "Notifications"}</h2>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={emailNotifications}
+                onChange={(e) => setEmailNotifications(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-10 h-5 bg-slate-200 rounded-full peer-checked:bg-emerald-500 transition-colors" />
+              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-900">{(t as Record<string, string>).emailNotifications || "Email notifications for new orders"}</p>
+              <p className="text-xs text-slate-500">{(t as Record<string, string>).emailNotificationsDesc || "Receive an email when a customer places a new order."}</p>
+            </div>
+          </label>
         </section>
 
         <div className="flex items-center gap-3">
