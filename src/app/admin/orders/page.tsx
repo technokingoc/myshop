@@ -1,134 +1,155 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useLanguage } from "@/lib/language";
-import { Search } from "lucide-react";
+import { getDict } from "@/lib/i18n";
 
-const dict = {
-  en: {
-    title: "Orders",
-    subtitle: "All orders across the platform",
-    search: "Search customer...",
-    customer: "Customer",
-    seller: "Seller",
-    item: "Item",
-    price: "Price",
-    status: "Status",
-    date: "Date",
-    contact: "Contact",
-    all: "All",
-    new: "New",
-    contacted: "Contacted",
-    completed: "Completed",
-    noOrders: "No orders found",
-  },
-  pt: {
-    title: "Pedidos",
-    subtitle: "Todos os pedidos da plataforma",
-    search: "Pesquisar cliente...",
-    customer: "Cliente",
-    seller: "Vendedor",
-    item: "Item",
-    price: "Preço",
-    status: "Estado",
-    date: "Data",
-    contact: "Contacto",
-    all: "Todos",
-    new: "Novo",
-    contacted: "Contactado",
-    completed: "Concluído",
-    noOrders: "Nenhum pedido encontrado",
-  },
-};
+import type { OrderItem, OrderStatus, DateRange } from "@/components/orders/types";
+import { OrderStatsBar } from "@/components/orders/order-stats-bar";
+import { OrderFilters } from "@/components/orders/order-filters";
+import { OrderListView } from "@/components/orders/order-list-view";
+import { OrderPipelineView } from "@/components/orders/order-pipeline-view";
+import { OrderDetailPanel } from "@/components/orders/order-detail-panel";
 
-type Order = {
-  id: number; customerName: string; customerContact: string; status: string; createdAt: string;
-  sellerName: string; sellerSlug: string; itemName: string; itemPrice: string;
+type ApiOrder = {
+  id: number; customerName: string; customerContact: string; message: string;
+  status: string; createdAt: string; sellerId: number;
+  sellerName: string; sellerSlug: string;
+  itemId: number | null; itemName: string; itemPrice: string;
+  notes?: string; statusHistory?: Array<{ status: string; at: string; note?: string }>;
 };
 
 export default function AdminOrders() {
   const { lang } = useLanguage();
-  const t = dict[lang];
-  const [orders, setOrders] = useState<Order[]>([]);
+  const t = getDict(lang).orders as unknown as Record<string, string>;
+
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange>("all");
+  const [viewMode, setViewMode] = useState<"list" | "pipeline">("list");
+  const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sellerFilter, setSellerFilter] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/orders", { credentials: "include" })
-      .then((r) => r.json())
-      .then((d) => setOrders(d.orders || []))
+      .then(r => r.json())
+      .then(d => {
+        setOrders((d.orders || []).map((o: ApiOrder): OrderItem => ({
+          id: String(o.id), customerName: o.customerName, customerContact: o.customerContact,
+          message: o.message || "", itemId: o.itemId, itemName: o.itemName || "",
+          itemPrice: o.itemPrice || "", storeName: "", status: o.status as OrderStatus,
+          notes: o.notes || "", statusHistory: o.statusHistory || [],
+          createdAt: o.createdAt, sellerName: o.sellerName, sellerSlug: o.sellerSlug,
+        })));
+      })
       .catch(() => {});
   }, []);
 
   const filtered = useMemo(() => {
-    let list = orders;
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((o) => o.customerName.toLowerCase().includes(q) || (o.sellerName || "").toLowerCase().includes(q));
-    }
-    if (statusFilter !== "all") list = list.filter((o) => o.status === statusFilter);
-    return list;
-  }, [orders, search, statusFilter]);
+    const now = new Date();
+    return orders.filter(o => {
+      if (filter !== "all" && o.status !== filter) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!o.customerName.toLowerCase().includes(q) && !(o.sellerName || "").toLowerCase().includes(q) && !o.id.includes(q)) return false;
+      }
+      if (sellerFilter && !(o.sellerName || "").toLowerCase().includes(sellerFilter.toLowerCase())) return false;
+      if (dateRange !== "all") {
+        const diff = (now.getTime() - new Date(o.createdAt).getTime()) / 86400000;
+        if (dateRange === "today" && diff > 1) return false;
+        if (dateRange === "7d" && diff > 7) return false;
+        if (dateRange === "30d" && diff > 30) return false;
+      }
+      return true;
+    });
+  }, [orders, filter, search, dateRange, sellerFilter]);
+
+  const handleStatus = useCallback(async (id: string, status: OrderStatus, note?: string) => {
+    try {
+      await fetch(`/api/orders/${id}/status`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, note }),
+      });
+    } catch {}
+    const historyEntry = { status, at: new Date().toISOString(), note };
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status, statusHistory: [...(o.statusHistory || []), historyEntry] } : o));
+    setSelectedOrder(prev => prev?.id === id ? { ...prev, status, statusHistory: [...(prev.statusHistory || []), historyEntry] } : prev);
+  }, []);
+
+  const handleAddNote = useCallback(async (id: string, note: string) => {
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+    try {
+      await fetch(`/api/orders/${id}/status`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: order.status, note }),
+      });
+    } catch {}
+    const historyEntry = { status: order.status, at: new Date().toISOString(), note };
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, notes: (o.notes ? o.notes + "\n" : "") + note, statusHistory: [...(o.statusHistory || []), historyEntry] } : o));
+    setSelectedOrder(prev => prev?.id === id ? { ...prev, notes: (prev.notes ? prev.notes + "\n" : "") + note, statusHistory: [...(prev.statusHistory || []), historyEntry] } : prev);
+  }, [orders]);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }, []);
+
+  const handleBulkStatus = useCallback((status: OrderStatus) => {
+    selectedIds.forEach(id => handleStatus(id, status));
+    setSelectedIds(new Set());
+  }, [selectedIds, handleStatus]);
+
+  const sellers = useMemo(() => [...new Set(orders.map(o => o.sellerName).filter(Boolean))], [orders]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
-        <p className="mt-1 text-sm text-slate-500">{t.subtitle}</p>
+        <p className="mt-0.5 text-sm text-slate-500">{lang === "pt" ? "Todos os pedidos da plataforma" : "All orders across the platform"}</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.search}
-            className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100" />
-        </div>
-        <div className="flex gap-1">
-          {["all", "new", "contacted", "completed"].map((s) => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className={`rounded-lg px-3 py-2 text-xs font-medium ${statusFilter === s ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
-              {t[s as keyof typeof t]}
-            </button>
-          ))}
-        </div>
-      </div>
+      <OrderStatsBar orders={orders} t={t} />
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 text-left text-xs font-medium text-slate-500">
-              <th className="px-4 py-3">#</th>
-              <th className="px-4 py-3">{t.customer}</th>
-              <th className="px-4 py-3">{t.seller}</th>
-              <th className="px-4 py-3">{t.item}</th>
-              <th className="px-4 py-3">{t.price}</th>
-              <th className="px-4 py-3">{t.status}</th>
-              <th className="px-4 py-3">{t.date}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">{t.noOrders}</td></tr>
-            ) : filtered.map((o) => (
-              <tr key={o.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                <td className="px-4 py-3 text-slate-400">{o.id}</td>
-                <td className="px-4 py-3 font-medium text-slate-800">{o.customerName}</td>
-                <td className="px-4 py-3 text-slate-600">{o.sellerName}</td>
-                <td className="px-4 py-3 text-slate-600">{o.itemName || "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{o.itemPrice ? `$${o.itemPrice}` : "—"}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                    o.status === "completed" ? "bg-emerald-50 text-emerald-700" :
-                    o.status === "contacted" ? "bg-blue-50 text-blue-700" :
-                    "bg-slate-100 text-slate-600"
-                  }`}>{o.status}</span>
-                </td>
-                <td className="px-4 py-3 text-slate-500">{new Date(o.createdAt).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Seller filter */}
+      {sellers.length > 1 && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs font-medium text-slate-500">{lang === "pt" ? "Vendedor:" : "Seller:"}</span>
+          <select value={sellerFilter} onChange={e => setSellerFilter(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs">
+            <option value="">{lang === "pt" ? "Todos" : "All"}</option>
+            {sellers.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
+
+      <OrderFilters
+        filter={filter} setFilter={setFilter}
+        search={search} setSearch={setSearch}
+        dateRange={dateRange} setDateRange={setDateRange}
+        viewMode={viewMode} setViewMode={setViewMode}
+        orders={orders} onExport={() => {}} t={t}
+        selectedCount={selectedIds.size} onBulkStatus={handleBulkStatus}
+      />
+
+      {viewMode === "list" ? (
+        <OrderListView
+          orders={filtered} onSelect={setSelectedOrder}
+          onStatusChange={handleStatus} t={t}
+          selectedIds={selectedIds} onToggleSelect={toggleSelect}
+          showSeller
+        />
+      ) : (
+        <OrderPipelineView orders={filtered} onSelect={setSelectedOrder} t={t} />
+      )}
+
+      {selectedOrder && (
+        <OrderDetailPanel
+          order={selectedOrder} onClose={() => setSelectedOrder(null)}
+          onStatusChange={handleStatus} onAddNote={handleAddNote} t={t}
+        />
+      )}
     </div>
   );
 }

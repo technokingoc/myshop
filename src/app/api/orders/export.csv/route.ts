@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     if (!sellerId) return NextResponse.json({ error: "sellerId required" }, { status: 400 });
 
     const filters = [eq(orders.sellerId, Number(sellerId))];
-    if (status && ["new", "contacted", "completed"].includes(status)) filters.push(eq(orders.status, status));
+    if (status && ["new", "contacted", "processing", "shipped", "completed", "cancelled"].includes(status)) filters.push(eq(orders.status, status));
     if (q) {
       filters.push(or(ilike(orders.customerName, `%${q}%`), ilike(orders.customerContact, `%${q}%`), ilike(orders.message, `%${q}%`))!);
     }
