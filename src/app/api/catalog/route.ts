@@ -167,7 +167,7 @@ export async function PUT(req: NextRequest) {
       try {
         if (currentStock === 0) {
           await notifyOutOfStock(row.id, row.sellerId);
-        } else if (currentStock <= threshold) {
+        } else if (threshold !== null && threshold !== undefined && currentStock <= threshold) {
           await notifyLowStock(row.id, row.sellerId, currentStock, threshold);
         }
       } catch (error) {
