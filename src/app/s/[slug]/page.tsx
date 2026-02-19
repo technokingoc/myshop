@@ -9,7 +9,11 @@ import {
   ShoppingBag, X, Send, CheckCircle, Home, Package, Star, MessageSquare,
   Phone, Info, Heart, User, LogIn, ChevronLeft, ChevronRight, Share2, Copy, Check,
   Tag, Grid2X2, Grid3X3, LayoutGrid, BadgeCheck, Sparkles, TrendingUp, Clock, Truck, CalendarDays, Users,
+  ShoppingCart, Plus,
 } from "lucide-react";
+import CartSummary from "@/components/cart/cart-summary";
+import { CartManager } from "@/lib/cart";
+import SimpleToast from "@/components/toast-simple";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
 import { getTheme } from "@/lib/theme-colors";
 import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
@@ -82,6 +86,8 @@ const dict = {
     minPrice: "Min price", maxPrice: "Max price", priceRange: "Price Range",
     category: "Category", clearFilters: "Clear all",
     applyFilters: "Apply filters",
+    addToCart: "Add to cart", addedToCart: "Added to cart",
+    goToCart: "View cart", checkout: "Checkout",
   },
   pt: {
     loading: "A carregar loja...", notFound: "Loja não encontrada",
@@ -122,6 +128,8 @@ const dict = {
     minPrice: "Preço mín.", maxPrice: "Preço máx.", priceRange: "Faixa de Preço",
     category: "Categoria", clearFilters: "Limpar tudo",
     applyFilters: "Aplicar filtros",
+    addToCart: "Adicionar ao carrinho", addedToCart: "Adicionado ao carrinho",
+    goToCart: "Ver carrinho", checkout: "Checkout",
   },
 };
 
@@ -210,6 +218,28 @@ export default function StorefrontPage() {
   const handleSearchLoading = useCallback((loading: boolean) => {
     setSearchLoading(loading);
   }, []);
+
+  const addProductToCart = useCallback((product: Product, seller: Seller) => {
+    const cartItem = {
+      id: product.id,
+      storeId: seller.id,
+      storeName: seller.name,
+      name: product.name,
+      price: Number(product.price) || 0,
+      imageUrl: product.imageUrl || undefined,
+      quantity: 1,
+      // Add stock limit if available
+      maxQuantity: undefined, // Would need to get from product stock data
+    };
+
+    CartManager.addItem(cartItem);
+    
+    // Show a brief success message
+    const event = new CustomEvent('show-toast', {
+      detail: { message: t.addedToCart, type: 'success' }
+    });
+    window.dispatchEvent(event);
+  }, [t]);
 
   // Fetch global categories for localized names
   const { categories: globalCats } = useCategories();
@@ -309,7 +339,7 @@ export default function StorefrontPage() {
             <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
             <span className="font-semibold text-slate-800 truncate max-w-[150px] sm:max-w-none">{seller.name}</span>
           </div>
-          <StorefrontActions social={social} customer={customer} slug={slug} t={t} wishlistCount={wishlistIds.size} />
+          <StorefrontActions social={social} customer={customer} slug={slug} t={t} wishlistCount={wishlistIds.size} lang={lang} />
         </div>
       </header>
 
@@ -362,6 +392,8 @@ export default function StorefrontPage() {
             onSearchLoading={handleSearchLoading}
             searchLoading={searchLoading}
             globalCatMap={globalCatMap}
+            seller={seller}
+            addProductToCart={addProductToCart}
           />
         )}
         {activeTab === "about" && <AboutTab seller={seller} t={t} />}
@@ -394,6 +426,9 @@ export default function StorefrontPage() {
           </div>
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <SimpleToast />
     </div>
   );
 }
@@ -404,13 +439,19 @@ function StorefrontActions({
   slug,
   t,
   wishlistCount,
+  lang,
 }: {
   social: Seller["socialLinks"];
   customer: CustomerInfo;
   slug: string;
   t: Record<string, string>;
   wishlistCount: number;
+  lang: 'en' | 'pt';
 }) {
+  const handleCartRedirect = () => {
+    window.location.href = '/checkout';
+  };
+
   return (
     <div className="flex items-center gap-1">
       {social.whatsapp && (
@@ -428,6 +469,14 @@ function StorefrontActions({
           <Facebook className="h-4 w-4" />
         </a>
       )}
+      
+      {/* Cart Summary */}
+      <CartSummary 
+        lang={lang}
+        onCheckout={handleCartRedirect}
+        className="ml-2"
+      />
+      
       <div className="mx-1 h-4 w-px bg-slate-200" />
       {customer ? (
         <>
@@ -519,7 +568,7 @@ function PriceDisplay({ price, compareAtPrice, currency, theme, size = "sm" }: {
 /* ── Products Tab ── */
 function ProductsTab({
   products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist, gridCols, setGridCols, template,
-  storeSlug, onSearchResults, onSearchLoading, searchLoading, globalCatMap,
+  storeSlug, onSearchResults, onSearchLoading, searchLoading, globalCatMap, seller, addProductToCart,
 }: {
   products: Product[]; categories: { name: string; displayName?: string; count: number }[]; category: string; setCategory: (c: string) => void;
   currency: string; t: Record<string, string>; theme: ReturnType<typeof getTheme>;
@@ -528,6 +577,7 @@ function ProductsTab({
   template: StoreTemplate;
   storeSlug: string; onSearchResults: (data: any) => void; onSearchLoading: (loading: boolean) => void;
   searchLoading: boolean; globalCatMap: Map<string, string>;
+  seller: Seller; addProductToCart: (product: Product, seller: Seller) => void;
 }) {
   const isNew = (p: Product) => {
     if (!p.createdAt) return false;
@@ -635,9 +685,20 @@ function ProductsTab({
                   </div>
                   <div className="flex items-center justify-between mt-1.5">
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
-                    <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`rounded-lg ${theme.btn} px-3 py-1.5 text-xs font-semibold text-white ${theme.btnHover}`}>
-                      {t.order}
-                    </button>
+                    <div className="flex gap-1">
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          addProductToCart(product, seller);
+                        }} 
+                        className="rounded-lg bg-blue-600 hover:bg-blue-700 px-2 py-1.5 text-xs font-semibold text-white transition-colors"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`rounded-lg ${theme.btn} px-3 py-1.5 text-xs font-semibold text-white ${theme.btnHover}`}>
+                        {t.order}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -663,9 +724,20 @@ function ProductsTab({
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} size="lg" />
                   </div>
                   {product.shortDescription && <p className="mt-1 text-sm text-slate-500 line-clamp-2">{product.shortDescription}</p>}
-                  <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl ${theme.btn} py-3 text-sm font-semibold text-white ${theme.btnHover} transition-all`}>
-                    <ShoppingBag className="h-4 w-4" /> {t.order}
-                  </button>
+                  <div className="mt-3 flex gap-2">
+                    <button 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        addProductToCart(product, seller);
+                      }} 
+                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 py-3 text-sm font-semibold text-white transition-all"
+                    >
+                      <Plus className="h-4 w-4" /> {t.addToCart}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`flex-1 flex items-center justify-center gap-2 rounded-xl ${theme.btn} py-3 text-sm font-semibold text-white ${theme.btnHover} transition-all`}>
+                      <ShoppingBag className="h-4 w-4" /> {t.order}
+                    </button>
+                  </div>
                 </div>
               </article>
             ) : (
@@ -695,9 +767,20 @@ function ProductsTab({
                   </div>
                 </div>
                 <div className={`px-2.5 pb-2.5 sm:px-3 sm:pb-3`}>
-                  <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`flex w-full items-center justify-center gap-1.5 rounded-xl ${theme.btn} py-2 sm:py-2.5 text-xs font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.97]`}>
-                    <ShoppingBag className="h-3.5 w-3.5" /> {t.order}
-                  </button>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        addProductToCart(product, seller);
+                      }} 
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 py-2 sm:py-2.5 text-xs font-semibold text-white transition-all active:scale-[0.97]"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onProductClick(product); }} className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl ${theme.btn} py-2 sm:py-2.5 text-xs font-semibold text-white ${theme.btnHover} transition-all active:scale-[0.97]`}>
+                      <ShoppingBag className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </article>
             )

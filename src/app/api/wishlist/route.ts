@@ -1,76 +1,114 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustomerSession } from "@/lib/customer-session";
 import { getDb } from "@/lib/db";
-import { wishlists, catalogItems, sellers } from "@/lib/schema";
+import { wishlists } from "@/lib/schema";
+import { getCustomerSession } from "@/lib/customer-session";
 import { eq, and } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getCustomerSession();
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
+    
+    if (!session) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    
     const db = getDb();
-    const rows = await db
-      .select({
-        wishlistId: wishlists.id,
-        catalogItemId: wishlists.catalogItemId,
-        itemName: catalogItems.name,
-        itemPrice: catalogItems.price,
-        itemImageUrl: catalogItems.imageUrl,
-        itemCategory: catalogItems.category,
-        sellerSlug: sellers.slug,
-        sellerName: sellers.name,
-        sellerCurrency: sellers.currency,
-      })
+    
+    const userWishlists = await db.select()
       .from(wishlists)
-      .innerJoin(catalogItems, eq(wishlists.catalogItemId, catalogItems.id))
-      .innerJoin(sellers, eq(catalogItems.sellerId, sellers.id))
       .where(eq(wishlists.customerId, session.customerId));
-
-    return NextResponse.json(rows);
+    
+    return NextResponse.json(userWishlists);
+    
   } catch (error) {
-    console.error("Wishlist GET error:", error);
-    return NextResponse.json({ error: "Failed to load wishlist" }, { status: 500 });
-  }
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const session = await getCustomerSession();
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-    const { catalogItemId } = await req.json();
-    if (!catalogItemId) return NextResponse.json({ error: "catalogItemId required" }, { status: 400 });
-
-    const db = getDb();
-    const [row] = await db.insert(wishlists).values({
-      customerId: session.customerId,
-      catalogItemId: Number(catalogItemId),
-    }).onConflictDoNothing().returning();
-
-    return NextResponse.json({ ok: true, id: row?.id });
-  } catch (error) {
-    console.error("Wishlist POST error:", error);
-    return NextResponse.json({ error: "Failed to add to wishlist" }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: NextRequest) {
-  try {
-    const session = await getCustomerSession();
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-    const catalogItemId = req.nextUrl.searchParams.get("catalogItemId");
-    if (!catalogItemId) return NextResponse.json({ error: "catalogItemId required" }, { status: 400 });
-
-    const db = getDb();
-    await db.delete(wishlists).where(
-      and(eq(wishlists.customerId, session.customerId), eq(wishlists.catalogItemId, Number(catalogItemId)))
+    console.error('Wishlist get error:', error);
+    return NextResponse.json(
+      { error: "Failed to get wishlist" },
+      { status: 500 }
     );
+  }
+}
 
-    return NextResponse.json({ ok: true });
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getCustomerSession();
+    
+    if (!session) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    
+    const { catalogItemId } = await request.json();
+    
+    if (!catalogItemId) {
+      return NextResponse.json({ error: "catalogItemId is required" }, { status: 400 });
+    }
+    
+    const db = getDb();
+    
+    // Check if already in wishlist
+    const existing = await db.select()
+      .from(wishlists)
+      .where(
+        and(
+          eq(wishlists.customerId, session.customerId),
+          eq(wishlists.catalogItemId, catalogItemId)
+        )
+      )
+      .limit(1);
+    
+    if (existing.length > 0) {
+      return NextResponse.json({ message: "Already in wishlist" });
+    }
+    
+    await db.insert(wishlists).values({
+      customerId: session.customerId,
+      catalogItemId: catalogItemId,
+      createdAt: new Date()
+    });
+    
+    return NextResponse.json({ success: true });
+    
   } catch (error) {
-    console.error("Wishlist DELETE error:", error);
-    return NextResponse.json({ error: "Failed to remove from wishlist" }, { status: 500 });
+    console.error('Wishlist add error:', error);
+    return NextResponse.json(
+      { error: "Failed to add to wishlist" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getCustomerSession();
+    
+    if (!session) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    
+    const { searchParams } = new URL(request.url);
+    const catalogItemId = searchParams.get('catalogItemId');
+    
+    if (!catalogItemId) {
+      return NextResponse.json({ error: "catalogItemId is required" }, { status: 400 });
+    }
+    
+    const db = getDb();
+    
+    await db.delete(wishlists)
+      .where(
+        and(
+          eq(wishlists.customerId, session.customerId),
+          eq(wishlists.catalogItemId, parseInt(catalogItemId))
+        )
+      );
+    
+    return NextResponse.json({ success: true });
+    
+  } catch (error) {
+    console.error('Wishlist remove error:', error);
+    return NextResponse.json(
+      { error: "Failed to remove from wishlist" },
+      { status: 500 }
+    );
   }
 }

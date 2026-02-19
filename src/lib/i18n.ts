@@ -145,6 +145,97 @@ export const dictionary = {
       emailNotifications: "Email notifications for new orders",
       emailNotificationsDesc: "Receive an email when a customer places a new order.",
     },
+    cart: {
+      title: "Shopping Cart",
+      empty: "Your cart is empty",
+      emptyDescription: "Add some products to get started",
+      continueShopping: "Continue shopping",
+      addToCart: "Add to cart",
+      addedToCart: "Added to cart",
+      updateCart: "Update cart",
+      removeFromCart: "Remove from cart",
+      quantity: "Quantity",
+      subtotal: "Subtotal",
+      total: "Total",
+      discount: "Discount",
+      proceedToCheckout: "Proceed to checkout",
+      itemsInCart: "items in cart",
+      maxQuantityReached: "Maximum quantity reached",
+      outOfStock: "Out of stock",
+      lowStock: "Only {count} left in stock",
+    },
+    checkout: {
+      title: "Checkout",
+      reviewOrder: "Review Order",
+      shippingInfo: "Shipping Information",
+      billingInfo: "Billing Information", 
+      paymentMethod: "Payment Method",
+      orderConfirmation: "Order Confirmation",
+      continuousGuest: "Continue as guest",
+      orSignIn: "or sign in",
+      createAccount: "Create account for faster checkout",
+      
+      // Address form
+      fullName: "Full name",
+      emailAddress: "Email address",
+      phoneNumber: "Phone number",
+      streetAddress: "Street address",
+      city: "City",
+      country: "Country",
+      saveAddress: "Save address for next time",
+      useSameForBilling: "Use same address for billing",
+      
+      // Payment methods
+      bankTransfer: "Bank transfer",
+      cashOnDelivery: "Cash on delivery",
+      mobileMoney: "Mobile money (M-Pesa)",
+      paymentInstructions: "Payment instructions will be provided after order confirmation",
+      
+      // Order notes
+      orderNotes: "Order notes (optional)",
+      orderNotesPlaceholder: "Special instructions, delivery notes...",
+      
+      // Coupon
+      couponCode: "Coupon code",
+      applyCoupon: "Apply coupon",
+      removeCoupon: "Remove coupon",
+      couponApplied: "Coupon applied successfully",
+      invalidCoupon: "Invalid coupon code",
+      
+      // Order summary
+      orderSummary: "Order Summary",
+      shippingAddress: "Shipping Address",
+      billingAddress: "Billing Address",
+      paymentMethodSelected: "Payment Method",
+      
+      // Actions
+      backToCart: "Back to cart",
+      continuesToShipping: "Continue to shipping",
+      continuesToPayment: "Continue to payment",
+      continuesToReview: "Continue to review",
+      placeOrder: "Place order",
+      
+      // Confirmation
+      orderPlaced: "Order placed successfully!",
+      orderNumber: "Order number",
+      confirmationEmail: "A confirmation email has been sent to",
+      trackYourOrder: "Track your order",
+      continueShoppingLower: "Continue shopping",
+      orderTotal: "Order total",
+      
+      // Validation errors
+      nameRequired: "Full name is required",
+      emailRequired: "Email address is required",
+      emailInvalid: "Please enter a valid email address", 
+      phoneRequired: "Phone number is required",
+      addressRequired: "Street address is required",
+      cityRequired: "City is required",
+      paymentRequired: "Please select a payment method",
+      
+      // Loading states
+      placingOrder: "Placing your order...",
+      processingPayment: "Processing payment...",
+    },
   },
   pt: {
     common: {
@@ -291,6 +382,97 @@ export const dictionary = {
       notifications: "Notificações",
       emailNotifications: "Notificações por email para novos pedidos",
       emailNotificationsDesc: "Receba um email quando um cliente fizer um novo pedido.",
+    },
+    cart: {
+      title: "Carrinho de Compras",
+      empty: "O seu carrinho está vazio",
+      emptyDescription: "Adicione alguns produtos para começar",
+      continueShopping: "Continuar compras",
+      addToCart: "Adicionar ao carrinho",
+      addedToCart: "Adicionado ao carrinho",
+      updateCart: "Atualizar carrinho",
+      removeFromCart: "Remover do carrinho",
+      quantity: "Quantidade",
+      subtotal: "Subtotal",
+      total: "Total",
+      discount: "Desconto",
+      proceedToCheckout: "Prosseguir para o checkout",
+      itemsInCart: "itens no carrinho",
+      maxQuantityReached: "Quantidade máxima atingida",
+      outOfStock: "Fora de stock",
+      lowStock: "Apenas {count} em stock",
+    },
+    checkout: {
+      title: "Checkout",
+      reviewOrder: "Rever Pedido",
+      shippingInfo: "Informações de Envio",
+      billingInfo: "Informações de Faturação",
+      paymentMethod: "Método de Pagamento",
+      orderConfirmation: "Confirmação do Pedido",
+      continuousGuest: "Continuar como convidado",
+      orSignIn: "ou iniciar sessão",
+      createAccount: "Criar conta para checkout mais rápido",
+      
+      // Address form
+      fullName: "Nome completo",
+      emailAddress: "Endereço de email",
+      phoneNumber: "Número de telefone",
+      streetAddress: "Morada",
+      city: "Cidade",
+      country: "País",
+      saveAddress: "Guardar morada para próxima vez",
+      useSameForBilling: "Usar a mesma morada para faturação",
+      
+      // Payment methods
+      bankTransfer: "Transferência bancária",
+      cashOnDelivery: "Pagamento na entrega",
+      mobileMoney: "Dinheiro móvel (M-Pesa)",
+      paymentInstructions: "As instruções de pagamento serão fornecidas após a confirmação do pedido",
+      
+      // Order notes
+      orderNotes: "Notas do pedido (opcional)",
+      orderNotesPlaceholder: "Instruções especiais, notas de entrega...",
+      
+      // Coupon
+      couponCode: "Código de cupão",
+      applyCoupon: "Aplicar cupão",
+      removeCoupon: "Remover cupão",
+      couponApplied: "Cupão aplicado com sucesso",
+      invalidCoupon: "Código de cupão inválido",
+      
+      // Order summary
+      orderSummary: "Resumo do Pedido",
+      shippingAddress: "Morada de Envio",
+      billingAddress: "Morada de Faturação",
+      paymentMethodSelected: "Método de Pagamento",
+      
+      // Actions
+      backToCart: "Voltar ao carrinho",
+      continuesToShipping: "Continuar para envio",
+      continuesToPayment: "Continuar para pagamento",
+      continuesToReview: "Continuar para revisão",
+      placeOrder: "Fazer pedido",
+      
+      // Confirmation
+      orderPlaced: "Pedido realizado com sucesso!",
+      orderNumber: "Número do pedido",
+      confirmationEmail: "Um email de confirmação foi enviado para",
+      trackYourOrder: "Rastrear o seu pedido",
+      continueShoppingLower: "Continuar compras",
+      orderTotal: "Total do pedido",
+      
+      // Validation errors
+      nameRequired: "Nome completo é obrigatório",
+      emailRequired: "Endereço de email é obrigatório",
+      emailInvalid: "Por favor insira um email válido",
+      phoneRequired: "Número de telefone é obrigatório",
+      addressRequired: "Morada é obrigatória",
+      cityRequired: "Cidade é obrigatória", 
+      paymentRequired: "Por favor selecione um método de pagamento",
+      
+      // Loading states
+      placingOrder: "A fazer o seu pedido...",
+      processingPayment: "A processar pagamento...",
     },
   },
 } as const;

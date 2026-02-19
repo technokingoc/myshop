@@ -3,68 +3,102 @@ import { getDb } from "@/lib/db";
 import { coupons } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
+    const { code, sellerId, orderTotal } = await request.json();
+    
+    if (!code || !sellerId || orderTotal === undefined) {
+      return NextResponse.json({ 
+        valid: false, 
+        error: "Missing required fields" 
+      }, { status: 400 });
+    }
+    
     const db = getDb();
-    const { code, sellerId, orderTotal } = await req.json();
-
-    if (!code || !sellerId) {
-      return NextResponse.json({ valid: false, error: "code and sellerId required" }, { status: 400 });
+    
+    // Find the coupon
+    const couponQuery = await db.select()
+      .from(coupons)
+      .where(
+        and(
+          eq(coupons.code, code.trim().toUpperCase()),
+          eq(coupons.sellerId, sellerId),
+          eq(coupons.active, true)
+        )
+      )
+      .limit(1);
+    
+    if (couponQuery.length === 0) {
+      return NextResponse.json({ 
+        valid: false, 
+        error: "Invalid coupon code" 
+      });
     }
-
-    const [coupon] = await db.select().from(coupons)
-      .where(and(
-        eq(coupons.sellerId, Number(sellerId)),
-        eq(coupons.code, code.toUpperCase().trim()),
-        eq(coupons.active, true),
-      ));
-
-    if (!coupon) {
-      return NextResponse.json({ valid: false, error: "Invalid coupon code" });
-    }
-
-    // Check expiry
+    
+    const coupon = couponQuery[0];
+    
+    // Check validity period
     const now = new Date();
+    
     if (coupon.validFrom && new Date(coupon.validFrom) > now) {
-      return NextResponse.json({ valid: false, error: "Coupon not yet active" });
+      return NextResponse.json({ 
+        valid: false, 
+        error: "Coupon is not yet valid" 
+      });
     }
+    
     if (coupon.validUntil && new Date(coupon.validUntil) < now) {
-      return NextResponse.json({ valid: false, error: "Coupon expired" });
+      return NextResponse.json({ 
+        valid: false, 
+        error: "Coupon has expired" 
+      });
     }
-
-    // Check max uses
-    if (coupon.maxUses !== null && coupon.maxUses !== -1 && (coupon.usedCount ?? 0) >= coupon.maxUses) {
-      return NextResponse.json({ valid: false, error: "Coupon usage limit reached" });
+    
+    // Check minimum order amount
+    if (coupon.minOrderAmount && orderTotal < Number(coupon.minOrderAmount)) {
+      return NextResponse.json({ 
+        valid: false, 
+        error: `Minimum order amount of ${coupon.minOrderAmount} required` 
+      });
     }
-
-    // Check min order amount
-    const total = Number(orderTotal || 0);
-    const minAmount = Number(coupon.minOrderAmount || 0);
-    if (minAmount > 0 && total < minAmount) {
-      return NextResponse.json({ valid: false, error: `Minimum order amount: ${minAmount}` });
+    
+    // Check usage limits
+    const usedCount = coupon.usedCount || 0;
+    const maxUses = coupon.maxUses || -1;
+    if (maxUses !== -1 && usedCount >= maxUses) {
+      return NextResponse.json({ 
+        valid: false, 
+        error: "Coupon usage limit reached" 
+      });
     }
-
+    
     // Calculate discount
     let discount = 0;
-    if (coupon.type === "percentage") {
-      discount = total * (Number(coupon.value) / 100);
+    if (coupon.type === 'percentage') {
+      discount = orderTotal * (Number(coupon.value) / 100);
     } else {
-      discount = Math.min(Number(coupon.value), total);
+      discount = Number(coupon.value);
     }
-    discount = Math.round(discount * 100) / 100;
-
+    
+    // Don't allow discount to exceed order total
+    discount = Math.min(discount, orderTotal);
+    
     return NextResponse.json({
       valid: true,
       coupon: {
         id: coupon.id,
         code: coupon.code,
         type: coupon.type,
-        value: coupon.value,
+        value: coupon.value
       },
-      discount,
+      discount: discount
     });
+    
   } catch (error) {
-    console.error("Coupon validate error:", error);
-    return NextResponse.json({ valid: false, error: "Validation failed" }, { status: 500 });
+    console.error('Coupon validation error:', error);
+    return NextResponse.json(
+      { valid: false, error: "Failed to validate coupon" },
+      { status: 500 }
+    );
   }
 }
