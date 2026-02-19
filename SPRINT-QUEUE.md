@@ -9,7 +9,7 @@ Must be production-ready for real Mozambique merchants.
 
 ### Phase 1: Core Commerce Polish (CURRENT)
 - [x] **S36: Product Management Premium** — Drag-and-drop image reordering. Image zoom on hover. Variant management (size/color/material). Stock tracking with low-stock alerts. Bulk product actions (activate/deactivate/delete). Product duplication.
-- [ ] **S37: Order Flow & Tracking** — Order timeline (placed → confirmed → shipped → delivered). Status update with notes. Customer notification on status change. Print order/packing slip. Order search and filters. Refund/cancel flow.
+- [x] **S37: Order Flow & Tracking** — Order timeline (placed → confirmed → shipped → delivered). Status update with notes. Customer notification on status change. Print order/packing slip. Order search and filters. Refund/cancel flow.
 - [ ] **S38: Storefront Search & Filters** — Full-text product search. Filter by price range, category, location, rating. Sort by price/date/popularity. Search suggestions. Mobile filter drawer.
 - [ ] **S39: Seller Analytics Dashboard** — Revenue chart (daily/weekly/monthly). Top selling products. Customer demographics. Conversion funnel. Comparison with previous period. Export reports.
 
