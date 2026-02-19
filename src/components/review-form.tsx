@@ -272,7 +272,7 @@ export default function ReviewForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t.titlePlaceholder}
-            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             maxLength={100}
           />
         </div>
@@ -287,7 +287,7 @@ export default function ReviewForm({
             onChange={(e) => setContent(e.target.value)}
             placeholder={t.contentPlaceholder}
             rows={5}
-            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
             maxLength={1000}
           />
           <div className="flex justify-between mt-1">
@@ -368,7 +368,7 @@ export default function ReviewForm({
           <button
             type="submit"
             disabled={submitting || uploading}
-            className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {submitting ? (
               <>

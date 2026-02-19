@@ -28,7 +28,7 @@ const dict = {
 type Order = { id: number; status: string; message: string; createdAt: string; sellerName: string; sellerSlug: string; itemName: string | null; itemPrice: string | null; itemId: number | null };
 
 const statusIcon: Record<string, typeof Clock> = { new: Clock, confirmed: CheckCircle, shipped: Truck, delivered: CheckCircle, cancelled: AlertCircle };
-const statusColor: Record<string, string> = { new: "bg-blue-50 text-blue-700", confirmed: "bg-emerald-50 text-emerald-700", shipped: "bg-amber-50 text-amber-700", delivered: "bg-green-50 text-green-700", cancelled: "bg-red-50 text-red-600" };
+const statusColor: Record<string, string> = { new: "bg-green-50 text-green-700", confirmed: "bg-emerald-50 text-emerald-700", shipped: "bg-amber-50 text-amber-700", delivered: "bg-green-50 text-green-700", cancelled: "bg-red-50 text-red-600" };
 
 export default function CustomerOrdersPage() {
   const { lang } = useLanguage();
@@ -80,7 +80,7 @@ export default function CustomerOrdersPage() {
   return (
     <div>
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100"><Package className="h-5 w-5 text-indigo-600" /></div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100"><Package className="h-5 w-5 text-green-600" /></div>
         <div>
           <h1 className="text-lg font-bold text-slate-900">{t.title}</h1>
           <p className="text-xs text-slate-500">{t.subtitle}</p>
@@ -142,10 +142,10 @@ export default function CustomerOrdersPage() {
                     </div>
                     {order.itemName && <p className="mt-1 truncate text-sm text-slate-700">{order.itemName}</p>}
                     {order.itemPrice && (
-                      <p className="mt-0.5 text-sm font-semibold text-indigo-600">${order.itemPrice}</p>
+                      <p className="mt-0.5 text-sm font-semibold text-green-600">${order.itemPrice}</p>
                     )}
                     <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
-                      <Link href={`/s/${order.sellerSlug}`} className="font-medium text-indigo-600 hover:text-indigo-700">{order.sellerName}</Link>
+                      <Link href={`/s/${order.sellerSlug}`} className="font-medium text-green-600 hover:text-green-700">{order.sellerName}</Link>
                       <span>{new Date(order.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
@@ -155,7 +155,7 @@ export default function CustomerOrdersPage() {
                       <button
                         onClick={() => handleReorder(order.id)}
                         disabled={isReordering}
-                        className="flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition"
+                        className="flex items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50 transition"
                       >
                         {isReordering ? (
                           <>

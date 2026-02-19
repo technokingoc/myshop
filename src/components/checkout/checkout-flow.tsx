@@ -179,7 +179,7 @@ export default function CheckoutFlow({ lang }: CheckoutFlowProps) {
           <p className="text-gray-600 mb-4">Your cart is empty</p>
           <Link 
             href="/stores" 
-            className="text-blue-600 hover:text-blue-800"
+            className="text-green-600 hover:text-green-800"
           >
             Continue shopping
           </Link>
@@ -213,10 +213,10 @@ export default function CheckoutFlow({ lang }: CheckoutFlowProps) {
                   onClick={() => goToStep(step.key)}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
                     step.key === currentStep 
-                      ? 'bg-blue-600 border-blue-600 text-white' 
+                      ? 'bg-green-600 border-green-600 text-white' 
                       : step.completed 
                         ? 'bg-green-600 border-green-600 text-white' 
-                        : 'border-gray-300 text-gray-500 bg-white hover:border-blue-600'
+                        : 'border-gray-300 text-gray-500 bg-white hover:border-green-600'
                   }`}
                   disabled={!step.completed && step.key !== currentStep && !validateCurrentStep()}
                 >
@@ -228,7 +228,7 @@ export default function CheckoutFlow({ lang }: CheckoutFlowProps) {
                 </button>
                 
                 <span className={`ml-3 text-sm font-medium ${
-                  step.key === currentStep ? 'text-blue-600' : 'text-gray-500'
+                  step.key === currentStep ? 'text-green-600' : 'text-gray-500'
                 }`}>
                   {step.label}
                 </span>

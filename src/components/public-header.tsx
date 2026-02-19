@@ -257,14 +257,16 @@ export function PublicHeader() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Link
                 href="/login"
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="rounded-lg px-2 py-2 sm:px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                title={t.login}
               >
-                {t.login}
+                <User className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">{t.login}</span>
               </Link>
-              <Link href="/register" className="ui-btn ui-btn-primary">
+              <Link href="/register" className="ui-btn ui-btn-primary text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
                 {t.startFree}
               </Link>
             </div>
@@ -290,9 +292,11 @@ export function PublicHeader() {
             {!session && (
               <>
                 <Link href="/login" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors duration-150 min-h-[44px] flex items-center truncate">
+                  <User className="h-4 w-4 mr-2" />
                   {t.login}
                 </Link>
                 <Link href="/register" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors duration-150 min-h-[44px] flex items-center truncate">
+                  <Plus className="h-4 w-4 mr-2" />
                   {t.register}
                 </Link>
               </>
@@ -301,7 +305,8 @@ export function PublicHeader() {
           
           {!session && (
             <div className="mt-3">
-              <Link href="/register" onClick={() => setOpen(false)} className="ui-btn ui-btn-primary w-full justify-center min-h-[44px] text-sm truncate">
+              <Link href="/register" onClick={() => setOpen(false)} className="ui-btn ui-btn-primary w-full justify-center min-h-[44px] text-sm truncate flex items-center gap-2">
+                <Plus className="h-4 w-4" />
                 {t.startFree}
               </Link>
             </div>

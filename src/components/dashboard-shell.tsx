@@ -22,6 +22,7 @@ import {
   Megaphone,
   Zap,
   Truck,
+  Warehouse,
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -51,6 +52,7 @@ const dict = {
     promotions: "Promotions",
     flashSales: "Flash Sales",
     reviews: "Reviews",
+    inventory: "Inventory",
     shipping: "Shipping",
     setup: "Setup",
     pricing: "Pricing",
@@ -77,6 +79,7 @@ const dict = {
     promotions: "Promoções",
     flashSales: "Vendas Relâmpago",
     reviews: "Avaliações",
+    inventory: "Inventário",
     shipping: "Envio",
     setup: "Configurar",
     pricing: "Preços",
@@ -120,14 +123,14 @@ function NavItem({
       aria-current={active ? "page" : undefined}
       className={`group flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-all duration-200 ${
         active
-          ? "bg-indigo-100 text-indigo-900 shadow-sm"
+          ? "bg-green-100 text-green-900 shadow-sm"
           : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
       }`}
     >
       <span className={`flex h-5 w-5 items-center justify-center rounded-lg transition-colors ${
-        active ? "bg-indigo-200/50" : "group-hover:bg-slate-100"
+        active ? "bg-green-200/50" : "group-hover:bg-slate-100"
       }`}>
-        <item.icon className={`h-4 w-4 ${active ? "text-indigo-700" : "text-slate-500 group-hover:text-slate-700"}`} />
+        <item.icon className={`h-4 w-4 ${active ? "text-green-700" : "text-slate-500 group-hover:text-slate-700"}`} />
       </span>
       <span className="font-semibold">{item.label}</span>
     </Link>
@@ -186,11 +189,11 @@ function NavDropdown({
                 href={item.href}
                 className={`flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-indigo-50/80 text-slate-900"
+                    ? "bg-green-50/80 text-slate-900"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <item.icon className={`h-4 w-4 ${active ? "text-indigo-600" : "text-slate-400"}`} />
+                <item.icon className={`h-4 w-4 ${active ? "text-green-600" : "text-slate-400"}`} />
                 {item.label}
               </Link>
             );
@@ -261,6 +264,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     { label: t.dashboard, icon: LayoutDashboard, href: "/dashboard", key: "dashboard" },
     { label: t.orders, icon: ShoppingCart, href: "/dashboard/orders", key: "orders" },
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
+    { label: t.inventory, icon: Warehouse, href: "/dashboard/inventory", key: "inventory" },
     { label: t.shipping, icon: Truck, href: "/dashboard/shipping", key: "shipping" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
@@ -279,6 +283,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const storeDropdownItems = [
     { label: t.orders, icon: ShoppingCart, href: "/dashboard/orders", key: "orders" },
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
+    { label: t.inventory, icon: Warehouse, href: "/dashboard/inventory", key: "inventory" },
     { label: t.shipping, icon: Truck, href: "/dashboard/shipping", key: "shipping" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
@@ -310,14 +315,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             >
               <div className="flex h-full flex-col">
                 {/* Enhanced profile card */}
-                <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50 p-4">
+                <div className="border-b border-slate-100 bg-gradient-to-r from-green-50 to-purple-50 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-900/5">
-                        <span className="text-sm font-bold text-indigo-600">{ownerInitial}</span>
+                        <span className="text-sm font-bold text-green-600">{ownerInitial}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold uppercase tracking-wide text-indigo-600/80">{t.profileLabel}</p>
+                        <p className="truncate text-xs font-semibold uppercase tracking-wide text-green-600/80">{t.profileLabel}</p>
                         <p className="truncate text-lg font-bold text-slate-900">{storeName}</p>
                       </div>
                     </div>
@@ -426,7 +431,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <NotificationBell t={t} sellerId={setup?.sellerId} />
 
                 <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 sm:flex">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-semibold text-indigo-700">{ownerInitial}</div>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-[11px] font-semibold text-green-700">{ownerInitial}</div>
                   <span className="max-w-32 truncate text-xs font-medium text-slate-700">{storeName}</span>
                 </div>
 
@@ -448,23 +453,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
           {/* ── Enhanced Mobile bottom nav ── */}
           <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md lg:hidden">
-            <div className="mx-auto max-w-md">
-              <ul className="grid grid-cols-5 gap-1 px-2 py-1">
-                {[...storeItems.slice(0, 3), ...accountItems.slice(0, 2)].map((item) => {
+            <div className="mx-auto max-w-lg">
+              <ul className="grid grid-cols-4 gap-1 px-2 py-1">
+                {[...storeItems.slice(0, 3), accountItems.slice(1, 2)[0]].map((item) => {
                   const active = item.key === activePage;
                   return (
                     <li key={item.key}>
                       <Link
                         href={item.href}
                         aria-current={active ? "page" : undefined}
-                        className={`flex h-12 flex-col items-center justify-center gap-1 rounded-xl text-xs transition-all duration-200 ${
+                        className={`flex h-14 flex-col items-center justify-center gap-1.5 rounded-xl text-xs transition-all duration-200 ${
                           active 
-                            ? "bg-indigo-50 text-indigo-700 shadow-sm" 
+                            ? "bg-green-50 text-green-700 shadow-sm" 
                             : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                         }`}
                       >
-                        <item.icon className={`h-4 w-4 ${active ? "text-indigo-600" : "text-slate-400"}`} />
-                        <span className="font-medium">{item.label}</span>
+                        <item.icon className={`h-5 w-5 ${active ? "text-green-600" : "text-slate-400"}`} />
+                        <span className="font-medium whitespace-nowrap truncate max-w-16">{item.label}</span>
                       </Link>
                     </li>
                   );

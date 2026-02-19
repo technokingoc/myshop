@@ -655,7 +655,7 @@ export function EnhancedProductForm({
             <h3 className="text-lg font-semibold text-slate-900">Product Variants</h3>
             <button
               onClick={addVariant}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               <Plus className="h-4 w-4" />
               Add Variant

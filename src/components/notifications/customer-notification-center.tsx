@@ -109,7 +109,7 @@ export function CustomerNotificationCenter({ t, customerId, lang }: Props) {
   const getNotificationIcon = (type: string) => {
     switch (true) {
       case type.startsWith("order:"):
-        return <Package className="h-5 w-5 text-blue-500" />;
+        return <Package className="h-5 w-5 text-green-500" />;
       default:
         return <Bell className="h-5 w-5 text-slate-500" />;
     }
@@ -118,7 +118,7 @@ export function CustomerNotificationCenter({ t, customerId, lang }: Props) {
   const getNotificationColor = (type: string) => {
     switch (true) {
       case type.startsWith("order:"):
-        return "bg-blue-50 border-blue-200";
+        return "bg-green-50 border-green-200";
       default:
         return "bg-slate-50 border-slate-200";
     }
@@ -174,7 +174,7 @@ export function CustomerNotificationCenter({ t, customerId, lang }: Props) {
           {filteredUnreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="flex items-center gap-2 px-3 py-1 text-sm text-green-600 hover:text-green-800 font-medium"
             >
               <CheckCircle className="h-4 w-4" />
               {t.markAllRead || "Mark all read"}
@@ -234,7 +234,7 @@ export function CustomerNotificationCenter({ t, customerId, lang }: Props) {
                           {notification.message}
                         </p>
                         {notification.orderId && (
-                          <span className="inline-block mt-1 text-xs text-blue-600 font-medium">
+                          <span className="inline-block mt-1 text-xs text-green-600 font-medium">
                             ORD-{notification.orderId}
                           </span>
                         )}
@@ -244,7 +244,7 @@ export function CustomerNotificationCenter({ t, customerId, lang }: Props) {
                           {formatTimeAgo(notification.createdAt)}
                         </span>
                         {!notification.read ? (
-                          <Circle className="h-2 w-2 fill-blue-500 text-blue-500" />
+                          <Circle className="h-2 w-2 fill-green-500 text-green-500" />
                         ) : (
                           <Circle className="h-2 w-2 text-slate-300" />
                         )}

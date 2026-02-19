@@ -150,7 +150,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
             value={filters.query}
             onChange={(e) => updateFilter("query", e.target.value)}
             placeholder={t.searchPlaceholder || "Search orders, customers, items..."}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
         </div>
         
@@ -158,14 +158,14 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
           onClick={() => setIsOpen(!isOpen)}
           className={`flex items-center gap-2 px-3 py-2 border rounded-lg transition-colors ${
             isOpen || hasActiveFilters 
-              ? "border-blue-500 bg-blue-50 text-blue-700" 
+              ? "border-green-500 bg-green-50 text-green-700" 
               : "border-slate-200 text-slate-600 hover:bg-slate-50"
           }`}
         >
           <Filter className="h-4 w-4" />
           <span className="text-sm font-medium">{t.filters || "Filters"}</span>
           {activeFilterCount > 0 && (
-            <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               {activeFilterCount}
             </span>
           )}
@@ -206,7 +206,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
               <select
                 value={filters.status}
                 onChange={(e) => updateFilter("status", e.target.value as OrderStatus | "all")}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               >
                 <option value="all">{t.allStatuses || "All Statuses"}</option>
                 <option value="placed">{t.placed || "Placed"}</option>
@@ -228,7 +228,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => updateFilter("dateFrom", e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               />
             </div>
 
@@ -242,7 +242,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => updateFilter("dateTo", e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               />
             </div>
 
@@ -257,7 +257,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 value={filters.customerName}
                 onChange={(e) => updateFilter("customerName", e.target.value)}
                 placeholder={t.customerNamePlaceholder || "Enter customer name..."}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               />
             </div>
 
@@ -271,7 +271,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 value={filters.customerContact}
                 onChange={(e) => updateFilter("customerContact", e.target.value)}
                 placeholder={t.contactPlaceholder || "Email or phone..."}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               />
             </div>
 
@@ -286,7 +286,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 value={filters.itemName}
                 onChange={(e) => updateFilter("itemName", e.target.value)}
                 placeholder={t.itemNamePlaceholder || "Enter item name..."}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               />
             </div>
 
@@ -303,7 +303,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               />
             </div>
 
@@ -320,7 +320,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 placeholder="999.99"
                 step="0.01"
                 min="0"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-green-500"
               />
             </div>
           </div>
@@ -334,7 +334,7 @@ export function AdvancedSearch({ orders, onFilteredResults, t }: Props) {
                 </span>
                 <button
                   onClick={clearFilters}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-green-600 hover:text-green-800 font-medium"
                 >
                   {t.clearAll || "Clear All"}
                 </button>

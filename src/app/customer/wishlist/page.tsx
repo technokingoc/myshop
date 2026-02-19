@@ -58,7 +58,7 @@ export default function WishlistPage() {
           <Heart className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 text-sm font-medium text-slate-500">{t.empty}</p>
           <p className="mt-1 text-xs text-slate-400">{t.emptyHint}</p>
-          <Link href="/stores" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">{t.browse}</Link>
+          <Link href="/stores" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700">{t.browse}</Link>
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -72,8 +72,8 @@ export default function WishlistPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">{item.itemName}</p>
-                  <p className="mt-0.5 text-sm font-bold text-indigo-600">{item.sellerCurrency} {item.itemPrice}</p>
-                  <Link href={`/s/${item.sellerSlug}`} className="mt-0.5 block truncate text-xs text-slate-500 hover:text-indigo-600">{item.sellerName}</Link>
+                  <p className="mt-0.5 text-sm font-bold text-green-600">{item.sellerCurrency} {item.itemPrice}</p>
+                  <Link href={`/s/${item.sellerSlug}`} className="mt-0.5 block truncate text-xs text-slate-500 hover:text-green-600">{item.sellerName}</Link>
                 </div>
               </div>
               <div className="flex border-t border-slate-100">
@@ -81,7 +81,7 @@ export default function WishlistPage() {
                   <Trash2 className="h-3.5 w-3.5" /> {t.remove}
                 </button>
                 <div className="w-px bg-slate-100" />
-                <Link href={`/s/${item.sellerSlug}`} className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition">
+                <Link href={`/s/${item.sellerSlug}`} className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-green-600 hover:bg-green-50 transition">
                   <ShoppingBag className="h-3.5 w-3.5" /> {t.order}
                 </Link>
               </div>

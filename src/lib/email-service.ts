@@ -218,3 +218,66 @@ export async function sendNewReviewAlert(
 
   await send(sellerEmail, subject, html);
 }
+
+export async function sendRestockReminder(
+  sellerEmail: string,
+  productName: string,
+  currentStock: number,
+  triggerQuantity: number,
+  targetQuantity: number,
+  supplierName: string = '',
+  lang: Lang = "en"
+) {
+  const isEn = lang === "en";
+  const subject = isEn
+    ? `🔄 Restock Reminder: ${productName}`
+    : `🔄 Lembrete de Reposição: ${productName}`;
+
+  const html = wrap(`
+    <h1 style="font-size:20px;color:#0f172a;margin:0 0 16px">${isEn ? "Restock Reminder" : "Lembrete de Reposição"}</h1>
+    <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 8px">
+      <strong>${isEn ? "Product" : "Produto"}:</strong> ${productName}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 8px">
+      <strong>${isEn ? "Current Stock" : "Estoque Atual"}:</strong> ${currentStock} ${isEn ? "items" : "itens"}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 8px">
+      <strong>${isEn ? "Reorder Point" : "Ponto de Reposição"}:</strong> ${triggerQuantity} ${isEn ? "items" : "itens"}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 16px">
+      <strong>${isEn ? "Suggested Reorder Quantity" : "Quantidade Sugerida"}:</strong> ${targetQuantity} ${isEn ? "items" : "itens"}
+    </p>
+    
+    <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:16px;margin:16px 0">
+      <p style="color:#92400e;font-size:14px;line-height:1.6;margin:0;font-weight:600">
+        ${isEn ? "⚠️ Time to Restock!" : "⚠️ Hora de Repor!"}
+      </p>
+      <p style="color:#92400e;font-size:14px;line-height:1.6;margin:4px 0 0">
+        ${isEn 
+          ? "Your product stock has reached the reorder point. Consider placing an order to avoid running out."
+          : "O estoque do seu produto chegou ao ponto de reposição. Considere fazer um pedido para evitar ficar sem produtos."
+        }
+      </p>
+    </div>
+
+    ${supplierName ? `
+      <div style="background:#f0f9ff;border-radius:8px;padding:16px;margin:16px 0">
+        <p style="color:#0369a1;font-size:14px;line-height:1.6;margin:0 0 4px;font-weight:600">
+          ${isEn ? "💡 Quick Action" : "💡 Ação Rápida"}
+        </p>
+        <p style="color:#0369a1;font-size:14px;line-height:1.6;margin:0">
+          ${isEn ? "Contact your supplier" : "Entre em contacto com o seu fornecedor"}: <strong>${supplierName}</strong>
+        </p>
+      </div>
+    ` : ''}
+    
+    <p style="color:#94a3b8;font-size:12px;margin:16px 0 0">
+      ${isEn 
+        ? "You can manage restock reminders and view stock history in your dashboard inventory section."
+        : "Pode gerir lembretes de reposição e ver o histórico de estoque na secção de inventário do seu painel."
+      }
+    </p>
+  `);
+
+  await send(sellerEmail, subject, html);
+}

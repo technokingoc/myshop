@@ -160,14 +160,14 @@ export default function UnifiedRegisterPage() {
           <p className="mt-2 text-sm text-slate-600">{t.successSub}</p>
           
           {/* Store option hint */}
-          <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-3 text-left">
-            <h3 className="text-sm font-medium text-blue-900">{t.storeOptionTitle}</h3>
-            <p className="mt-1 text-xs text-blue-700">{t.storeOptionDesc}</p>
+          <div className="mt-4 rounded-lg bg-green-50 border border-green-200 p-3 text-left">
+            <h3 className="text-sm font-medium text-green-900">{t.storeOptionTitle}</h3>
+            <p className="mt-1 text-xs text-green-700">{t.storeOptionDesc}</p>
           </div>
           
           <button
             onClick={onContinue}
-            className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+            className="mt-6 w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700"
           >
             {t.continue}
           </button>
@@ -243,7 +243,7 @@ export default function UnifiedRegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
           >
             {loading ? t.registering : t.register}
           </button>
@@ -251,7 +251,7 @@ export default function UnifiedRegisterPage() {
 
         <p className="mt-4 text-center text-sm text-slate-600">
           {t.haveAccount}{" "}
-          <Link href="/login" className="text-blue-600 underline underline-offset-2">{t.login}</Link>
+          <Link href="/login" className="text-green-600 underline underline-offset-2">{t.login}</Link>
         </p>
       </div>
     </main>
@@ -286,7 +286,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${error ? "border-rose-400" : "border-slate-300"}`}
+        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring ${error ? "border-rose-400" : "border-slate-300"}`}
       />
       {error && <span className="text-xs text-rose-600">{error}</span>}
     </label>

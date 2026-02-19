@@ -219,7 +219,7 @@ export function StoreCreationWizard({ onSuccess, onCancel }: StoreCreationWizard
             <select
               value={formData.businessType}
               onChange={(e) => updateField("businessType", e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring"
             >
               {businessTypeOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -251,7 +251,7 @@ export function StoreCreationWizard({ onSuccess, onCancel }: StoreCreationWizard
               value={formData.description}
               placeholder={t.descriptionPh}
               onChange={(e) => updateField("description", e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring"
               rows={3}
             />
           </div>
@@ -279,7 +279,7 @@ export function StoreCreationWizard({ onSuccess, onCancel }: StoreCreationWizard
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              className="flex-1 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
             >
               {loading ? t.creating : t.create}
             </button>
@@ -318,7 +318,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${error ? "border-rose-400" : "border-slate-300"}`}
+        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring ${error ? "border-rose-400" : "border-slate-300"}`}
       />
       {error && <span className="text-xs text-rose-600">{error}</span>}
     </label>

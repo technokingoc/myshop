@@ -38,7 +38,7 @@ export function AvatarPlaceholder({
   const initial = (name || "?").charAt(0).toUpperCase();
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700 ${className}`}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-green-100 font-semibold text-green-700 ${className}`}
     >
       {initial}
     </div>

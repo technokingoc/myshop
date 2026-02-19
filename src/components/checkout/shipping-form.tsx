@@ -203,14 +203,14 @@ export default function ShippingForm({
           
           {/* Guest vs Account Option */}
           {!customerSession && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center space-x-3 mb-3">
                 <input
                   type="radio"
                   id="guest"
                   checked={data.guestCheckout}
                   onChange={() => onUpdate({ ...data, guestCheckout: true })}
-                  className="w-4 h-4 text-blue-600"
+                  className="w-4 h-4 text-green-600"
                 />
                 <label htmlFor="guest" className="font-medium text-gray-900">
                   {dict.checkout.continuousGuest}
@@ -223,7 +223,7 @@ export default function ShippingForm({
                   id="account"
                   checked={!data.guestCheckout}
                   onChange={() => onUpdate({ ...data, guestCheckout: false })}
-                  className="w-4 h-4 text-blue-600"
+                  className="w-4 h-4 text-green-600"
                 />
                 <label htmlFor="account" className="text-gray-700">
                   {dict.checkout.createAccount}
@@ -231,7 +231,7 @@ export default function ShippingForm({
               </div>
               
               {!data.guestCheckout && (
-                <p className="text-sm text-blue-600 mt-2 ml-7">
+                <p className="text-sm text-green-600 mt-2 ml-7">
                   Account creation will happen after order confirmation
                 </p>
               )}
@@ -249,7 +249,7 @@ export default function ShippingForm({
                 type="text"
                 value={formData.name}
                 onChange={(e) => updateField('name', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   errors.name ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Enter your full name"
@@ -269,7 +269,7 @@ export default function ShippingForm({
                 type="email"
                 value={formData.email}
                 onChange={(e) => updateField('email', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Enter your email address"
@@ -289,7 +289,7 @@ export default function ShippingForm({
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => updateField('phone', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   errors.phone ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="+258 XX XXX XXXX"
@@ -309,7 +309,7 @@ export default function ShippingForm({
                 type="text"
                 value={formData.address}
                 onChange={(e) => updateField('address', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   errors.address ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Street address, apartment, suite, etc."
@@ -329,7 +329,7 @@ export default function ShippingForm({
                   type="text"
                   value={formData.city}
                   onChange={(e) => updateField('city', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                     errors.city ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="City"
@@ -347,7 +347,7 @@ export default function ShippingForm({
                 <select
                   value={formData.country}
                   onChange={(e) => updateField('country', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   {countries.map(country => (
                     <option key={country} value={country}>{country}</option>
@@ -366,7 +366,7 @@ export default function ShippingForm({
                 
                 {loadingMethods ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                    <Loader2 className="w-6 h-6 animate-spin text-green-600" />
                     <span className="ml-2 text-gray-600">Loading shipping options...</span>
                   </div>
                 ) : shippingMethods.length === 0 ? (
@@ -381,7 +381,7 @@ export default function ShippingForm({
                         key={method.id}
                         className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                           selectedMethod?.id === method.id
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-green-500 bg-green-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                         onClick={() => handleMethodSelect(method)}
@@ -392,7 +392,7 @@ export default function ShippingForm({
                               type="radio"
                               checked={selectedMethod?.id === method.id}
                               onChange={() => handleMethodSelect(method)}
-                              className="w-4 h-4 text-blue-600"
+                              className="w-4 h-4 text-green-600"
                             />
                             <div className="flex items-center space-x-2">
                               {method.type === 'pickup' ? (
@@ -419,11 +419,11 @@ export default function ShippingForm({
                         )}
                         
                         {method.type === 'pickup' && method.pickupAddress && (
-                          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <p className="font-medium text-blue-900 mb-1">Pickup Location:</p>
-                            <p className="text-sm text-blue-800">{method.pickupAddress}</p>
+                          <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <p className="font-medium text-green-900 mb-1">Pickup Location:</p>
+                            <p className="text-sm text-green-800">{method.pickupAddress}</p>
                             {method.pickupInstructions && (
-                              <p className="text-sm text-blue-700 mt-1">{method.pickupInstructions}</p>
+                              <p className="text-sm text-green-700 mt-1">{method.pickupInstructions}</p>
                             )}
                           </div>
                         )}
@@ -446,7 +446,7 @@ export default function ShippingForm({
                     type="checkbox"
                     checked={data.saveAddress}
                     onChange={(e) => onUpdate({ ...data, saveAddress: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-green-600 rounded"
                   />
                   <span className="ml-3 text-sm text-gray-700">
                     {dict.checkout.saveAddress}
@@ -459,7 +459,7 @@ export default function ShippingForm({
                   type="checkbox"
                   checked={data.useSameAddress}
                   onChange={toggleSameAddress}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-green-600 rounded"
                 />
                 <span className="ml-3 text-sm text-gray-700">
                   {dict.checkout.useSameForBilling}
@@ -479,7 +479,7 @@ export default function ShippingForm({
               
               <button
                 type="submit"
-                className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 {dict.checkout.continuesToPayment}
               </button>

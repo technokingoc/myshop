@@ -121,7 +121,7 @@ export default function UnifiedLoginPage() {
             <span className="text-slate-700">{t.email}</span>
             <input
               type="email"
-              className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${emailError ? "border-rose-400" : "border-slate-300"}`}
+              className={`rounded-lg border bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring ${emailError ? "border-rose-400" : "border-slate-300"}`}
               value={email}
               placeholder={t.emailPh}
               onChange={(e) => setEmail(e.target.value)}
@@ -133,7 +133,7 @@ export default function UnifiedLoginPage() {
             <span className="text-slate-700">{t.password}</span>
             <input
               type="password"
-              className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${passwordError ? "border-rose-400" : "border-slate-300"}`}
+              className={`rounded-lg border bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring ${passwordError ? "border-rose-400" : "border-slate-300"}`}
               value={password}
               placeholder={t.passwordPh}
               onChange={(e) => setPassword(e.target.value)}
@@ -146,14 +146,14 @@ export default function UnifiedLoginPage() {
             {t.remember}
           </label>
 
-          <button disabled={loading} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+          <button disabled={loading} className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60">
             {loading ? t.loading : t.login}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-slate-600">
           {t.noAccount}{" "}
-          <Link href="/register" className="text-blue-600 underline underline-offset-2">{t.register}</Link>
+          <Link href="/register" className="text-green-600 underline underline-offset-2">{t.register}</Link>
         </p>
       </div>
     </main>

@@ -188,7 +188,7 @@ export default function AdminReviews() {
             <button key={status.key} onClick={() => setStatusFilter(status.key)}
               className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
                 statusFilter === status.key 
-                  ? "bg-indigo-100 text-indigo-700" 
+                  ? "bg-green-100 text-green-700" 
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}>
               {status.label}
@@ -238,7 +238,7 @@ export default function AdminReviews() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-slate-800">{r.customerName}</span>
                       {r.verified && (
-                        <span className="text-blue-600 text-xs" title={t.verified}>✓</span>
+                        <span className="text-green-600 text-xs" title={t.verified}>✓</span>
                       )}
                     </div>
                   </td>

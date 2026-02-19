@@ -251,7 +251,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
         {onWriteReview && (
           <button
             onClick={onWriteReview}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
           >
             {t.writeReview}
           </button>
@@ -274,7 +274,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
             <select
               value={sort}
               onChange={(e) => handleSortChange(e.target.value)}
-              className="appearance-none bg-white border border-slate-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="appearance-none bg-white border border-slate-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -296,7 +296,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
           {onWriteReview && (
             <button
               onClick={onWriteReview}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
             >
               {t.writeReview}
             </button>
@@ -326,7 +326,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-slate-900">{review.customerName}</span>
                         {review.verified && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
                             <CheckCircle className="h-3 w-3" />
                             {t.verified}
                           </span>
@@ -353,7 +353,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
                   {shouldTruncate && (
                     <button
                       onClick={() => toggleExpandReview(review.id)}
-                      className="ml-1 text-indigo-600 hover:text-indigo-700 font-medium"
+                      className="ml-1 text-green-600 hover:text-green-700 font-medium"
                     >
                       {isExpanded ? 'Show less' : 'Read more'}
                     </button>

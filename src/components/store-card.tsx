@@ -31,10 +31,10 @@ export function StoreCard({ store }: StoreCardProps) {
   return (
     <Link
       href={`/s/${store.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-indigo-200 hover:shadow-xl hover:-translate-y-1"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-green-200 hover:shadow-xl hover:-translate-y-1"
     >
       {/* Enhanced Banner */}
-      <div className="relative h-28 bg-gradient-to-br from-indigo-100 via-purple-50 to-slate-100">
+      <div className="relative h-28 bg-gradient-to-br from-green-100 via-purple-50 to-slate-100">
         {store.bannerUrl && (
           <>
             <img src={store.bannerUrl} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
@@ -55,13 +55,13 @@ export function StoreCard({ store }: StoreCardProps) {
             {store.logoUrl ? (
               <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-base font-bold text-white">
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-green-500 to-purple-600 text-base font-bold text-white">
                 {store.name.charAt(0)}
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1 pt-1">
-            <h3 className="truncate text-base font-bold text-slate-900 group-hover:text-indigo-900 transition-colors">{store.name}</h3>
+            <h3 className="truncate text-base font-bold text-slate-900 group-hover:text-green-900 transition-colors">{store.name}</h3>
             {store.city && (
               <p className="flex items-center gap-1 text-xs text-slate-500 mt-1">
                 <MapPin className="h-3 w-3" />
@@ -95,7 +95,7 @@ export function StoreCard({ store }: StoreCardProps) {
 
         {/* Enhanced CTA */}
         <div className="mt-auto pt-4">
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 group-hover:text-indigo-700 group-hover:gap-2 transition-all">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-600 group-hover:text-green-700 group-hover:gap-2 transition-all">
             {t.visit}
             <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />

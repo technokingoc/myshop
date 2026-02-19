@@ -176,7 +176,7 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
   const getNotificationIcon = (type: string) => {
     switch (true) {
       case type.startsWith("order:"):
-        return <Package className="h-5 w-5 text-blue-500" />;
+        return <Package className="h-5 w-5 text-green-500" />;
       case type.startsWith("inventory:"):
         return <AlertTriangle className="h-5 w-5 text-amber-500" />;
       case type.startsWith("review:"):
@@ -200,7 +200,7 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
     // Regular priority based on type
     switch (true) {
       case type.startsWith("order:"):
-        return "bg-blue-50 border-blue-200";
+        return "bg-green-50 border-green-200";
       case type.startsWith("inventory:"):
         return "bg-amber-50 border-amber-200";
       case type.startsWith("review:"):
@@ -242,49 +242,52 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4 overflow-hidden">
           {/* Filter Buttons */}
-          <div className="flex bg-slate-100 rounded-lg p-1">
-            {[
-              { key: "all", label: t.all || "All", count: notifications.length },
-              { key: "unread", label: t.unread || "Unread", count: unreadCount },
-              { key: "orders", label: t.orders || "Orders", count: notifications.filter(n => n.type.startsWith("order:")).length },
-              { key: "inventory", label: t.inventory || "Inventory", count: notifications.filter(n => n.type.startsWith("inventory:")).length },
-              { key: "reviews", label: t.reviews || "Reviews", count: notifications.filter(n => n.type.startsWith("review:")).length },
-            ].map(({ key, label, count }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key as typeof filter)}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  filter === key 
-                    ? "bg-white text-slate-900 shadow-sm" 
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                {label} {count > 0 && <span className="text-xs">({count})</span>}
-              </button>
-            ))}
+          <div className="flex bg-slate-100 rounded-lg p-1 overflow-x-auto min-w-0">
+            <div className="flex gap-1 whitespace-nowrap">
+              {[
+                { key: "all", label: t.all || "All", count: notifications.length },
+                { key: "unread", label: t.unread || "Unread", count: unreadCount },
+                { key: "orders", label: t.orders || "Orders", count: notifications.filter(n => n.type.startsWith("order:")).length },
+                { key: "inventory", label: t.inventory || "Inventory", count: notifications.filter(n => n.type.startsWith("inventory:")).length },
+                { key: "reviews", label: t.reviews || "Reviews", count: notifications.filter(n => n.type.startsWith("review:")).length },
+              ].map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key as typeof filter)}
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    filter === key 
+                      ? "bg-white text-slate-900 shadow-sm" 
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  {label} {count > 0 && <span className="text-xs">({count})</span>}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {filteredUnreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 text-xs sm:text-sm text-green-600 hover:text-green-800 font-medium"
             >
               <CheckCircle className="h-4 w-4" />
-              {t.markAllRead || "Mark all read"}
+              <span className="hidden sm:inline">{t.markAllRead || "Mark all read"}</span>
+              <span className="sm:hidden">Read all</span>
             </button>
           )}
           
           <button
             onClick={() => setShowPreferences(!showPreferences)}
-            className="flex items-center gap-2 px-3 py-1 text-sm text-slate-600 hover:text-slate-900 font-medium"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 text-xs sm:text-sm text-slate-600 hover:text-slate-900 font-medium"
           >
             <Settings className="h-4 w-4" />
-            {t.preferences || "Preferences"}
+            <span className="hidden sm:inline">{t.preferences || "Preferences"}</span>
           </button>
         </div>
       </div>
@@ -324,7 +327,7 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
                             [key]: e.target.checked,
                           },
                         })}
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-slate-300 text-green-600 focus:ring-green-500"
                       />
                       <span className="ml-3 text-sm text-slate-700">{label}</span>
                     </label>
@@ -354,7 +357,7 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
                             [key]: e.target.checked,
                           },
                         })}
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-slate-300 text-green-600 focus:ring-green-500"
                       />
                       <span className="ml-3 text-sm text-slate-700">{label}</span>
                     </label>
@@ -382,7 +385,7 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
                         onChange={() => updatePreferences({
                           emailFrequency: key as typeof preferences.emailFrequency,
                         })}
-                        className="border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="border-slate-300 text-green-600 focus:ring-green-500"
                       />
                       <span className="ml-3 text-sm text-slate-700">{label}</span>
                     </label>
@@ -461,7 +464,7 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
                           {notification.message}
                         </p>
                         {notification.orderId && (
-                          <span className="inline-block mt-1 text-xs text-blue-600 font-medium">
+                          <span className="inline-block mt-1 text-xs text-green-600 font-medium">
                             ORD-{notification.orderId}
                           </span>
                         )}
@@ -482,7 +485,7 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
                           </span>
                         )}
                         {!notification.read ? (
-                          <Circle className="h-2 w-2 fill-blue-500 text-blue-500" />
+                          <Circle className="h-2 w-2 fill-green-500 text-green-500" />
                         ) : (
                           <Circle className="h-2 w-2 text-slate-300" />
                         )}

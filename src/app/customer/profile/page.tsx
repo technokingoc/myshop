@@ -53,14 +53,14 @@ export default function CustomerProfilePage() {
     } catch {} finally { setSaving(false); setTimeout(() => setSaved(false), 3000); }
   };
 
-  const inp = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition";
+  const inp = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-100 transition";
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /><span className="ml-2 text-sm text-slate-500">{t.loading}</span></div>;
 
   return (
     <div className="mx-auto max-w-md">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100"><User className="h-5 w-5 text-indigo-600" /></div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100"><User className="h-5 w-5 text-green-600" /></div>
         <div>
           <h1 className="text-lg font-bold text-slate-900">{t.title}</h1>
           <p className="text-xs text-slate-500">{t.subtitle}</p>
@@ -94,7 +94,7 @@ export default function CustomerProfilePage() {
             <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={inp} />
           </div>
         </div>
-        <button type="submit" disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition">
+        <button type="submit" disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {saving ? t.saving : saved ? t.saved : t.save}
         </button>

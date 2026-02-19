@@ -310,7 +310,7 @@ export default function AnalyticsPage() {
               onClick={() => setGroupBy(g.key)}
               className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                 groupBy === g.key
-                  ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                  ? "border-green-200 bg-green-50 text-green-700"
                   : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
               }`}
             >
@@ -337,7 +337,7 @@ export default function AnalyticsPage() {
               description={t.ordersDesc}
               value={String(data.metrics.orders)}
               trend={data.metrics.orderTrend}
-              color="text-blue-600 bg-blue-50"
+              color="text-green-600 bg-green-50"
             />
             <MetricCard
               icon={DollarSign}
@@ -353,7 +353,7 @@ export default function AnalyticsPage() {
               description={t.avgOrderDesc}
               value={`$${data.metrics.avgOrderValue.toFixed(2)}`}
               trend={data.previousPeriodComparison.avgOrderValue.trend}
-              color="text-indigo-600 bg-indigo-50"
+              color="text-green-600 bg-green-50"
             />
             <MetricCard
               icon={Users}
@@ -393,7 +393,7 @@ export default function AnalyticsPage() {
                     return (
                       <div key={i} className="group relative flex flex-1 flex-col items-center justify-end" style={{ height: "100%" }}>
                         <div
-                          className="w-full rounded-t bg-gradient-to-t from-indigo-500 to-indigo-400 transition-colors group-hover:from-indigo-600 group-hover:to-indigo-500"
+                          className="w-full rounded-t bg-gradient-to-t from-green-500 to-green-400 transition-colors group-hover:from-green-600 group-hover:to-green-500"
                           style={{ height: `${Math.max(pct, 2)}%`, minHeight: 2 }}
                           title={`${label}: ${d.count} orders, $${d.revenue.toFixed(2)} revenue, ${d.uniqueCustomers} customers`}
                         />
@@ -433,7 +433,7 @@ export default function AnalyticsPage() {
                       label={t.loyalCustomers}
                       count={data.customerSegmentation.demographics.loyal}
                       total={data.customerSegmentation.total}
-                      color="bg-indigo-500"
+                      color="bg-green-500"
                     />
                     <SegmentBar
                       label={t.repeatCustomers}
@@ -445,7 +445,7 @@ export default function AnalyticsPage() {
                       label={t.newCustomers}
                       count={data.customerSegmentation.demographics.new_}
                       total={data.customerSegmentation.total}
-                      color="bg-blue-500"
+                      color="bg-green-500"
                     />
                   </div>
                 </div>
@@ -504,9 +504,9 @@ export default function AnalyticsPage() {
                     const width = (stage.count / maxCount) * 100;
                     
                     const stageColors: Record<string, string> = {
-                      placed: "bg-blue-500",
+                      placed: "bg-green-500",
                       contacted: "bg-cyan-500",
-                      confirmed: "bg-indigo-500", 
+                      confirmed: "bg-green-500", 
                       shipped: "bg-purple-500",
                       delivered: "bg-emerald-500",
                       completed: "bg-green-500",

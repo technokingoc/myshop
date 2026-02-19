@@ -59,7 +59,7 @@ function ToastCard({ item, onClose }: { item: Toast; onClose: () => void }) {
   const styles = {
     success: "border-emerald-200 bg-emerald-50 text-emerald-900",
     error: "border-rose-200 bg-rose-50 text-rose-900",
-    info: "border-blue-200 bg-blue-50 text-blue-900",
+    info: "border-green-200 bg-green-50 text-green-900",
   } as const;
 
   const Icon = item.type === "success" ? CheckCircle2 : item.type === "error" ? AlertCircle : Info;

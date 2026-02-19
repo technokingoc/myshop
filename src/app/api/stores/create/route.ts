@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       logoUrl: logoUrl?.trim() || "",
       address: address?.trim() || "",
       plan: "free",
-      themeColor: themeColor || "indigo",
+      themeColor: themeColor || "green",
       storeTemplate: storeTemplate || "classic",
       headerTemplate: headerTemplate || "compact",
       // TODO: Add business verification fields to schema if needed

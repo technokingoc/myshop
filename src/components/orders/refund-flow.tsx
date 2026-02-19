@@ -80,9 +80,9 @@ export function RefundFlow({ order, onRefund, onCancel, onClose, t, language }: 
           <div className="space-y-3">
             <button
               onClick={() => setAction("refund")}
-              className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors text-left"
             >
-              <DollarSign className="h-5 w-5 text-blue-600" />
+              <DollarSign className="h-5 w-5 text-green-600" />
               <div>
                 <p className="font-medium text-slate-900">
                   {isEn ? "Process Refund" : "Processar Reembolso"}
@@ -127,10 +127,10 @@ export function RefundFlow({ order, onRefund, onCancel, onClose, t, language }: 
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-            action === "refund" ? "bg-blue-100" : "bg-red-100"
+            action === "refund" ? "bg-green-100" : "bg-red-100"
           }`}>
             {action === "refund" ? (
-              <DollarSign className="h-5 w-5 text-blue-600" />
+              <DollarSign className="h-5 w-5 text-green-600" />
             ) : (
               <RefreshCw className="h-5 w-5 text-red-600" />
             )}
@@ -155,7 +155,7 @@ export function RefundFlow({ order, onRefund, onCancel, onClose, t, language }: 
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value as RefundReason)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-200"
             >
               {Object.entries(refundReasons).map(([key, labels]) => (
                 <option key={key} value={key}>
@@ -176,7 +176,7 @@ export function RefundFlow({ order, onRefund, onCancel, onClose, t, language }: 
                 value={refundAmount}
                 onChange={(e) => setRefundAmount(e.target.value)}
                 placeholder={isEn ? "Enter amount" : "Digite o valor"}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-200"
               />
               <p className="text-xs text-slate-500 mt-1">
                 {isEn ? "Original order value:" : "Valor original do pedido:"} {order.itemPrice || "—"}
@@ -194,7 +194,7 @@ export function RefundFlow({ order, onRefund, onCancel, onClose, t, language }: 
               onChange={(e) => setNote(e.target.value)}
               placeholder={isEn ? "Add details about this action..." : "Adicione detalhes sobre esta ação..."}
               rows={3}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-200"
             />
           </div>
         </div>
@@ -211,7 +211,7 @@ export function RefundFlow({ order, onRefund, onCancel, onClose, t, language }: 
             disabled={processing || !note.trim() || (action === "refund" && !refundAmount.trim())}
             className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
               action === "refund"
-                ? "bg-blue-600 text-white hover:bg-blue-700"
+                ? "bg-green-600 text-white hover:bg-green-700"
                 : "bg-red-600 text-white hover:bg-red-700"
             }`}
           >

@@ -125,7 +125,7 @@ export function CancelRefundModal({ order, isOpen, onClose, onConfirm, t }: Prop
                   onClick={() => setAction("refund")}
                   className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg border transition-colors ${
                     action === "refund"
-                      ? "bg-blue-50 border-blue-200 text-blue-700"
+                      ? "bg-green-50 border-green-200 text-green-700"
                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -144,7 +144,7 @@ export function CancelRefundModal({ order, isOpen, onClose, onConfirm, t }: Prop
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               required
             >
               <option value="">{t.selectReason || "Select a reason..."}</option>
@@ -168,7 +168,7 @@ export function CancelRefundModal({ order, isOpen, onClose, onConfirm, t }: Prop
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder={t.customReasonPlaceholder || "Please explain the reason..."}
                 rows={3}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                 required
               />
             </div>
@@ -190,12 +190,12 @@ export function CancelRefundModal({ order, isOpen, onClose, onConfirm, t }: Prop
                   value={refundAmount || ""}
                   onChange={(e) => setRefundAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
                   placeholder={orderAmount.toString()}
-                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
                 <button
                   type="button"
                   onClick={() => setRefundAmount(orderAmount)}
-                  className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap"
+                  className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap"
                 >
                   {t.fullAmount || "Full Amount"}
                 </button>
@@ -222,7 +222,7 @@ export function CancelRefundModal({ order, isOpen, onClose, onConfirm, t }: Prop
               className={`flex-1 py-2 px-4 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ${
                 action === "cancel" 
                   ? "bg-red-600 hover:bg-red-700" 
-                  : "bg-blue-600 hover:bg-blue-700"
+                  : "bg-green-600 hover:bg-green-700"
               }`}
             >
               {isSubmitting ? (

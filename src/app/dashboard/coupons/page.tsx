@@ -281,8 +281,8 @@ export default function CouponsPage() {
               <div key={c.id} className={`rounded-xl border bg-white p-4 transition ${!c.active || isExpired ? "border-slate-200 opacity-60" : "border-slate-200"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50">
-                      <Tag className="h-4 w-4 text-indigo-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-dashed border-green-300 bg-green-50">
+                      <Tag className="h-4 w-4 text-green-600" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">

@@ -135,7 +135,7 @@ export function CategorySelect({ value, onChange, placeholder, className }: Cate
                 type="button"
                 onClick={() => { onChange(cat.slug); setOpen(false); setSearch(""); }}
                 className={`flex w-full items-center rounded-lg px-3 py-2 text-sm text-left transition hover:bg-slate-50 ${
-                  value === cat.slug ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-700"
+                  value === cat.slug ? "bg-green-50 text-green-700 font-medium" : "text-slate-700"
                 }`}
               >
                 {cat.parentLabel && <span className="text-slate-400 mr-1">{cat.parentLabel} &gt; </span>}

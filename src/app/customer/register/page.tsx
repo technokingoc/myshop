@@ -53,14 +53,14 @@ export default function CustomerRegisterPage() {
     } catch { setError("Network error"); } finally { setLoading(false); }
   };
 
-  const inp = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition";
+  const inp = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-100 transition";
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100">
-            <UserPlus className="h-6 w-6 text-indigo-600" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100">
+            <UserPlus className="h-6 w-6 text-green-600" />
           </div>
           <h1 className="mt-4 text-xl font-bold text-slate-900">{t.title}</h1>
           <p className="mt-1 text-sm text-slate-500">{t.subtitle}</p>
@@ -88,14 +88,14 @@ export default function CustomerRegisterPage() {
             <label className="text-xs font-medium text-slate-600">{t.phone}</label>
             <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={t.phonePh} className={inp} />
           </div>
-          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition">
+          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {loading ? t.submitting : t.submit}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-slate-500">
           {t.hasAccount}{" "}
-          <Link href="/customer/login" className="font-semibold text-indigo-600 hover:text-indigo-700">{t.login}</Link>
+          <Link href="/customer/login" className="font-semibold text-green-600 hover:text-green-700">{t.login}</Link>
         </p>
       </div>
     </div>

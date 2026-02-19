@@ -40,7 +40,7 @@ export default function OrderConfirmation({
         </p>
         <Link
           href="/cart"
-          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
         >
           Back to Cart
         </Link>
@@ -69,7 +69,7 @@ export default function OrderConfirmation({
           {orderResult.orders.map((order, index) => (
             <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-3">
-                <Package className="w-5 h-5 text-blue-600" />
+                <Package className="w-5 h-5 text-green-600" />
                 <div>
                   <p className="font-medium text-gray-900">
                     {dict.checkout.orderNumber}: #{order.id}
@@ -82,7 +82,7 @@ export default function OrderConfirmation({
               
               <Link
                 href={`/track/${order.trackingToken}`}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center"
               >
                 {dict.checkout.trackYourOrder}
                 <ArrowRight className="w-4 h-4 ml-1" />
@@ -105,12 +105,12 @@ export default function OrderConfirmation({
       </div>
       
       {/* What Happens Next */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
         <div className="flex items-start space-x-3">
-          <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
+          <Mail className="w-5 h-5 text-green-600 mt-0.5" />
           <div>
-            <h4 className="font-medium text-blue-900 mb-2">What happens next?</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <h4 className="font-medium text-green-900 mb-2">What happens next?</h4>
+            <ul className="text-sm text-green-800 space-y-1">
               <li>• You'll receive a confirmation email with order details</li>
               <li>• Sellers will be notified and will prepare your items</li>
               <li>• You'll receive updates as your orders are processed and shipped</li>
@@ -124,7 +124,7 @@ export default function OrderConfirmation({
       <div className="flex flex-col sm:flex-row gap-4">
         <Link
           href="/stores"
-          className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-center"
+          className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium text-center"
         >
           {dict.checkout.continueShoppingLower}
         </Link>
@@ -144,7 +144,7 @@ export default function OrderConfirmation({
         </p>
         <Link
           href="/support"
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          className="text-green-600 hover:text-green-800 text-sm font-medium"
         >
           Contact Support
         </Link>

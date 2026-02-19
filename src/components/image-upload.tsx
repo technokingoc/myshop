@@ -112,7 +112,7 @@ export function ImageUpload({ currentUrl, onUrlChange, className }: Props) {
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="mt-1.5 text-xs text-indigo-600 hover:underline"
+          className="mt-1.5 text-xs text-green-600 hover:underline"
         >
           {t.replace}
         </button>
@@ -139,19 +139,19 @@ export function ImageUpload({ currentUrl, onUrlChange, className }: Props) {
         onClick={() => inputRef.current?.click()}
         className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 transition ${
           dragging
-            ? "border-indigo-400 bg-indigo-50"
-            : "border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50"
+            ? "border-green-400 bg-green-50"
+            : "border-slate-300 bg-slate-50 hover:border-green-400 hover:bg-green-50"
         }`}
       >
         {progress !== null ? (
           <>
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
-            <span className="text-xs font-medium text-indigo-600">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-green-200 border-t-green-600" />
+            <span className="text-xs font-medium text-green-600">
               {t.uploading} {progress}%
             </span>
             <div className="h-1 w-full max-w-[160px] overflow-hidden rounded-full bg-slate-200">
               <div
-                className="h-full rounded-full bg-indigo-600 transition-all"
+                className="h-full rounded-full bg-green-600 transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>

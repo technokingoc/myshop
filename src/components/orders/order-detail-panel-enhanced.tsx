@@ -194,7 +194,7 @@ export function OrderDetailPanelEnhanced({ order, onClose, onStatusChange, onAdd
                   )}
                   {isEmail && (
                     <a href={`mailto:${order.customerContact}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100">
                       <Mail className="h-3.5 w-3.5" /> Email
                     </a>
                   )}
@@ -217,7 +217,7 @@ export function OrderDetailPanelEnhanced({ order, onClose, onStatusChange, onAdd
                   <div className="flex flex-wrap gap-1.5">
                     {(["pending", "paid", "failed", "manual"] as PaymentState[]).map(s => (
                       <button key={s} onClick={() => updatePayment(s)}
-                        className={`rounded-full border px-2.5 py-1 text-xs capitalize ${paymentStatus === s ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-300 text-slate-600"}`}>
+                        className={`rounded-full border px-2.5 py-1 text-xs capitalize ${paymentStatus === s ? "border-green-300 bg-green-50 text-green-700" : "border-slate-300 text-slate-600"}`}>
                         {s}
                       </button>
                     ))}
@@ -293,8 +293,8 @@ export function OrderDetailPanelEnhanced({ order, onClose, onStatusChange, onAdd
                   </button>
                 </div>
                 
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-                  <p className="text-sm text-blue-800">
+                <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+                  <p className="text-sm text-green-800">
                     <strong>{t.printTip || "Tip"}:</strong> {t.printTipText || "Use the invoice for customer records and the packing slip for warehouse/shipping."}
                   </p>
                 </div>

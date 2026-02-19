@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { FAB } from "@/components/fab";
+import { StockStatusBadge } from "@/components/inventory/stock-status-badge";
 
 type ProductVariant = {
   id: number;
@@ -132,40 +133,17 @@ const dict = {
 
 // Stock indicator component with enhanced styling
 function StockIndicator({ item }: { item: CatalogItem }) {
-  const { lang } = useLanguage();
-  const t = dict[lang];
-
-  if (!item.trackInventory) return null;
-
   const totalStock = item.hasVariants 
     ? (item.variants?.reduce((sum, v) => sum + v.stockQuantity, 0) || 0)
     : item.stockQuantity;
 
-  const isLowStock = totalStock <= item.lowStockThreshold && totalStock > 0;
-  const isOutOfStock = totalStock === 0;
-
-  if (isOutOfStock) {
-    return (
-      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-        <AlertCircle className="h-3 w-3" />
-        {t.outOfStockAlert}
-      </div>
-    );
-  }
-
-  if (isLowStock) {
-    return (
-      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
-        <AlertTriangle className="h-3 w-3" />
-        {t.stockAlert}
-      </div>
-    );
-  }
-
   return (
-    <div className="text-xs text-slate-500">
-      {totalStock} {t.inStock}
-    </div>
+    <StockStatusBadge
+      currentStock={totalStock}
+      threshold={item.lowStockThreshold}
+      trackInventory={item.trackInventory}
+      size="sm"
+    />
   );
 }
 
@@ -194,7 +172,7 @@ function EnhancedProductCard({
 
   return (
     <div className={`group rounded-xl border-2 bg-white p-4 transition-all duration-200 hover:shadow-md ${
-      isSelected ? "border-indigo-300 bg-indigo-50" : "border-slate-200 hover:border-slate-300"
+      isSelected ? "border-green-300 bg-green-50" : "border-slate-200 hover:border-slate-300"
     }`}>
       <div className="flex gap-4">
         {/* Product image with zoom on hover */}
@@ -218,7 +196,7 @@ function EnhancedProductCard({
             
             {/* Additional images indicator */}
             {imageUrls.length > 0 && (
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
                 +{imageUrls.length}
               </div>
             )}
@@ -234,7 +212,7 @@ function EnhancedProductCard({
                 
                 {/* Variants badge */}
                 {item.hasVariants && (
-                  <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                  <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                     <Layers3 className="h-3 w-3" />
                     {item.variants?.length || 0} {t.variants}
                   </span>
@@ -297,7 +275,7 @@ function EnhancedProductCard({
           className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
         >
           {isSelected ? (
-            <CheckSquare className="h-4 w-4 text-indigo-600" />
+            <CheckSquare className="h-4 w-4 text-green-600" />
           ) : (
             <Square className="h-4 w-4 text-slate-400" />
           )}
@@ -694,8 +672,8 @@ export default function EnhancedCatalogPage() {
 
         {/* Enhanced bulk actions bar */}
         {selected.size > 0 && (
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg">
-            <span className="text-sm font-semibold text-indigo-900">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-50 border border-green-200 rounded-lg">
+            <span className="text-sm font-semibold text-green-900">
               {selected.size} {t.selected}
             </span>
             <div className="flex items-center gap-2">
@@ -715,7 +693,7 @@ export default function EnhancedCatalogPage() {
               </button>
               <button
                 onClick={() => handleBulkAction("duplicate")}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
                 <Copy className="h-3 w-3" />
                 {t.bulkDuplicate}

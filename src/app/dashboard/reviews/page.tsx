@@ -427,7 +427,7 @@ export default function SellerReviewsPage() {
                 onClick={() => setStatusFilter(filter.value)}
                 className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
                   statusFilter === filter.value
-                    ? "bg-indigo-100 text-indigo-700"
+                    ? "bg-green-100 text-green-700"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
@@ -444,7 +444,7 @@ export default function SellerReviewsPage() {
               placeholder={t.search}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -498,7 +498,7 @@ export default function SellerReviewsPage() {
                           {new Date(review.createdAt).toLocaleDateString()}
                         </span>
                         {review.verified && (
-                          <span className="text-blue-600 font-medium">
+                          <span className="text-green-600 font-medium">
                             {t.verifiedPurchase}
                           </span>
                         )}

@@ -21,7 +21,7 @@ export function OrderStatsBar({ orders, t }: Props) {
 
   const stats = [
     { label: t.totalOrders || "Total", value: total, icon: Package, color: "text-slate-600 bg-slate-100" },
-    { label: t.needAttention || "Need attention", value: newCount, icon: AlertCircle, color: "text-blue-600 bg-blue-100" },
+    { label: t.needAttention || "Need attention", value: newCount, icon: AlertCircle, color: "text-green-600 bg-green-100" },
     { label: t.processing || "Processing", value: processingCount, icon: Loader2, color: "text-orange-600 bg-orange-100" },
     { label: t.revenueMonth || "Revenue", value: `$${revenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600 bg-emerald-100" },
   ];

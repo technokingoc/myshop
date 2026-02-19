@@ -133,7 +133,7 @@ export function LocationSelect({ value, onChange, placeholder, className, allowF
                       type="button"
                       onClick={() => { onChange(loc.slug); setOpen(false); setSearch(""); }}
                       className={`flex w-full items-center rounded-lg px-3 py-2 text-sm text-left transition hover:bg-slate-50 ${
-                        isSelected ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-700"
+                        isSelected ? "bg-green-50 text-green-700 font-medium" : "text-slate-700"
                       }`}
                     >
                       {name}

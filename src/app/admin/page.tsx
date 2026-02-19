@@ -78,7 +78,7 @@ export default function AdminDashboard() {
     if (!stats) return [];
     return [
       { label: t.sellers, value: stats.sellers, icon: Users, color: "text-violet-600 bg-violet-50" },
-      { label: t.products, value: stats.products, icon: Package, color: "text-blue-600 bg-blue-50" },
+      { label: t.products, value: stats.products, icon: Package, color: "text-green-600 bg-green-50" },
       { label: t.orders, value: stats.orders, icon: ShoppingCart, color: "text-emerald-600 bg-emerald-50" },
       { label: t.reviews, value: stats.reviews, icon: MessageSquare, color: "text-amber-600 bg-amber-50" },
       { label: t.revenue, value: `$${Number(stats.revenue).toFixed(2)}`, icon: DollarSign, color: "text-green-600 bg-green-50" },
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                       <td className="py-2 pr-3">
                         <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                           o.status === "completed" ? "bg-emerald-50 text-emerald-700" :
-                          o.status === "contacted" ? "bg-blue-50 text-blue-700" :
+                          o.status === "contacted" ? "bg-green-50 text-green-700" :
                           "bg-slate-100 text-slate-600"
                         }`}>{o.status}</span>
                       </td>

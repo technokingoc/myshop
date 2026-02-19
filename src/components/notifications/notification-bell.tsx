@@ -133,7 +133,7 @@ export function NotificationBell({ t, sellerId }: Props) {
       case "order_status":
       case "order:new":
       case "order:status":
-        return <Package className="h-5 w-5 text-blue-500" />;
+        return <Package className="h-5 w-5 text-green-500" />;
       default:
         return <Bell className="h-5 w-5 text-slate-500" />;
     }
@@ -186,7 +186,7 @@ export function NotificationBell({ t, sellerId }: Props) {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-xs text-green-600 hover:text-green-800 font-medium"
                 >
                   {t.markAllRead || "Mark all read"}
                 </button>
@@ -223,7 +223,7 @@ export function NotificationBell({ t, sellerId }: Props) {
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer ${
-                      !notification.read ? "bg-blue-50" : ""
+                      !notification.read ? "bg-green-50" : ""
                     }`}
                     onClick={() => {
                       if (!notification.read) {
@@ -262,7 +262,7 @@ export function NotificationBell({ t, sellerId }: Props) {
                               {formatTimeAgo(notification.createdAt)}
                             </span>
                             {!notification.read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             )}
                           </div>
                         </div>
@@ -272,7 +272,7 @@ export function NotificationBell({ t, sellerId }: Props) {
                           {notification.message}
                         </p>
                         {notification.orderId && (
-                          <span className="inline-block mt-1 text-xs text-blue-600 font-medium">
+                          <span className="inline-block mt-1 text-xs text-green-600 font-medium">
                             ORD-{notification.orderId}
                           </span>
                         )}

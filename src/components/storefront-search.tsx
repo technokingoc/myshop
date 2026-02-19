@@ -177,7 +177,7 @@ export function StorefrontSearch({
               value={filters.q}
               onChange={(e) => handleSearchInput(e.target.value)}
               placeholder={t.searchProducts || "Search products..."}
-              className="w-full rounded-xl border border-slate-200 bg-white pl-12 pr-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-12 pr-4 py-3 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100 transition"
               onFocus={() => filters.q && setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             />
@@ -220,7 +220,7 @@ export function StorefrontSearch({
           <select
             value={filters.category}
             onChange={(e) => updateFilter("category", e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
           >
             <option value="">{t.allCategories || "All categories"}</option>
             {globalCategories.map((cat) => (
@@ -237,7 +237,7 @@ export function StorefrontSearch({
               placeholder={t.minPrice || "Min price"}
               value={filters.minPrice}
               onChange={(e) => updateFilter("minPrice", e.target.value)}
-              className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
             />
             <span className="text-slate-400">-</span>
             <input
@@ -245,7 +245,7 @@ export function StorefrontSearch({
               placeholder={t.maxPrice || "Max price"}
               value={filters.maxPrice}
               onChange={(e) => updateFilter("maxPrice", e.target.value)}
-              className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
             />
           </div>
 
@@ -253,7 +253,7 @@ export function StorefrontSearch({
           <select
             value={filters.minRating}
             onChange={(e) => updateFilter("minRating", e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
           >
             {ratingOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -266,7 +266,7 @@ export function StorefrontSearch({
           <select
             value={filters.sort}
             onChange={(e) => updateFilter("sort", e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
           >
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -296,7 +296,7 @@ export function StorefrontSearch({
             <SlidersHorizontal className="h-4 w-4" />
             {t.filters || "Filters"}
             {hasActiveFilters && (
-              <span className="rounded-full bg-indigo-600 h-2 w-2"></span>
+              <span className="rounded-full bg-green-600 h-2 w-2"></span>
             )}
           </button>
 
@@ -304,7 +304,7 @@ export function StorefrontSearch({
           <select
             value={filters.sort}
             onChange={(e) => updateFilter("sort", e.target.value)}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
           >
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -348,7 +348,7 @@ export function StorefrontSearch({
                 <select
                   value={filters.category}
                   onChange={(e) => updateFilter("category", e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
                 >
                   <option value="">{t.allCategories || "All categories"}</option>
                   {globalCategories.map((cat) => (
@@ -370,7 +370,7 @@ export function StorefrontSearch({
                     placeholder={t.minPrice || "Min"}
                     value={filters.minPrice}
                     onChange={(e) => updateFilter("minPrice", e.target.value)}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
                   />
                   <span className="text-slate-400">-</span>
                   <input
@@ -378,7 +378,7 @@ export function StorefrontSearch({
                     placeholder={t.maxPrice || "Max"}
                     value={filters.maxPrice}
                     onChange={(e) => updateFilter("maxPrice", e.target.value)}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
                   />
                 </div>
                 {priceRange.min !== priceRange.max && (
@@ -396,7 +396,7 @@ export function StorefrontSearch({
                 <select
                   value={filters.minRating}
                   onChange={(e) => updateFilter("minRating", e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100"
                 >
                   {ratingOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -416,7 +416,7 @@ export function StorefrontSearch({
               </button>
               <button
                 onClick={() => setShowMobileFilters(false)}
-                className="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+                className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700"
               >
                 {t.applyFilters || "Apply filters"}
               </button>

@@ -174,7 +174,7 @@ export default function AdminSellers() {
                     value={s.plan || "free"}
                     onChange={(e) => changePlan(s.id, e.target.value)}
                     className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 cursor-pointer ${
-                      s.plan === "business" ? "bg-violet-100 text-violet-700" : s.plan === "pro" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
+                      s.plan === "business" ? "bg-violet-100 text-violet-700" : s.plan === "pro" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"
                     }`}
                   >
                     <option value="free">Free</option>

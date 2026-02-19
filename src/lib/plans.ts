@@ -55,7 +55,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       en: "For growing sellers who need more capacity and insights.",
       pt: "Para vendedores em crescimento que precisam de mais capacidade.",
     },
-    badge: "bg-indigo-100 text-indigo-700",
+    badge: "bg-green-100 text-green-700",
     limits: { products: 100, ordersPerMonth: -1 },
     features: [
       { key: "products", label: { en: "Up to 100 products", pt: "Até 100 produtos" }, included: true, limit: 100 },

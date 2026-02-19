@@ -185,7 +185,7 @@ export default function CustomerAddressesPage() {
     setShowForm(false);
   };
 
-  const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition";
+  const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-100 transition";
 
   if (loading) {
     return (
@@ -200,8 +200,8 @@ export default function CustomerAddressesPage() {
     <div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100">
-            <MapPin className="h-5 w-5 text-indigo-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100">
+            <MapPin className="h-5 w-5 text-green-600" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-slate-900">{t.title}</h1>
@@ -210,7 +210,7 @@ export default function CustomerAddressesPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+          className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition"
         >
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? t.cancel : t.addNew}
@@ -326,7 +326,7 @@ export default function CustomerAddressesPage() {
             <button
               type="submit"
               disabled={saving}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {saving ? t.saving : t.save}
@@ -350,7 +350,7 @@ export default function CustomerAddressesPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-slate-900">{address.label}</span>
                     {address.isDefault && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                         <Check className="h-3 w-3" /> {t.default}
                       </span>
                     )}

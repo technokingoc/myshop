@@ -17,14 +17,14 @@ const statusIcons: Record<string, typeof Clock> = {
 };
 
 const statusColors: Record<string, { bg: string; text: string; border: string }> = {
-  placed: { bg: "bg-blue-500", text: "text-blue-700", border: "border-blue-500" },
+  placed: { bg: "bg-green-500", text: "text-green-700", border: "border-green-500" },
   confirmed: { bg: "bg-amber-500", text: "text-amber-700", border: "border-amber-500" },
   processing: { bg: "bg-orange-500", text: "text-orange-700", border: "border-orange-500" },
   shipped: { bg: "bg-purple-500", text: "text-purple-700", border: "border-purple-500" },
   delivered: { bg: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-500" },
   cancelled: { bg: "bg-red-500", text: "text-red-700", border: "border-red-500" },
   // Legacy mappings for backward compatibility
-  new: { bg: "bg-blue-500", text: "text-blue-700", border: "border-blue-500" },
+  new: { bg: "bg-green-500", text: "text-green-700", border: "border-green-500" },
   contacted: { bg: "bg-amber-500", text: "text-amber-700", border: "border-amber-500" },
   completed: { bg: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-500" },
 };

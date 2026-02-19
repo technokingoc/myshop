@@ -98,14 +98,14 @@ const mapToOrderStatus = (status: string): OrderStatus => {
 
 const statusBg: Record<string, string> = {
   placed: "bg-slate-500",
-  confirmed: "bg-blue-500",
+  confirmed: "bg-green-500",
   processing: "bg-amber-500", 
   shipped: "bg-purple-500",
   delivered: "bg-emerald-500",
   cancelled: "bg-red-500",
   // Legacy status mappings
   new: "bg-slate-500",
-  contacted: "bg-blue-500",
+  contacted: "bg-green-500",
   completed: "bg-emerald-500",
 };
 

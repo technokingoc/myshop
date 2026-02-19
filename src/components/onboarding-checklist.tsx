@@ -65,10 +65,10 @@ export function OnboardingChecklist({ data }: { data: OnboardingData }) {
   if (dismissed) return null;
 
   return (
-    <div className="mb-6 rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 to-white p-5">
+    <div className="mb-6 rounded-xl border border-green-100 bg-gradient-to-br from-green-50/80 to-white p-5">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-indigo-500" />
+          <Sparkles className="h-5 w-5 text-green-500" />
           <div>
             <h2 className="text-sm font-semibold text-slate-900">{t.title}</h2>
             <p className="text-xs text-slate-500">{allDone ? t.allDoneSub : t.subtitle}</p>
@@ -84,12 +84,12 @@ export function OnboardingChecklist({ data }: { data: OnboardingData }) {
       {/* Progress bar */}
       <div className="mt-3">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-medium text-indigo-600">{pct}% {t.complete}</span>
+          <span className="font-medium text-green-600">{pct}% {t.complete}</span>
           <span className="text-slate-400">{doneCount}/{steps.length}</span>
         </div>
-        <div className="mt-1 h-2 overflow-hidden rounded-full bg-indigo-100">
+        <div className="mt-1 h-2 overflow-hidden rounded-full bg-green-100">
           <div
-            className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+            className="h-full rounded-full bg-green-500 transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -105,7 +105,7 @@ export function OnboardingChecklist({ data }: { data: OnboardingData }) {
               className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
                 step.done
                   ? "text-slate-400"
-                  : "text-slate-700 hover:bg-indigo-50"
+                  : "text-slate-700 hover:bg-green-50"
               }`}
             >
               <div className="flex items-center gap-2.5">

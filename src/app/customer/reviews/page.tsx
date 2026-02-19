@@ -159,7 +159,7 @@ export default function CustomerReviewsPage() {
                       </h3>
                       <Link 
                         href={`/s/${review.sellerSlug}`}
-                        className="text-xs text-indigo-600 hover:text-indigo-700"
+                        className="text-xs text-green-600 hover:text-green-700"
                       >
                         {review.sellerName}
                       </Link>
@@ -168,7 +168,7 @@ export default function CustomerReviewsPage() {
                     {/* Status Badge */}
                     <div className="flex items-center gap-2">
                       {review.verified && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                           <CheckCircle className="h-3 w-3" /> {t.verified}
                         </span>
                       )}

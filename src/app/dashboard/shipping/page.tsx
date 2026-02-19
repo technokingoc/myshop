@@ -189,7 +189,7 @@ export default function ShippingPage() {
         </div>
         <button
           onClick={() => setShowZoneForm(true)}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Zone
@@ -203,7 +203,7 @@ export default function ShippingPage() {
           <p className="text-gray-500 mb-4">Create your first shipping zone to start managing delivery options</p>
           <button
             onClick={() => setShowZoneForm(true)}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Shipping Zone
@@ -256,7 +256,7 @@ export default function ShippingPage() {
                   <h4 className="text-sm font-medium text-gray-900">Shipping Methods</h4>
                   <button
                     onClick={() => setShowMethodForm(zone.id)}
-                    className="inline-flex items-center px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <Plus className="w-3 h-3 mr-1" />
                     Add Method
@@ -292,7 +292,7 @@ export default function ShippingPage() {
                         </div>
                         
                         <div className="space-y-2 text-sm text-gray-600">
-                          <p className="font-medium text-blue-600">{formatMethodType(method.type)}</p>
+                          <p className="font-medium text-green-600">{formatMethodType(method.type)}</p>
                           
                           {method.type !== 'free' && method.type !== 'pickup' && (
                             <p className="font-semibold text-gray-900">
@@ -313,7 +313,7 @@ export default function ShippingPage() {
                           </div>
                           
                           {method.type === 'pickup' && method.pickupAddress && (
-                            <p className="text-blue-600">📍 {method.pickupAddress}</p>
+                            <p className="text-green-600">📍 {method.pickupAddress}</p>
                           )}
                           
                           <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
@@ -359,7 +359,7 @@ export default function ShippingPage() {
                     type="text"
                     defaultValue={editingZone?.name}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -372,7 +372,7 @@ export default function ShippingPage() {
                     type="text"
                     defaultValue={editingZone?.regions.join(', ')}
                     placeholder="Maputo, Matola, Beira"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -385,7 +385,7 @@ export default function ShippingPage() {
                     type="text"
                     defaultValue={editingZone?.countries.join(', ')}
                     placeholder="Mozambique, South Africa"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -394,7 +394,7 @@ export default function ShippingPage() {
                     name="active"
                     type="checkbox"
                     defaultChecked={editingZone?.active ?? true}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                   />
                   <label className="ml-2 text-sm text-gray-700">
                     Active
@@ -415,7 +415,7 @@ export default function ShippingPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   {editingZone ? 'Update' : 'Create'} Zone
                 </button>
@@ -449,7 +449,7 @@ export default function ShippingPage() {
                     type="text"
                     defaultValue={editingMethod?.name}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -460,7 +460,7 @@ export default function ShippingPage() {
                   <select
                     name="type"
                     defaultValue={editingMethod?.type || 'flat_rate'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="flat_rate">Flat Rate</option>
                     <option value="weight_based">Weight Based</option>
@@ -478,7 +478,7 @@ export default function ShippingPage() {
                     type="number"
                     step="0.01"
                     defaultValue={editingMethod?.rate}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -491,7 +491,7 @@ export default function ShippingPage() {
                     type="number"
                     step="0.01"
                     defaultValue={editingMethod?.freeShippingMinOrder}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -503,7 +503,7 @@ export default function ShippingPage() {
                     name="estimatedDays"
                     type="number"
                     defaultValue={editingMethod?.estimatedDays || 3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -516,7 +516,7 @@ export default function ShippingPage() {
                     type="number"
                     step="0.01"
                     defaultValue={editingMethod?.maxWeight}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -528,7 +528,7 @@ export default function ShippingPage() {
                     name="pickupAddress"
                     type="text"
                     defaultValue={editingMethod?.pickupAddress}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -540,7 +540,7 @@ export default function ShippingPage() {
                     name="pickupInstructions"
                     defaultValue={editingMethod?.pickupInstructions}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -549,7 +549,7 @@ export default function ShippingPage() {
                     name="active"
                     type="checkbox"
                     defaultChecked={editingMethod?.active ?? true}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                   />
                   <label className="ml-2 text-sm text-gray-700">
                     Active
@@ -570,7 +570,7 @@ export default function ShippingPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   {editingMethod ? 'Update' : 'Create'} Method
                 </button>

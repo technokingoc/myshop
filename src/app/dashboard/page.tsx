@@ -122,7 +122,7 @@ const dict = {
 };
 
 const statusColors: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
+  new: "bg-green-100 text-green-700",
   contacted: "bg-amber-100 text-amber-700",
   completed: "bg-emerald-100 text-emerald-700",
 };
@@ -237,9 +237,9 @@ export default function DashboardPage() {
 
       {/* Stats row */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={ShoppingCart} label={t.totalOrders} value={String(data.orderCount)} color="text-blue-600 bg-blue-50" />
+        <StatCard icon={ShoppingCart} label={t.totalOrders} value={String(data.orderCount)} color="text-green-600 bg-green-50" />
         <StatCard icon={DollarSign} label={t.revenue} value={`$${data.revenue.toFixed(2)}`} color="text-emerald-600 bg-emerald-50" />
-        <StatCard icon={Package} label={t.activeProducts} value={String(data.publishedCount)} color="text-indigo-600 bg-indigo-50" />
+        <StatCard icon={Package} label={t.activeProducts} value={String(data.publishedCount)} color="text-green-600 bg-green-50" />
         <StatCard icon={Eye} label={t.storeViews} value={data.storeViews > 0 ? String(data.storeViews) : "—"} color="text-slate-500 bg-slate-50" />
       </div>
 
@@ -248,7 +248,7 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-4 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900">{t.recentOrders}</h2>
-            <Link href="/dashboard/orders" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+            <Link href="/dashboard/orders" className="text-xs font-medium text-green-600 hover:text-green-700">
               {t.viewAll} →
             </Link>
           </div>
@@ -333,18 +333,18 @@ export default function DashboardPage() {
       <div className="grid grid-cols-3 gap-3">
         <Link
           href="/dashboard/catalog"
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-green-200 hover:bg-green-50/50"
         >
-          <Plus className="h-4 w-4 text-indigo-600" />
+          <Plus className="h-4 w-4 text-green-600" />
           {t.addProduct}
         </Link>
         <a
           href={`/s/${slug}`}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-green-200 hover:bg-green-50/50"
         >
-          <ExternalLink className="h-4 w-4 text-indigo-600" />
+          <ExternalLink className="h-4 w-4 text-green-600" />
           {t.viewStorefront}
         </a>
         <Link

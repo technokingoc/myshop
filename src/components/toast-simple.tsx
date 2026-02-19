@@ -43,7 +43,7 @@ export default function SimpleToast() {
           className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg max-w-sm ${
             toast.type === 'success' ? 'bg-green-600 text-white' :
             toast.type === 'error' ? 'bg-red-600 text-white' :
-            'bg-blue-600 text-white'
+            'bg-green-600 text-white'
           } animate-in slide-in-from-right-full`}
         >
           {toast.type === 'success' && <Check className="w-5 h-5 flex-shrink-0" />}

@@ -501,7 +501,7 @@ function StorefrontActions({
         </a>
       )}
       {social.facebook && (
-        <a href={social.facebook} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition">
+        <a href={social.facebook} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-green-50 hover:text-green-600 transition">
           <Facebook className="h-4 w-4" />
         </a>
       )}
@@ -561,7 +561,7 @@ function StoreHeaderTemplates({
             <button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button>
           </div>
         </div>
-        <div className="bg-white"><div className="mx-auto max-w-5xl px-4 py-3"><div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-3"><div className={`${template.avatarSize} overflow-hidden rounded-xl bg-white shadow-sm`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h1 className="truncate text-base font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-blue-500" />}</div><p className="line-clamp-1 text-xs text-slate-500">{seller.description || seller.businessType}</p></div></div>{stats}</div></div></div>
+        <div className="bg-white"><div className="mx-auto max-w-5xl px-4 py-3"><div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-3"><div className={`${template.avatarSize} overflow-hidden rounded-xl bg-white shadow-sm`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h1 className="truncate text-base font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-green-500" />}</div><p className="line-clamp-1 text-xs text-slate-500">{seller.description || seller.businessType}</p></div></div>{stats}</div></div></div>
       </>
     );
   }
@@ -569,14 +569,14 @@ function StoreHeaderTemplates({
   const banner = <div className="relative h-[120px] overflow-hidden rounded-2xl sm:h-[150px]">{seller.bannerUrl ? <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} /> : <div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>}<div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" /></div>;
 
   if (headerTemplate === "hero") {
-    return <div className="bg-white"><div className="mx-auto max-w-5xl px-4 pb-2 pt-1"><div className="relative">{banner}<div className="absolute inset-x-3 bottom-3 rounded-xl bg-white/90 p-3 backdrop-blur"><div className="flex items-center gap-3"><div className={`${template.avatarSize} overflow-hidden rounded-xl border border-white/60 bg-white shadow`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-blue-500" />}</div><div className="flex items-center gap-2 text-xs text-slate-500">{ratingInfo.count > 0 && <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" />{ratingInfo.avg} ({ratingInfo.count})</span>}{seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}</div></div><div className="hidden sm:flex items-center gap-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button></div></div>{stats}</div></div></div></div>;
+    return <div className="bg-white"><div className="mx-auto max-w-5xl px-4 pb-2 pt-1"><div className="relative">{banner}<div className="absolute inset-x-3 bottom-3 rounded-xl bg-white/90 p-3 backdrop-blur"><div className="flex items-center gap-3"><div className={`${template.avatarSize} overflow-hidden rounded-xl border border-white/60 bg-white shadow`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-green-500" />}</div><div className="flex items-center gap-2 text-xs text-slate-500">{ratingInfo.count > 0 && <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" />{ratingInfo.avg} ({ratingInfo.count})</span>}{seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}</div></div><div className="hidden sm:flex items-center gap-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button></div></div>{stats}</div></div></div></div>;
   }
 
   if (headerTemplate === "split") {
-    return <div className="bg-white"><div className="mx-auto max-w-5xl px-4 py-3"><div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:grid-cols-[1.7fr,1fr]">{banner}<div className="rounded-xl bg-slate-50 p-3"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-blue-500" />}</div><p className="mt-1 line-clamp-2 text-xs text-slate-500">{seller.description || seller.businessType}</p><div className="mt-3 grid grid-cols-2 gap-2 text-xs"><div className="rounded-lg bg-white p-2"><p className="text-slate-400">{t.products}</p><p className="font-semibold text-slate-800">{productsCount}</p></div><div className="rounded-lg bg-white p-2"><p className="text-slate-400">{t.reviews}</p><p className="font-semibold text-slate-800">{reviewsCount}</p></div></div><div className="mt-3 flex items-center gap-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button></div>{stats}</div></div></div></div>;
+    return <div className="bg-white"><div className="mx-auto max-w-5xl px-4 py-3"><div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:grid-cols-[1.7fr,1fr]">{banner}<div className="rounded-xl bg-slate-50 p-3"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <BadgeCheck className="h-4 w-4 text-green-500" />}</div><p className="mt-1 line-clamp-2 text-xs text-slate-500">{seller.description || seller.businessType}</p><div className="mt-3 grid grid-cols-2 gap-2 text-xs"><div className="rounded-lg bg-white p-2"><p className="text-slate-400">{t.products}</p><p className="font-semibold text-slate-800">{productsCount}</p></div><div className="rounded-lg bg-white p-2"><p className="text-slate-400">{t.reviews}</p><p className="font-semibold text-slate-800">{reviewsCount}</p></div></div><div className="mt-3 flex items-center gap-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Share2 className="h-4 w-4" /></button></div>{stats}</div></div></div></div>;
   }
 
-  return <div className="bg-white pb-1"><div className="mx-auto max-w-5xl px-4"><div className="relative mt-0 h-[110px] overflow-hidden rounded-b-2xl sm:h-[140px]">{seller.bannerUrl ? <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} /> : <div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>}<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" /></div><div className="relative -mt-8 flex items-end gap-3 px-2 sm:px-4"><div className={`${template.avatarSize} shrink-0 overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-lg`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />} /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1 pb-1"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <span title={t.verified}><BadgeCheck className="h-4 w-4 shrink-0 text-blue-500" /></span>}</div><div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-slate-500">{ratingInfo.count > 0 && <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /><span className="font-semibold text-slate-700">{ratingInfo.avg}</span><span>({ratingInfo.count})</span></span>}{seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}{seller.businessType && seller.businessType !== "Retail" && <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium">{seller.businessType}</span>}</div></div><div className="hidden sm:flex items-center gap-1 pb-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition" title="WhatsApp"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" title={t.shareStore}><Share2 className="h-4 w-4" /></button></div></div><div className="mt-2 px-2 sm:px-4">{stats}</div></div></div>;
+  return <div className="bg-white pb-1"><div className="mx-auto max-w-5xl px-4"><div className="relative mt-0 h-[110px] overflow-hidden rounded-b-2xl sm:h-[140px]">{seller.bannerUrl ? <SafeImg src={seller.bannerUrl} alt={`${seller.name} banner`} className="h-full w-full object-cover" fallback={<div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>} /> : <div className={`flex h-full items-center justify-center bg-gradient-to-br ${theme.gradient}`}><span className="text-2xl font-bold text-white/80">{seller.name}</span></div>}<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" /></div><div className="relative -mt-8 flex items-end gap-3 px-2 sm:px-4"><div className={`${template.avatarSize} shrink-0 overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-lg`}>{seller.logoUrl ? <SafeImg src={seller.logoUrl} alt={seller.name} className="h-full w-full object-cover" fallback={<AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />} /> : <AvatarPlaceholder name={seller.name} className="h-full w-full text-xl" />}</div><div className="min-w-0 flex-1 pb-1"><div className="flex items-center gap-2"><h1 className="truncate text-lg font-bold text-slate-900">{seller.name}</h1>{isVerified && <span title={t.verified}><BadgeCheck className="h-4 w-4 shrink-0 text-green-500" /></span>}</div><div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-slate-500">{ratingInfo.count > 0 && <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /><span className="font-semibold text-slate-700">{ratingInfo.avg}</span><span>({ratingInfo.count})</span></span>}{seller.city && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{seller.city}</span>}{seller.businessType && seller.businessType !== "Retail" && <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium">{seller.businessType}</span>}</div></div><div className="hidden sm:flex items-center gap-1 pb-1">{social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition" title="WhatsApp"><MessageCircle className="h-4 w-4" /></a>}<button onClick={() => { if (navigator.share) navigator.share({ url: window.location.href, title: seller.name }); else { navigator.clipboard.writeText(window.location.href); } }} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" title={t.shareStore}><Share2 className="h-4 w-4" /></button></div></div><div className="mt-2 px-2 sm:px-4">{stats}</div></div></div>;
 }
 
 /* ── Price Display with compare_at_price ── */
@@ -729,7 +729,7 @@ function ProductsTab({
                           e.stopPropagation(); 
                           addProductToCart(product, seller);
                         }} 
-                        className="rounded-lg bg-blue-600 hover:bg-blue-700 px-2 py-1.5 text-xs font-semibold text-white transition-colors"
+                        className="rounded-lg bg-green-600 hover:bg-green-700 px-2 py-1.5 text-xs font-semibold text-white transition-colors"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
@@ -769,7 +769,7 @@ function ProductsTab({
                         e.stopPropagation(); 
                         addProductToCart(product, seller);
                       }} 
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 py-3 text-sm font-semibold text-white transition-all"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 py-3 text-sm font-semibold text-white transition-all"
                     >
                       <Plus className="h-4 w-4" /> {t.addToCart}
                     </button>
@@ -813,7 +813,7 @@ function ProductsTab({
                         e.stopPropagation(); 
                         addProductToCart(product, seller);
                       }} 
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 py-2 sm:py-2.5 text-xs font-semibold text-white transition-all active:scale-[0.97]"
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-green-600 hover:bg-green-700 py-2 sm:py-2.5 text-xs font-semibold text-white transition-all active:scale-[0.97]"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -914,17 +914,17 @@ function ReviewsTab({ sellerId, t }: { sellerId: number; t: Record<string, strin
       )}
 
       <div className="flex items-center justify-between">
-        {!showForm && !sent && <button onClick={() => setShowForm(true)} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition">{t.writeReview}</button>}
+        {!showForm && !sent && <button onClick={() => setShowForm(true)} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition">{t.writeReview}</button>}
         {sent && <span className="text-sm text-emerald-600">✓ {t.reviewSubmitted}</span>}
       </div>
 
       {showForm && (
         <form onSubmit={submit} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.yourName} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.yourName} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100" />
           <div><label className="text-xs font-medium text-slate-500">{t.rating}</label><StarRatingInput value={rating} onChange={setRating} /></div>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.yourReview} required rows={3} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.yourReview} required rows={3} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100" />
           <div className="flex gap-2">
-            <button type="submit" disabled={sending} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition">{sending ? t.submitting : t.submitReview}</button>
+            <button type="submit" disabled={sending} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition">{sending ? t.submitting : t.submitReview}</button>
             <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 transition">{t.close}</button>
           </div>
         </form>
@@ -968,7 +968,7 @@ function ContactTab({ seller, t }: { seller: Seller; t: Record<string, string> }
           <h3 className="text-sm font-semibold text-slate-900">{t.socialLinks}</h3>
           <div className="mt-3 flex gap-3">
             {social.instagram && <a href={social.instagram} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:border-pink-300 hover:text-pink-600 transition"><Instagram className="h-4 w-4" /> Instagram</a>}
-            {social.facebook && <a href={social.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:border-blue-300 hover:text-blue-600 transition"><Facebook className="h-4 w-4" /> Facebook</a>}
+            {social.facebook && <a href={social.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:border-green-300 hover:text-green-600 transition"><Facebook className="h-4 w-4" /> Facebook</a>}
           </div>
         </div>
       )}
@@ -1068,7 +1068,7 @@ function ProductModal({
                       </div>
                       <div className="mt-2 flex gap-2 overflow-x-auto">
                         {images.map((url, i) => (
-                          <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 overflow-hidden rounded-lg border-2 transition ${i === activeImg ? "border-indigo-500 shadow-sm" : "border-transparent opacity-70 hover:opacity-100"}`}>
+                          <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 overflow-hidden rounded-lg border-2 transition ${i === activeImg ? "border-green-500 shadow-sm" : "border-transparent opacity-70 hover:opacity-100"}`}>
                             <SafeImg src={url} alt="" className="h-14 w-14 object-cover" fallback={<PlaceholderImage className="h-14 w-14" />} />
                           </button>
                         ))}
@@ -1236,19 +1236,19 @@ function OrderForm({
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderName}</label>
-        <input required value={name} onChange={(e) => setName(e.target.value)} placeholder={t.orderNamePh} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <input required value={name} onChange={(e) => setName(e.target.value)} placeholder={t.orderNamePh} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100" />
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderContact}</label>
-        <input required value={contact} onChange={(e) => setContact(e.target.value)} placeholder={t.orderContactPh} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <input required value={contact} onChange={(e) => setContact(e.target.value)} placeholder={t.orderContactPh} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100" />
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderQty}</label>
-        <input type="number" min={1} max={99} value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="mt-1 w-20 rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <input type="number" min={1} max={99} value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="mt-1 w-20 rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100" />
       </div>
       <div>
         <label className="text-xs font-medium text-slate-500">{t.orderNotes}</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.orderNotesPh} rows={2} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.orderNotesPh} rows={2} className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-green-300 focus:outline-none focus:ring-2 focus:ring-green-100" />
       </div>
 
       {/* Coupon section */}
@@ -1275,7 +1275,7 @@ function OrderForm({
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                 placeholder={t.couponPlaceholder}
-                className="h-10 flex-1 rounded-lg border border-slate-200 px-3 font-mono text-sm uppercase focus:border-indigo-300 focus:outline-none"
+                className="h-10 flex-1 rounded-lg border border-slate-200 px-3 font-mono text-sm uppercase focus:border-green-300 focus:outline-none"
               />
               <button
                 type="button" onClick={applyCoupon} disabled={validating}

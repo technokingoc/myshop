@@ -13,7 +13,7 @@ interface FABProps {
 }
 
 export function FAB({ href, onClick, icon: Icon, children, className = "" }: FABProps) {
-  const baseClassName = `fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-green-600 px-6 py-4 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-green-700 hover:scale-105 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 md:hidden ${className}`;
+  const baseClassName = `fixed bottom-24 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-green-600 px-6 py-4 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-green-700 hover:scale-105 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 md:hidden ${className}`;
 
   if (onClick) {
     return (

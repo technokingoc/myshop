@@ -50,21 +50,21 @@ function StorePreviewContent() {
   
   // Get preview parameters from URL
   const storeName = searchParams?.get("name") || "Your Store Name";
-  const themeColor = searchParams?.get("color") || "indigo";
+  const themeColor = searchParams?.get("color") || "green";
   const storeTemplate = searchParams?.get("template") || "classic";
   const headerStyle = searchParams?.get("header") || "compact";
   const logoUrl = searchParams?.get("logo") || "";
   
   const getThemeClasses = (color: string) => {
     const colors: Record<string, string> = {
-      indigo: "bg-indigo-600 border-indigo-600 text-indigo-600",
-      blue: "bg-blue-600 border-blue-600 text-blue-600", 
+      green: "bg-green-600 border-green-600 text-green-600",
+      blue: "bg-green-600 border-green-600 text-green-600", 
       green: "bg-green-600 border-green-600 text-green-600",
       purple: "bg-purple-600 border-purple-600 text-purple-600",
       pink: "bg-pink-600 border-pink-600 text-pink-600",
       red: "bg-red-600 border-red-600 text-red-600",
     };
-    return colors[color] || colors.indigo;
+    return colors[color] || colors.green;
   };
   
   const themeClasses = getThemeClasses(themeColor);
@@ -138,7 +138,7 @@ function StorePreviewContent() {
             <input
               type="text"
               placeholder={t.searchPlaceholder}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg pl-10 focus:outline-none focus:ring-2 focus:ring-green-500"
               readOnly
             />
             <svg className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +182,7 @@ function StorePreviewContent() {
                     </svg>
                   </div>
                 </div>
-                <h3 className="font-medium text-slate-900 mb-1 group-hover:text-blue-600">
+                <h3 className="font-medium text-slate-900 mb-1 group-hover:text-green-600">
                   {productName}
                 </h3>
                 <p className="text-lg font-semibold text-slate-900 mb-2">
@@ -190,8 +190,8 @@ function StorePreviewContent() {
                 </p>
                 <button className={`
                   w-full py-2 text-sm font-medium rounded-lg transition-colors
-                  ${themeClasses.includes('bg-indigo') ? 'bg-indigo-600 hover:bg-indigo-700 text-white' :
-                    themeClasses.includes('bg-blue') ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                  ${themeClasses.includes('bg-green') ? 'bg-green-600 hover:bg-green-700 text-white' :
+                    themeClasses.includes('bg-blue') ? 'bg-green-600 hover:bg-green-700 text-white' :
                     themeClasses.includes('bg-green') ? 'bg-green-600 hover:bg-green-700 text-white' :
                     themeClasses.includes('bg-purple') ? 'bg-purple-600 hover:bg-purple-700 text-white' :
                     themeClasses.includes('bg-pink') ? 'bg-pink-600 hover:bg-pink-700 text-white' :

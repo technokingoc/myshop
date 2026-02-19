@@ -109,7 +109,7 @@ export default function ShippingInfo({ sellerId, className = '', compact = false
   return (
     <div className={`border border-gray-200 rounded-lg p-4 bg-gray-50 ${className}`}>
       <div className="flex items-center space-x-2 mb-3">
-        <Truck className="w-4 h-4 text-blue-600" />
+        <Truck className="w-4 h-4 text-green-600" />
         <h3 className="font-medium text-gray-900">Shipping & Delivery</h3>
       </div>
       
@@ -198,7 +198,7 @@ export default function ShippingInfo({ sellerId, className = '', compact = false
         {summary.totalMethods > 1 && (
           <div className="pt-2 border-t border-gray-200">
             <div className="flex items-center space-x-2">
-              <Info className="w-4 h-4 text-blue-500" />
+              <Info className="w-4 h-4 text-green-500" />
               <span className="text-xs text-gray-500">
                 {summary.totalMethods} shipping methods available at checkout
               </span>

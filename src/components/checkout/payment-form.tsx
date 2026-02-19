@@ -104,8 +104,8 @@ export default function PaymentForm({
                 key={method.id}
                 className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                   data.paymentMethod === method.id
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-green-600 bg-green-50'
+                    : 'border-gray-200 hover:border-green-300'
                 }`}
               >
                 <input
@@ -114,7 +114,7 @@ export default function PaymentForm({
                   value={method.id}
                   checked={data.paymentMethod === method.id}
                   onChange={() => selectPaymentMethod(method.id)}
-                  className="w-4 h-4 text-blue-600 mt-1 mr-4"
+                  className="w-4 h-4 text-green-600 mt-1 mr-4"
                 />
                 
                 <div className="flex items-start space-x-3 flex-1">
@@ -133,8 +133,8 @@ export default function PaymentForm({
           )}
           
           {data.paymentMethod && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800">
                 {dict.checkout.paymentInstructions}
               </p>
             </div>
@@ -151,7 +151,7 @@ export default function PaymentForm({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
             placeholder={dict.checkout.orderNotesPlaceholder}
           />
         </div>

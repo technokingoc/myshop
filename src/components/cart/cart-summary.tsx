@@ -132,7 +132,7 @@ export default function CartSummary({ lang, onCheckout, className = "" }: CartSu
                   setIsOpen(false);
                   onCheckout?.();
                 }}
-                className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="w-full bg-green-600 text-white py-2.5 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 {dict.cart.proceedToCheckout}
               </button>

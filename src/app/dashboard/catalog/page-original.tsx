@@ -395,10 +395,10 @@ export default function DashboardCatalogPage() {
 
       {/* Bulk actions */}
       {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm">
-          <span className="font-medium text-indigo-800">{selected.size} {t.selected}</span>
-          <button onClick={() => bulkSetStatus(true)} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white">{t.bulkPublish}</button>
-          <button onClick={() => bulkSetStatus(false)} className="rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700">{t.bulkUnpublish}</button>
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-sm">
+          <span className="font-medium text-green-800">{selected.size} {t.selected}</span>
+          <button onClick={() => bulkSetStatus(true)} className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white">{t.bulkPublish}</button>
+          <button onClick={() => bulkSetStatus(false)} className="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-700">{t.bulkUnpublish}</button>
         </div>
       )}
 
@@ -446,7 +446,7 @@ export default function DashboardCatalogPage() {
                   {/* Actions row */}
                   <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
                     <button onClick={() => setSelected((prev) => { const n = new Set(prev); if (n.has(item.id)) n.delete(item.id); else n.add(item.id); return n; })}>
-                      {isSelected ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-400" />}
+                      {isSelected ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4 text-slate-400" />}
                     </button>
                     <div className="flex items-center gap-1">
                       <button onClick={() => togglePublish(item, item.status !== "Published")} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50" title={item.status === "Published" ? t.unpublish : t.publish}>
@@ -486,7 +486,7 @@ export default function DashboardCatalogPage() {
                   <div key={item.id} className="grid grid-cols-[40px_1fr_100px_100px_100px_120px] items-center gap-2 px-4 py-3">
                     <div>
                       <button onClick={() => setSelected((prev) => { const n = new Set(prev); if (n.has(item.id)) n.delete(item.id); else n.add(item.id); return n; })}>
-                        {isSelected ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-400" />}
+                        {isSelected ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4 text-slate-400" />}
                       </button>
                     </div>
                     <div className="flex min-w-0 items-center gap-2.5">
@@ -654,7 +654,7 @@ function MultiImageUploadField({
           <ImageUpload key={i} currentUrl={url} onUrlChange={(v) => set(i, v)} />
         ))}
         {urls.length < 5 && (
-          <button type="button" onClick={add} className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 transition">
+          <button type="button" onClick={add} className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-slate-400 hover:border-green-400 hover:text-green-500 transition">
             <Plus className="h-5 w-5" /> <span className="text-xs">{addLabel}</span>
           </button>
         )}

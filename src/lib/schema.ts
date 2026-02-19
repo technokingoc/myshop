@@ -32,7 +32,7 @@ export const stores = pgTable("stores", {
     facebook?: string;
   }>().default({}),
   plan: varchar("plan", { length: 32 }).default("free"),
-  themeColor: varchar("theme_color", { length: 32 }).default("indigo"),
+  themeColor: varchar("theme_color", { length: 32 }).default("green"),
   storeTemplate: varchar("store_template", { length: 32 }).default("classic"),
   headerTemplate: varchar("header_template", { length: 32 }).default("compact"),
   businessHours: jsonb("business_hours").$type<Record<string, { open: string; close: string }>>().default({}),
@@ -68,7 +68,7 @@ export const sellers = pgTable("sellers", {
   plan: varchar("plan", { length: 32 }).default("free"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   emailNotifications: boolean("email_notifications").default(true),
-  themeColor: varchar("theme_color", { length: 32 }).default("indigo"),
+  themeColor: varchar("theme_color", { length: 32 }).default("green"),
   businessHours: jsonb("business_hours").$type<Record<string, { open: string; close: string }>>().default({}),
   address: text("address").default(""),
   country: varchar("country", { length: 64 }).default(""),
@@ -362,6 +362,98 @@ export const shippingMethods = pgTable("shipping_methods", {
   pickupInstructions: text("pickup_instructions").default(""), // for pickup methods
   active: boolean("active").default(true),
   sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Stock history tracking for inventory management
+export const stockHistory = pgTable("stock_history", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  productId: integer("product_id").references(() => catalogItems.id, { onDelete: "cascade" }),
+  variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
+  warehouseId: integer("warehouse_id").default(null), // for future multi-warehouse support
+  
+  // Stock change details
+  changeType: varchar("change_type", { length: 32 }).notNull(), // 'adjustment', 'sale', 'restock', 'return', 'damage', 'transfer'
+  quantityBefore: integer("quantity_before").notNull(),
+  quantityChange: integer("quantity_change").notNull(), // positive for increase, negative for decrease
+  quantityAfter: integer("quantity_after").notNull(),
+  
+  // Reference data
+  orderId: integer("order_id").references(() => orders.id), // if related to a sale/return
+  reason: text("reason").default(""), // manual adjustment reason
+  notes: text("notes").default(""), // additional context
+  
+  // Metadata
+  batchNumber: varchar("batch_number", { length: 128 }).default(""), // for batch tracking
+  expirationDate: timestamp("expiration_date"), // for perishable items
+  costPrice: numeric("cost_price", { precision: 10, scale: 2 }).default("0"), // cost basis for this stock
+  
+  // Audit trail
+  createdBy: integer("created_by").references(() => users.id), // user who made the change
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Restock reminders and alerts
+export const restockReminders = pgTable("restock_reminders", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  productId: integer("product_id").references(() => catalogItems.id, { onDelete: "cascade" }),
+  variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
+  warehouseId: integer("warehouse_id").default(null), // for future multi-warehouse support
+  
+  // Reminder settings
+  triggerQuantity: integer("trigger_quantity").notNull(), // stock level that triggers reminder
+  targetQuantity: integer("target_quantity").notNull(), // suggested reorder quantity
+  leadTimeDays: integer("lead_time_days").default(7), // days between order and delivery
+  
+  // Supplier information
+  supplierName: varchar("supplier_name", { length: 256 }).default(""),
+  supplierEmail: varchar("supplier_email", { length: 256 }).default(""),
+  supplierPhone: varchar("supplier_phone", { length: 64 }).default(""),
+  lastOrderDate: timestamp("last_order_date"),
+  averageLeadTime: integer("average_lead_time").default(7), // historical average in days
+  
+  // Status tracking
+  status: varchar("status", { length: 32 }).default("active"), // 'active', 'snoozed', 'disabled'
+  lastTriggered: timestamp("last_triggered"),
+  snoozeUntil: timestamp("snooze_until"),
+  
+  // Settings
+  emailNotifications: boolean("email_notifications").default(true),
+  autoReorderEnabled: boolean("auto_reorder_enabled").default(false), // for future automation
+  minOrderQuantity: integer("min_order_quantity").default(1),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Warehouses (foundation for future multi-warehouse support)
+export const warehouses = pgTable("warehouses", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 256 }).notNull(),
+  code: varchar("code", { length: 32 }).notNull(), // short identifier
+  
+  // Location
+  address: text("address").default(""),
+  city: varchar("city", { length: 256 }).default(""),
+  state: varchar("state", { length: 256 }).default(""),
+  country: varchar("country", { length: 64 }).default("Mozambique"),
+  postalCode: varchar("postal_code", { length: 32 }).default(""),
+  
+  // Settings
+  isDefault: boolean("is_default").default(false), // primary warehouse
+  isActive: boolean("is_active").default(true),
+  allowSales: boolean("allow_sales").default(true), // can fulfill orders
+  allowTransfers: boolean("allow_transfers").default(true), // can send/receive transfers
+  
+  // Contact
+  contactPerson: varchar("contact_person", { length: 256 }).default(""),
+  contactEmail: varchar("contact_email", { length: 256 }).default(""),
+  contactPhone: varchar("contact_phone", { length: 64 }).default(""),
+  
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

@@ -114,7 +114,7 @@ export function OrderFormDB({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t.namePh}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               />
             </div>
             <div>
@@ -124,7 +124,7 @@ export function OrderFormDB({
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
                 placeholder={t.contactPh}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               />
             </div>
             <div>
@@ -134,13 +134,13 @@ export function OrderFormDB({
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={t.messagePh}
                 rows={3}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               />
             </div>
             <button
               type="submit"
               disabled={sending}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
               {t.submit}

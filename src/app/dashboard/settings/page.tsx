@@ -13,7 +13,7 @@ import { LocationSelect } from "@/components/location-select";
 const STORAGE_SETUP = "myshop_setup_v2";
 
 const THEME_COLORS = [
-  { id: "indigo", label: "Indigo", bg: "bg-indigo-500", ring: "ring-indigo-300" },
+  { id: "green", label: "Indigo", bg: "bg-green-500", ring: "ring-green-300" },
   { id: "emerald", label: "Emerald", bg: "bg-emerald-500", ring: "ring-emerald-300" },
   { id: "rose", label: "Rose", bg: "bg-rose-500", ring: "ring-rose-300" },
   { id: "amber", label: "Amber", bg: "bg-amber-500", ring: "ring-amber-300" },
@@ -149,7 +149,7 @@ export default function SettingsPage() {
   const [planInfo, setPlanInfo] = useState<{ plan: string; productCount: number; orderCount: number } | null>(null);
 
   // New fields
-  const [themeColor, setThemeColor] = useState("indigo");
+  const [themeColor, setThemeColor] = useState("green");
   const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("");
@@ -193,7 +193,7 @@ export default function SettingsPage() {
             setSetup({ ...parsed, data: merged });
             setForm(merged);
             if (s.emailNotifications !== undefined) setEmailNotifications(s.emailNotifications);
-            setThemeColor(s.themeColor || "indigo");
+            setThemeColor(s.themeColor || "green");
             setBusinessHours(s.businessHours || {});
             setAddress(s.address || "");
             setCountry(s.country || "");
@@ -313,7 +313,7 @@ export default function SettingsPage() {
                 placeholder={t.descriptionPh}
                 rows={5}
                 maxLength={1000}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               />
               <p className="mt-1 text-xs text-slate-400">{descLen}/1000 {ts.charCount}</p>
             </div>
@@ -386,7 +386,7 @@ export default function SettingsPage() {
                   onClick={() => setStoreTemplate(tmpl.id)}
                   className={`rounded-xl border-2 p-3 text-left transition ${
                     storeTemplate === tmpl.id
-                      ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200"
+                      ? "border-green-500 bg-green-50 ring-2 ring-green-200"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
@@ -438,7 +438,7 @@ export default function SettingsPage() {
                   onClick={() => setHeaderTemplate(tmpl.id)}
                   className={`rounded-xl border-2 p-3 text-left transition ${
                     headerTemplate === tmpl.id
-                      ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200"
+                      ? "border-green-500 bg-green-50 ring-2 ring-green-200"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
@@ -465,7 +465,7 @@ export default function SettingsPage() {
                     type="time"
                     value={businessHours[day]?.open || ""}
                     onChange={(e) => updateHours(day, "open", e.target.value)}
-                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-indigo-300 focus:outline-none"
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-green-300 focus:outline-none"
                     placeholder={ts.open}
                   />
                   <span className="text-slate-400">—</span>
@@ -473,7 +473,7 @@ export default function SettingsPage() {
                     type="time"
                     value={businessHours[day]?.close || ""}
                     onChange={(e) => updateHours(day, "close", e.target.value)}
-                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-indigo-300 focus:outline-none"
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-green-300 focus:outline-none"
                     placeholder={ts.close}
                   />
                 </div>
@@ -494,7 +494,7 @@ export default function SettingsPage() {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder={ts.addressPh}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                 />
               </div>
               <div>
@@ -502,7 +502,7 @@ export default function SettingsPage() {
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                 >
                   <option value="">{ts.selectCountry}</option>
                   {COUNTRIES.map((c) => (
@@ -563,12 +563,12 @@ export default function SettingsPage() {
           >
             <div className="flex items-center gap-3 mb-4">
               <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold ${
-                planInfo.plan === "business" ? "bg-violet-100 text-violet-700" : planInfo.plan === "pro" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
+                planInfo.plan === "business" ? "bg-violet-100 text-violet-700" : planInfo.plan === "pro" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"
               }`}>
                 {planInfo.plan.charAt(0).toUpperCase() + planInfo.plan.slice(1)}
               </span>
               {planInfo.plan === "free" && (
-                <a href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                <a href="/pricing" className="text-sm font-medium text-green-600 hover:text-green-700">
                   {lang === "pt" ? "Fazer upgrade →" : "Upgrade →"}
                 </a>
               )}
@@ -710,7 +710,7 @@ function Field({
         value={value || ""}
         onChange={(e) => update(field, e.target.value)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
       />
     </div>
   );

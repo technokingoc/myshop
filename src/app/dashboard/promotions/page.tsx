@@ -277,8 +277,8 @@ export default function PromotionsPage() {
               <div key={promotion.id} className={`rounded-xl border bg-white p-4 transition ${!promotion.active || isExpired ? "border-slate-200 opacity-60" : "border-slate-200"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-dashed border-blue-300 bg-blue-50">
-                      <Megaphone className="h-4 w-4 text-blue-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-dashed border-green-300 bg-green-50">
+                      <Megaphone className="h-4 w-4 text-green-600" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">

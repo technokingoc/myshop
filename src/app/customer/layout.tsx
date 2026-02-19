@@ -39,7 +39,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2 text-sm font-bold text-indigo-600">
+          <Link href="/" className="flex items-center gap-2 text-sm font-bold text-green-600">
             <Store className="h-4 w-4" /> {t.home}
           </Link>
           
@@ -50,7 +50,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                 key={l.href}
                 href={l.href}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition ${
-                  pathname === l.href ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-100"
+                  pathname === l.href ? "bg-green-50 text-green-700" : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 <l.icon className="h-4 w-4" />
@@ -69,7 +69,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                 key={l.href}
                 href={l.href}
                 className={`flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition ${
-                  pathname === l.href ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-100"
+                  pathname === l.href ? "bg-green-50 text-green-700" : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 <l.icon className="h-4 w-4" />
@@ -91,7 +91,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                 key={l.href}
                 href={l.href}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition ${
-                  pathname === l.href ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-100"
+                  pathname === l.href ? "bg-green-50 text-green-700" : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 <l.icon className="h-4 w-4" />

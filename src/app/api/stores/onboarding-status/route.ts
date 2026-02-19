@@ -69,12 +69,12 @@ export async function GET() {
       // Store customization
       customization: {
         completed: !!(
-          store.themeColor && store.themeColor !== "indigo" ||
+          store.themeColor && store.themeColor !== "green" ||
           store.storeTemplate && store.storeTemplate !== "classic" ||
           store.logoUrl
         ),
         details: {
-          hasCustomTheme: store.themeColor !== "indigo",
+          hasCustomTheme: store.themeColor !== "green",
           hasCustomTemplate: store.storeTemplate !== "classic", 
           hasLogo: !!store.logoUrl,
         }

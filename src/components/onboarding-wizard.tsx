@@ -253,7 +253,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
     importMethod: "", // "csv" or "manual"
     
     // Step 3: Customization
-    themeColor: "indigo",
+    themeColor: "green",
     storeTemplate: "classic", 
     headerStyle: "compact",
     
@@ -396,11 +396,11 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
               >
                 <div className={`
                   flex items-center justify-center w-10 h-10 rounded-full border-2 
-                  ${isActive ? 'border-blue-500 bg-blue-50' : 
+                  ${isActive ? 'border-green-500 bg-green-50' : 
                     isCompleted ? 'border-green-500 bg-green-50' : 'border-slate-300 bg-white'}
                 `}>
                   <Icon className={`w-5 h-5 ${
-                    isActive ? 'text-blue-500' :
+                    isActive ? 'text-green-500' :
                     isCompleted ? 'text-green-500' : 'text-slate-400'
                   }`} />
                 </div>
@@ -469,7 +469,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
           <button
             onClick={currentStep === steps.length - 1 ? completeOnboarding : nextStep}
             disabled={loading}
-            className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
+            className="px-6 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-60"
           >
             {currentStep === steps.length - 1 ? t.complete : (
               <>{t.next}<ArrowRight className="w-4 h-4 inline ml-1" /></>
@@ -521,7 +521,7 @@ function StoreDetailsStep({ storeData, updateStoreData, errors, t, effectiveSlug
           <select
             value={storeData.businessType}
             onChange={(e) => updateStoreData("businessType", e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring"
           >
             {businessTypeOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -551,7 +551,7 @@ function StoreDetailsStep({ storeData, updateStoreData, errors, t, effectiveSlug
             value={storeData.description}
             placeholder={t.descriptionPh}
             onChange={(e) => updateStoreData("description", e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring"
+            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring"
             rows={3}
           />
         </div>
@@ -632,9 +632,9 @@ function ProductImportStep({ storeData, updateStoreData, t }: any) {
       
       <div className="grid md:grid-cols-2 gap-4">
         {/* CSV Import Option */}
-        <div className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition">
+        <div className="border border-slate-200 rounded-lg p-4 hover:border-green-300 transition">
           <div className="flex items-start space-x-3">
-            <Upload className="w-6 h-6 text-blue-600 mt-1" />
+            <Upload className="w-6 h-6 text-green-600 mt-1" />
             <div className="flex-1">
               <h3 className="font-medium text-slate-900">{t.csvImport}</h3>
               <p className="text-sm text-slate-600 mt-1">{t.csvImportDesc}</p>
@@ -642,7 +642,7 @@ function ProductImportStep({ storeData, updateStoreData, t }: any) {
               <div className="mt-3 space-y-2">
                 <button
                   onClick={downloadTemplate}
-                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  className="text-sm text-green-600 hover:text-green-800 underline"
                 >
                   {t.downloadTemplate}
                 </button>
@@ -663,7 +663,7 @@ function ProductImportStep({ storeData, updateStoreData, t }: any) {
                   />
                   <label
                     htmlFor="csv-upload"
-                    className="cursor-pointer inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
+                    className="cursor-pointer inline-flex items-center px-3 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100"
                   >
                     {uploading ? "Uploading..." : t.uploadCsv}
                   </label>
@@ -751,8 +751,8 @@ function CustomizationStep({ storeData, updateStoreData, t }: any) {
   const [previewMode, setPreviewMode] = useState<"mobile" | "desktop">("desktop");
   
   const colors = [
-    { name: "Indigo", value: "indigo", color: "bg-indigo-500" },
-    { name: "Blue", value: "blue", color: "bg-blue-500" },
+    { name: "Indigo", value: "green", color: "bg-green-500" },
+    { name: "Blue", value: "blue", color: "bg-green-500" },
     { name: "Green", value: "green", color: "bg-green-500" },
     { name: "Purple", value: "purple", color: "bg-purple-500" },
     { name: "Pink", value: "pink", color: "bg-pink-500" },
@@ -815,7 +815,7 @@ function CustomizationStep({ storeData, updateStoreData, t }: any) {
                   className={`
                     w-full text-left p-3 rounded-lg border text-sm
                     ${storeData.storeTemplate === template.value ? 
-                      'border-blue-400 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
+                      'border-green-400 bg-green-50' : 'border-slate-200 hover:border-slate-300'}
                   `}
                 >
                   <div className="font-medium">{template.name}</div>
@@ -883,8 +883,8 @@ function CustomizationStep({ storeData, updateStoreData, t }: any) {
             ${previewMode === "mobile" ? 'max-w-sm mx-auto' : ''}
           `}>
             <div className={`p-4 border-b ${
-              storeData.themeColor === 'indigo' ? 'bg-indigo-500' :
-              storeData.themeColor === 'blue' ? 'bg-blue-500' :
+              storeData.themeColor === 'green' ? 'bg-green-500' :
+              storeData.themeColor === 'blue' ? 'bg-green-500' :
               storeData.themeColor === 'green' ? 'bg-green-500' :
               storeData.themeColor === 'purple' ? 'bg-purple-500' :
               storeData.themeColor === 'pink' ? 'bg-pink-500' :
@@ -919,7 +919,7 @@ function CustomizationStep({ storeData, updateStoreData, t }: any) {
                 });
                 window.open(`/setup/preview?${params.toString()}`, '_blank');
               }}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100"
             >
               <Eye className="w-4 h-4" />
               <span>{t.previewStore}</span>
@@ -972,7 +972,7 @@ function VerificationStep({ storeData, updateStoreData, t }: any) {
             value={storeData.address}
             placeholder={t.addressPh}
             onChange={(e) => updateStoreData("address", e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring"
+            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring"
             rows={3}
           />
         </div>
@@ -991,8 +991,8 @@ function VerificationStep({ storeData, updateStoreData, t }: any) {
           </label>
         </div>
         
-        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-800">
             💡 <strong>Verification benefits:</strong> Verified stores get a trust badge, 
             higher search ranking, and customer confidence boost.
           </p>
@@ -1081,7 +1081,7 @@ function ChecklistStep({ storeData, t }: any) {
     {
       key: "storeCustomized",
       title: t.tasks.storeCustomized,
-      completed: storeData.themeColor !== "indigo" || storeData.storeTemplate !== "classic",
+      completed: storeData.themeColor !== "green" || storeData.storeTemplate !== "classic",
       action: null,
     },
     {
@@ -1169,7 +1169,7 @@ function ChecklistStep({ storeData, t }: any) {
                   href={task.action.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100"
+                  className="px-3 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded hover:bg-green-100"
                 >
                   {task.action.text}
                 </a>
@@ -1180,7 +1180,7 @@ function ChecklistStep({ storeData, t }: any) {
       </div>
       
       {/* Launch CTA */}
-      <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl text-center">
+      <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-green-50 border border-green-200 rounded-xl text-center">
         <div className="text-2xl mb-2">🚀</div>
         <h3 className="text-lg font-semibold text-slate-900 mb-2">
           {progress === 100 ? "You're ready to launch!" : "Almost there!"}
@@ -1194,7 +1194,7 @@ function ChecklistStep({ storeData, t }: any) {
         
         {progress === 100 && (
           <div className="flex justify-center space-x-3">
-            <button className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200">
+            <button className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200">
               <Eye className="w-4 h-4 inline mr-1" />
               Preview Store
             </button>
@@ -1234,7 +1234,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-blue-200 transition focus:ring ${
+        className={`rounded-lg border bg-white px-3 py-2 outline-none ring-green-200 transition focus:ring ${
           error ? "border-rose-400" : "border-slate-300"
         }`}
       />

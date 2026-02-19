@@ -89,7 +89,7 @@ export default function CartPage({ lang }: CartPageProps) {
             <p className="text-gray-500 mb-6">{dict.cart.emptyDescription}</p>
             <Link 
               href="/stores"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               {dict.cart.continueShopping}
             </Link>
@@ -182,7 +182,7 @@ export default function CartPage({ lang }: CartPageProps) {
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
                       placeholder={dict.checkout.couponCode}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       disabled={loadingCoupon}
                     />
                     <button
@@ -227,7 +227,7 @@ export default function CartPage({ lang }: CartPageProps) {
               
               <Link
                 href="/checkout"
-                className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-center block"
+                className="w-full mt-6 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium text-center block"
               >
                 {dict.cart.proceedToCheckout}
               </Link>
@@ -274,7 +274,7 @@ function CartItemCard({ item, lang, onUpdateQuantity, onRemove }: CartItemCardPr
             {item.variantName && (
               <p className="text-sm text-gray-500 mt-1">{item.variantName}</p>
             )}
-            <p className="text-sm text-blue-600 mt-1">${item.price.toFixed(2)} each</p>
+            <p className="text-sm text-green-600 mt-1">${item.price.toFixed(2)} each</p>
           </div>
           
           <button

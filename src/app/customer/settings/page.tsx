@@ -324,7 +324,7 @@ export default function CustomerSettingsPage() {
             <select
               value={settings.language}
               onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-100 transition"
             >
               <option value="en">English</option>
               <option value="pt">Português</option>
@@ -336,7 +336,7 @@ export default function CustomerSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {saving ? t.saving : saved ? t.saved : t.save}
