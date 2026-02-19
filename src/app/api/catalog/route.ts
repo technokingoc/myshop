@@ -59,7 +59,10 @@ export async function POST(req: NextRequest) {
   try {
     const db = getDb();
     const body = await req.json();
-    const { sellerId, name, type, price, status, imageUrl, shortDescription, category, imageUrls, compareAtPrice } = body;
+    const { 
+      sellerId, name, type, price, status, imageUrl, shortDescription, category, imageUrls, 
+      compareAtPrice, stockQuantity, trackInventory, lowStockThreshold, hasVariants 
+    } = body;
 
     if (!sellerId || !name) {
       return NextResponse.json({ error: "sellerId and name required" }, { status: 400 });
@@ -107,6 +110,10 @@ export async function POST(req: NextRequest) {
             shortDescription: shortDescription || "",
             category: category || "",
             compareAtPrice: compareAtPrice ? String(compareAtPrice) : "0",
+            stockQuantity: stockQuantity !== undefined ? Number(stockQuantity) : -1,
+            trackInventory: trackInventory || false,
+            lowStockThreshold: lowStockThreshold !== undefined ? Number(lowStockThreshold) : 5,
+            hasVariants: hasVariants || false,
           })
           .returning(),
       3,
@@ -141,6 +148,10 @@ export async function PUT(req: NextRequest) {
     if (updates.category !== undefined) setObj.category = updates.category;
     if (updates.imageUrls !== undefined) setObj.imageUrls = typeof updates.imageUrls === "string" ? updates.imageUrls : JSON.stringify(updates.imageUrls);
     if (updates.compareAtPrice !== undefined) setObj.compareAtPrice = String(updates.compareAtPrice);
+    if (updates.stockQuantity !== undefined) setObj.stockQuantity = Number(updates.stockQuantity);
+    if (updates.trackInventory !== undefined) setObj.trackInventory = updates.trackInventory;
+    if (updates.lowStockThreshold !== undefined) setObj.lowStockThreshold = Number(updates.lowStockThreshold);
+    if (updates.hasVariants !== undefined) setObj.hasVariants = updates.hasVariants;
 
     const [row] = await withRetry(
       () => db.update(catalogItems).set(setObj).where(eq(catalogItems.id, Number(id))).returning(),

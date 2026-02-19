@@ -52,6 +52,23 @@ export const catalogItems = pgTable("catalog_items", {
   trackInventory: boolean("track_inventory").default(false),
   lowStockThreshold: integer("low_stock_threshold").default(5),
   compareAtPrice: numeric("compare_at_price", { precision: 10, scale: 2 }).default("0"),
+  hasVariants: boolean("has_variants").default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const productVariants = pgTable("product_variants", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => catalogItems.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 256 }).notNull(), // e.g. "Large / Red / Cotton"
+  sku: varchar("sku", { length: 128 }).default(""),
+  price: numeric("price", { precision: 12, scale: 2 }).notNull(),
+  compareAtPrice: numeric("compare_at_price", { precision: 10, scale: 2 }).default("0"),
+  stockQuantity: integer("stock_quantity").default(0),
+  lowStockThreshold: integer("low_stock_threshold").default(5),
+  imageUrl: text("image_url").default(""),
+  attributes: jsonb("attributes").$type<Record<string, string>>().default({}), // { size: "Large", color: "Red", material: "Cotton" }
+  sortOrder: integer("sort_order").default(0),
+  active: boolean("active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
