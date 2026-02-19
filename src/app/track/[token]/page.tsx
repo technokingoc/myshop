@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { Clock, Phone, Package, Truck, CheckCircle, Ban, MessageCircle } from "lucide-react";
 import { OrderTimeline } from "@/components/orders/order-timeline";
+import type { OrderStatus } from "@/components/orders/types";
 
 type Tracking = {
   token: string;
@@ -77,6 +78,24 @@ const dict = {
 const STEPS = ["placed", "confirmed", "processing", "shipped", "delivered"];
 const stepIcons = [Clock, CheckCircle, Package, Truck, CheckCircle];
 
+// Function to map status strings to OrderStatus type (handles legacy mappings)
+const mapToOrderStatus = (status: string): OrderStatus => {
+  const statusMap: Record<string, OrderStatus> = {
+    // Current status types
+    placed: "placed",
+    confirmed: "confirmed", 
+    processing: "processing",
+    shipped: "shipped",
+    delivered: "delivered",
+    cancelled: "cancelled",
+    // Legacy mappings
+    new: "placed",
+    contacted: "confirmed",
+    completed: "delivered",
+  };
+  return statusMap[status] || "placed";
+};
+
 const statusBg: Record<string, string> = {
   placed: "bg-slate-500",
   confirmed: "bg-blue-500",
@@ -120,7 +139,7 @@ export default function TrackingPage() {
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <p className="text-sm text-slate-500 mb-4">#{data.token}</p>
             <OrderTimeline
-              currentStatus={data.orderStatus}
+              currentStatus={mapToOrderStatus(data.orderStatus)}
               statusHistory={data.statusHistory}
               t={Object.fromEntries(Object.entries(t.statusLabels).map(([k, v]) => [k, v]))}
               variant="stepper"

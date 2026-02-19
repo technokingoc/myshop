@@ -10,7 +10,7 @@ type Props = {
 
 export function OrderStatsBar({ orders, t }: Props) {
   const total = orders.length;
-  const newCount = orders.filter((o) => o.status === "new").length;
+  const newCount = orders.filter((o) => o.status === "placed").length;
   const processingCount = orders.filter((o) => o.status === "processing").length;
 
   const now = new Date();

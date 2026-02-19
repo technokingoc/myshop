@@ -181,9 +181,9 @@ export default function OrdersPage() {
           statusHistory: [...(prev.statusHistory || []), historyEntry] 
         } : prev);
         
-        toast.success(action === "cancel" ? (toastText.orderCancelled || "Order cancelled") : (toastText.refundProcessed || "Refund processed"));
+        toast.success(action === "cancel" ? "Order cancelled" : "Refund processed");
       } catch {
-        toast.error(toastText.syncFailed || "Failed to update order");
+        toast.error("Failed to update order");
       }
     }
   }, [sellerId, dbHealth, toast, toastText]);

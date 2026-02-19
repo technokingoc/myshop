@@ -15,6 +15,10 @@ export const dictionary = {
       statusUpdated: "Order status updated.",
       noteSaved: "Note saved.",
       syncFailed: "Could not sync with server. Local mode is active.",
+      refundProcessed: "Refund processed successfully.",
+      refundFailed: "Failed to process refund.",
+      orderCancelled: "Order cancelled successfully.",
+      cancelFailed: "Failed to cancel order.",
     },
     orders: {
       title: "Orders",
@@ -134,6 +138,10 @@ export const dictionary = {
       statusUpdated: "Estado do pedido atualizado.",
       noteSaved: "Nota guardada.",
       syncFailed: "Não foi possível sincronizar com o servidor. Modo local ativo.",
+      refundProcessed: "Reembolso processado com sucesso.",
+      refundFailed: "Falha ao processar reembolso.",
+      orderCancelled: "Pedido cancelado com sucesso.",
+      cancelFailed: "Falha ao cancelar pedido.",
     },
     orders: {
       title: "Pedidos",
