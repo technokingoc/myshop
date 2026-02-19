@@ -25,6 +25,9 @@ type Notification = {
   orderId?: number | null;
   read: boolean;
   metadata: Record<string, any>;
+  actionUrl?: string;
+  priority?: number;
+  notificationChannel?: string;
   createdAt: string;
 };
 
@@ -183,7 +186,18 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
     }
   };
 
-  const getNotificationColor = (type: string) => {
+  const getNotificationColor = (type: string, priority?: number) => {
+    // High priority notifications get red accent
+    if (priority === 3) {
+      return "bg-red-50 border-red-200";
+    }
+    
+    // Medium priority gets orange accent
+    if (priority === 2) {
+      return "bg-orange-50 border-orange-200";
+    }
+    
+    // Regular priority based on type
     switch (true) {
       case type.startsWith("order:"):
         return "bg-blue-50 border-blue-200";
@@ -409,11 +423,23 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
               <div
                 key={notification.id}
                 className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer ${
-                  !notification.read ? getNotificationColor(notification.type) : ""
+                  !notification.read ? getNotificationColor(notification.type, notification.priority) : ""
                 }`}
                 onClick={() => {
                   if (!notification.read) {
                     markAsRead([notification.id]);
+                  }
+                  
+                  // Handle action URL navigation
+                  if (notification.actionUrl) {
+                    if (notification.actionUrl.startsWith('http')) {
+                      window.open(notification.actionUrl, '_blank');
+                    } else {
+                      window.location.href = notification.actionUrl;
+                    }
+                  } else if (notification.orderId) {
+                    // Fallback to order link if no action URL
+                    window.location.href = `/dashboard/orders?highlight=${notification.orderId}`;
                   }
                 }}
               >
@@ -444,6 +470,17 @@ export function NotificationCenter({ t, userId, sellerId, lang }: Props) {
                         <span className="text-xs text-slate-400">
                           {formatTimeAgo(notification.createdAt)}
                         </span>
+                        {/* Priority indicator */}
+                        {notification.priority === 3 && (
+                          <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded">
+                            HIGH
+                          </span>
+                        )}
+                        {notification.priority === 2 && (
+                          <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded">
+                            MEDIUM
+                          </span>
+                        )}
                         {!notification.read ? (
                           <Circle className="h-2 w-2 fill-blue-500 text-blue-500" />
                         ) : (

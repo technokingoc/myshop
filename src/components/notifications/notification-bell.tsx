@@ -12,6 +12,9 @@ type Notification = {
   orderId?: number | null;
   read: boolean;
   metadata: Record<string, any>;
+  actionUrl?: string;
+  priority?: number;
+  notificationChannel?: string;
   createdAt: string;
 };
 
@@ -226,9 +229,20 @@ export function NotificationBell({ t, sellerId }: Props) {
                       if (!notification.read) {
                         markAsRead([notification.id]);
                       }
-                      if (notification.orderId) {
-                        // Optional: Navigate to order detail
-                        // You could emit an event or use a callback prop here
+                      
+                      // Close dropdown
+                      setIsOpen(false);
+                      
+                      // Handle action URL navigation
+                      if (notification.actionUrl) {
+                        if (notification.actionUrl.startsWith('http')) {
+                          window.open(notification.actionUrl, '_blank');
+                        } else {
+                          window.location.href = notification.actionUrl;
+                        }
+                      } else if (notification.orderId) {
+                        // Fallback to order link if no action URL
+                        window.location.href = `/dashboard/orders?highlight=${notification.orderId}`;
                       }
                     }}
                   >
@@ -276,7 +290,7 @@ export function NotificationBell({ t, sellerId }: Props) {
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  // Navigate to full notifications page if you have one
+                  window.location.href = '/dashboard/notifications';
                 }}
                 className="w-full text-xs text-center text-slate-500 hover:text-slate-700 py-1"
               >

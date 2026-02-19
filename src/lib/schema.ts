@@ -250,5 +250,33 @@ export const notifications = pgTable("notifications", {
   orderId: integer("order_id").references(() => orders.id, { onDelete: "cascade" }),
   read: boolean("read").default(false),
   metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  actionUrl: text("action_url").default(""),
+  priority: integer("priority").default(1), // 1=low, 2=medium, 3=high
+  notificationChannel: varchar("notification_channel", { length: 32 }).default("in_app"), // 'in_app', 'email', 'both'
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userType: varchar("user_type", { length: 32 }).notNull().default("seller"), // 'seller' or 'customer'
+  
+  // Email preferences
+  emailOrderUpdates: boolean("email_order_updates").default(true),
+  emailInventoryAlerts: boolean("email_inventory_alerts").default(true),
+  emailReviewAlerts: boolean("email_review_alerts").default(true),
+  emailPromotionalEmails: boolean("email_promotional_emails").default(false),
+  emailSystemUpdates: boolean("email_system_updates").default(true),
+  
+  // In-app preferences
+  inAppOrderUpdates: boolean("inapp_order_updates").default(true),
+  inAppInventoryAlerts: boolean("inapp_inventory_alerts").default(true),
+  inAppReviewAlerts: boolean("inapp_review_alerts").default(true),
+  inAppSystemUpdates: boolean("inapp_system_updates").default(true),
+  
+  // Email frequency
+  emailFrequency: varchar("email_frequency", { length: 32 }).default("instant"), // 'instant', 'daily', 'weekly'
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

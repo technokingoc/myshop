@@ -1,5 +1,5 @@
 import { getDb } from "./db";
-import { notifications, users, stores, orders, catalogItems, customerReviews, productVariants } from "./schema";
+import { notifications, users, stores, orders, catalogItems, customerReviews, productVariants, notificationPreferences } from "./schema";
 import { eq, and, or, lt, sql } from "drizzle-orm";
 import { emitEvent } from "./events";
 import { 
@@ -53,6 +53,39 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   emailFrequency: "instant",
 };
 
+async function shouldSendNotification(userId: number, notificationType: NotificationType, channel: "email" | "in_app"): Promise<boolean> {
+  try {
+    const preferences = await getNotificationPreferences(userId);
+    
+    // Map notification types to preference keys
+    let prefKey: keyof NotificationPreferences['email'] | keyof NotificationPreferences['inApp'];
+    
+    switch (true) {
+      case notificationType.startsWith("order:"):
+        prefKey = "orderUpdates";
+        break;
+      case notificationType.startsWith("inventory:"):
+        prefKey = "inventoryAlerts";
+        break;
+      case notificationType.startsWith("review:"):
+        prefKey = "reviewAlerts";
+        break;
+      default:
+        prefKey = "systemUpdates";
+        break;
+    }
+    
+    if (channel === "email") {
+      return preferences.email[prefKey as keyof NotificationPreferences['email']] || false;
+    } else {
+      return preferences.inApp[prefKey as keyof NotificationPreferences['inApp']] || false;
+    }
+  } catch (error) {
+    console.error("Error checking notification preferences:", error);
+    return true; // Default to sending if there's an error
+  }
+}
+
 async function createNotification(params: {
   sellerId?: number | null;
   customerId?: number | null;
@@ -61,6 +94,9 @@ async function createNotification(params: {
   message: string;
   orderId?: number | null;
   metadata?: Record<string, any>;
+  actionUrl?: string;
+  priority?: number;
+  notificationChannel?: "in_app" | "email" | "both";
 }) {
   const db = getDb();
   
@@ -75,6 +111,9 @@ async function createNotification(params: {
         message: params.message,
         orderId: params.orderId,
         metadata: params.metadata || {},
+        actionUrl: params.actionUrl || "",
+        priority: params.priority || 1,
+        notificationChannel: params.notificationChannel || "in_app",
       })
       .returning();
 
@@ -126,6 +165,9 @@ export async function notifyOrderPlaced(orderId: number, sellerId: number, custo
       title: "New Order Received",
       message: `Order ORD-${orderId} from ${order.customerName}`,
       orderId,
+      actionUrl: `/dashboard/orders?highlight=${orderId}`,
+      priority: 2, // Medium priority for new orders
+      notificationChannel: "both",
       metadata: {
         customerName: order.customerName,
         amount: "0", // You might want to calculate this from order items
@@ -133,13 +175,13 @@ export async function notifyOrderPlaced(orderId: number, sellerId: number, custo
     });
 
     // Send email notifications if preferences allow
-    if (sellerUser && seller?.emailNotifications) {
+    if (sellerUser && await shouldSendNotification(sellerUser.id, "order:new", "email")) {
       await sendNewOrderAlert(
         sellerUser.email,
         {
           ref: `ORD-${orderId}`,
           customerName: order.customerName,
-          sellerName: seller.name,
+          sellerName: seller?.name ?? "Store",
         },
         "en"
       );
@@ -213,6 +255,9 @@ export async function notifyOrderStatusChanged(
         title: `Order ORD-${orderId} Update`,
         message: `Your order is now ${statusMessage}`,
         orderId,
+        actionUrl: order.trackingToken ? `/track/${order.trackingToken}` : "",
+        priority: newStatus === "delivered" ? 2 : 1,
+        notificationChannel: "both",
         metadata: {
           status: newStatus,
           sellerName: seller?.name,
@@ -267,6 +312,9 @@ export async function notifyLowStock(productId: number, sellerId: number, curren
       type: "inventory:low_stock",
       title: "Low Stock Alert",
       message: `${product.name} is running low (${currentStock} left)`,
+      actionUrl: `/dashboard/catalog?highlight=${productId}`,
+      priority: 2, // Medium priority for low stock
+      notificationChannel: "both",
       metadata: {
         productId,
         productName: product.name,
@@ -276,7 +324,7 @@ export async function notifyLowStock(productId: number, sellerId: number, curren
     });
 
     // Send email notification if enabled
-    if (user && store?.emailNotifications) {
+    if (user && await shouldSendNotification(user.id, "inventory:low_stock", "email")) {
       await sendLowStockAlert(
         user.email,
         product.name,
@@ -316,6 +364,9 @@ export async function notifyOutOfStock(productId: number, sellerId: number) {
       type: "inventory:out_of_stock",
       title: "Out of Stock Alert",
       message: `${product.name} is now out of stock`,
+      actionUrl: `/dashboard/catalog?highlight=${productId}`,
+      priority: 3, // High priority for out of stock
+      notificationChannel: "both",
       metadata: {
         productId,
         productName: product.name,
@@ -323,7 +374,7 @@ export async function notifyOutOfStock(productId: number, sellerId: number) {
     });
 
     // Send email notification if enabled
-    if (user && store?.emailNotifications) {
+    if (user && await shouldSendNotification(user.id, "inventory:out_of_stock", "email")) {
       await sendOutOfStockAlert(
         user.email,
         product.name,
@@ -366,6 +417,9 @@ export async function notifyNewReview(reviewId: number, sellerId: number) {
       type: "review:new",
       title: "New Product Review",
       message: `${customer?.name || "A customer"} reviewed ${product?.name}: ${stars}`,
+      actionUrl: `/dashboard/reviews?highlight=${reviewId}`,
+      priority: 1, // Low priority for reviews
+      notificationChannel: "both",
       metadata: {
         reviewId,
         productId: review.catalogItemId,
@@ -376,13 +430,13 @@ export async function notifyNewReview(reviewId: number, sellerId: number) {
     });
 
     // Send email notification if enabled
-    if (sellerUser && store?.emailNotifications && product) {
+    if (sellerUser && product && await shouldSendNotification(sellerUser.id, "review:new", "email")) {
       await sendNewReviewAlert(
         sellerUser.email,
         product.name,
-        customer?.name || "A customer",
-        review.rating,
-        review.content,
+        customer?.name ?? "A customer",
+        review.rating ?? 0,
+        review.content ?? "",
         "en"
       );
     }
@@ -396,6 +450,32 @@ export async function getNotificationPreferences(userId: number): Promise<Notifi
   const db = getDb();
   
   try {
+    // Try to get from new preferences table first
+    const [prefs] = await db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId))
+      .limit(1);
+
+    if (prefs) {
+      return {
+        email: {
+          orderUpdates: prefs.emailOrderUpdates,
+          inventoryAlerts: prefs.emailInventoryAlerts,
+          reviewAlerts: prefs.emailReviewAlerts,
+          promotionalEmails: prefs.emailPromotionalEmails,
+        },
+        inApp: {
+          orderUpdates: prefs.inAppOrderUpdates,
+          inventoryAlerts: prefs.inAppInventoryAlerts,
+          reviewAlerts: prefs.inAppReviewAlerts,
+          systemUpdates: prefs.inAppSystemUpdates,
+        },
+        emailFrequency: prefs.emailFrequency as "instant" | "daily" | "weekly",
+      };
+    }
+
+    // Fallback to legacy store settings for backward compatibility
     const [store] = await db
       .select({
         emailNotifications: stores.emailNotifications,
@@ -404,18 +484,58 @@ export async function getNotificationPreferences(userId: number): Promise<Notifi
       .where(eq(stores.userId, userId))
       .limit(1);
 
-    if (!store) return defaultNotificationPreferences;
+    // Create default preferences entry for this user
+    const userType = store ? "seller" : "customer";
+    const emailEnabled = store?.emailNotifications ?? true;
+    
+    try {
+      const [newPrefs] = await db
+        .insert(notificationPreferences)
+        .values({
+          userId,
+          userType,
+          emailOrderUpdates: emailEnabled,
+          emailInventoryAlerts: emailEnabled,
+          emailReviewAlerts: emailEnabled,
+        })
+        .returning();
 
-    // For now, return default with email preferences from store
-    return {
-      ...defaultNotificationPreferences,
-      email: {
-        ...defaultNotificationPreferences.email,
-        orderUpdates: store.emailNotifications,
-        inventoryAlerts: store.emailNotifications,
-        reviewAlerts: store.emailNotifications,
-      },
-    };
+      return {
+        email: {
+          orderUpdates: newPrefs.emailOrderUpdates,
+          inventoryAlerts: newPrefs.emailInventoryAlerts,
+          reviewAlerts: newPrefs.emailReviewAlerts,
+          promotionalEmails: newPrefs.emailPromotionalEmails,
+        },
+        inApp: {
+          orderUpdates: newPrefs.inAppOrderUpdates,
+          inventoryAlerts: newPrefs.inAppInventoryAlerts,
+          reviewAlerts: newPrefs.inAppReviewAlerts,
+          systemUpdates: newPrefs.inAppSystemUpdates,
+        },
+        emailFrequency: newPrefs.emailFrequency as "instant" | "daily" | "weekly",
+      };
+    } catch (dbError) {
+      // If the notification preferences table doesn't exist yet, 
+      // fall back to legacy behavior using store settings
+      console.warn("NotificationPreferences table not found, using legacy settings:", dbError);
+      
+      return {
+        email: {
+          orderUpdates: emailEnabled,
+          inventoryAlerts: emailEnabled,
+          reviewAlerts: emailEnabled,
+          promotionalEmails: false,
+        },
+        inApp: {
+          orderUpdates: true,
+          inventoryAlerts: true,
+          reviewAlerts: true,
+          systemUpdates: true,
+        },
+        emailFrequency: "instant" as const,
+      };
+    }
   } catch (error) {
     console.error("Failed to get notification preferences:", error);
     return defaultNotificationPreferences;
@@ -426,7 +546,57 @@ export async function updateNotificationPreferences(userId: number, preferences:
   const db = getDb();
   
   try {
-    // For now, just update the general email notifications setting in stores
+    // Build update object
+    const updateData: Partial<typeof notificationPreferences.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+
+    if (preferences.email) {
+      if (preferences.email.orderUpdates !== undefined) updateData.emailOrderUpdates = preferences.email.orderUpdates;
+      if (preferences.email.inventoryAlerts !== undefined) updateData.emailInventoryAlerts = preferences.email.inventoryAlerts;
+      if (preferences.email.reviewAlerts !== undefined) updateData.emailReviewAlerts = preferences.email.reviewAlerts;
+      if (preferences.email.promotionalEmails !== undefined) updateData.emailPromotionalEmails = preferences.email.promotionalEmails;
+    }
+
+    if (preferences.inApp) {
+      if (preferences.inApp.orderUpdates !== undefined) updateData.inAppOrderUpdates = preferences.inApp.orderUpdates;
+      if (preferences.inApp.inventoryAlerts !== undefined) updateData.inAppInventoryAlerts = preferences.inApp.inventoryAlerts;
+      if (preferences.inApp.reviewAlerts !== undefined) updateData.inAppReviewAlerts = preferences.inApp.reviewAlerts;
+      if (preferences.inApp.systemUpdates !== undefined) updateData.inAppSystemUpdates = preferences.inApp.systemUpdates;
+    }
+
+    if (preferences.emailFrequency !== undefined) {
+      updateData.emailFrequency = preferences.emailFrequency;
+    }
+
+    // Try to update existing preferences
+    const result = await db
+      .update(notificationPreferences)
+      .set(updateData)
+      .where(eq(notificationPreferences.userId, userId))
+      .returning();
+
+    // If no existing preferences, create new ones
+    if (result.length === 0) {
+      // Determine user type
+      const [store] = await db
+        .select({ id: stores.id })
+        .from(stores)
+        .where(eq(stores.userId, userId))
+        .limit(1);
+
+      const userType = store ? "seller" : "customer";
+
+      await db
+        .insert(notificationPreferences)
+        .values({
+          userId,
+          userType,
+          ...updateData,
+        });
+    }
+
+    // Also update legacy stores table for backward compatibility
     if (preferences.email?.orderUpdates !== undefined) {
       await db
         .update(stores)

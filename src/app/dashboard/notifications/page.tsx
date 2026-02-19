@@ -36,7 +36,7 @@ export default async function NotificationsPage({
 
       <NotificationCenter 
         t={t}
-        userId={session.userId}
+        userId={session.sellerId}
         sellerId={session.sellerId}
         lang={lang}
       />
