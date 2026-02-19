@@ -73,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       "online store",
       "buy online",
       "MyShop"
-    ].filter(Boolean);
+    ].filter((k): k is string => Boolean(k) && typeof k === 'string');
 
     return {
       title: store.name,
