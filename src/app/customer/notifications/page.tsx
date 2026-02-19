@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getCustomerSession } from "@/lib/customer-session";
 import { redirect } from "next/navigation";
 import { CustomerNotificationCenter } from "@/components/notifications/customer-notification-center";
-import { getI18n } from "@/lib/i18n";
+import { getDict } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Notifications - MyShop",
@@ -20,7 +20,7 @@ export default async function CustomerNotificationsPage({
   }
 
   const lang = (searchParams.lang as "en" | "pt") || "en";
-  const t = await getI18n(lang);
+  const t = getDict(lang);
 
   return (
     <div className="min-h-screen bg-slate-50">
