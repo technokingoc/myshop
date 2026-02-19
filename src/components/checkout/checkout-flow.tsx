@@ -26,7 +26,9 @@ interface ShippingMethod {
   type: string;
   cost: number;
   estimatedDays: number;
-  description?: string;
+  description: string;
+  pickupAddress?: string;
+  pickupInstructions?: string;
 }
 
 interface CheckoutData {
