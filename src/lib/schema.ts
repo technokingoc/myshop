@@ -372,7 +372,7 @@ export const stockHistory = pgTable("stock_history", {
   sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
   productId: integer("product_id").references(() => catalogItems.id, { onDelete: "cascade" }),
   variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
-  warehouseId: integer("warehouse_id").default(null), // for future multi-warehouse support
+  warehouseId: integer("warehouse_id"), // for future multi-warehouse support
   
   // Stock change details
   changeType: varchar("change_type", { length: 32 }).notNull(), // 'adjustment', 'sale', 'restock', 'return', 'damage', 'transfer'
@@ -401,7 +401,7 @@ export const restockReminders = pgTable("restock_reminders", {
   sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
   productId: integer("product_id").references(() => catalogItems.id, { onDelete: "cascade" }),
   variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
-  warehouseId: integer("warehouse_id").default(null), // for future multi-warehouse support
+  warehouseId: integer("warehouse_id"), // for future multi-warehouse support
   
   // Reminder settings
   triggerQuantity: integer("trigger_quantity").notNull(), // stock level that triggers reminder
