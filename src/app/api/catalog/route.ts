@@ -5,6 +5,7 @@ import { eq, sql } from "drizzle-orm";
 import { checkDbReadiness, isMissingTableError } from "@/lib/db-readiness";
 import { withRetry } from "@/lib/retry";
 import { checkLimit } from "@/lib/plans";
+import { notifyLowStock, notifyOutOfStock } from "@/lib/notification-service";
 
 function isDbUnavailable(error: unknown) {
   const text = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
@@ -157,6 +158,23 @@ export async function PUT(req: NextRequest) {
       () => db.update(catalogItems).set(setObj).where(eq(catalogItems.id, Number(id))).returning(),
       3,
     );
+
+    // Check for low stock notifications if stock quantity was updated
+    if (updates.stockQuantity !== undefined && row.trackInventory) {
+      const currentStock = Number(updates.stockQuantity);
+      const threshold = row.lowStockThreshold;
+      
+      try {
+        if (currentStock === 0) {
+          await notifyOutOfStock(row.id, row.sellerId);
+        } else if (currentStock <= threshold) {
+          await notifyLowStock(row.id, row.sellerId, currentStock, threshold);
+        }
+      } catch (error) {
+        // Don't fail the update if notifications fail
+        console.error("Failed to send stock notifications:", error);
+      }
+    }
 
     return NextResponse.json(row);
   } catch (error) {

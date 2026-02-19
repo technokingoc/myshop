@@ -126,3 +126,95 @@ export async function sendOrderStatusUpdate(
 
   await send(customerEmail, subject, html);
 }
+
+export async function sendLowStockAlert(
+  sellerEmail: string,
+  productName: string,
+  currentStock: number,
+  threshold: number,
+  lang: Lang = "en"
+) {
+  const isEn = lang === "en";
+  const subject = isEn
+    ? `⚠️ Low Stock Alert: ${productName}`
+    : `⚠️ Alerta de Estoque Baixo: ${productName}`;
+
+  const html = wrap(`
+    <h1 style="font-size:20px;color:#0f172a;margin:0 0 16px">${isEn ? "Low Stock Alert" : "Alerta de Estoque Baixo"}</h1>
+    <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 8px">
+      <strong>${isEn ? "Product" : "Produto"}:</strong> ${productName}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 8px">
+      <strong>${isEn ? "Current Stock" : "Estoque Atual"}:</strong> ${currentStock} ${isEn ? "items" : "itens"}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 16px">
+      <strong>${isEn ? "Low Stock Threshold" : "Limite de Estoque Baixo"}:</strong> ${threshold} ${isEn ? "items" : "itens"}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 16px">
+      ${isEn ? "Consider restocking to avoid running out." : "Considere repor o estoque para evitar ficar sem produtos."}
+    </p>
+  `);
+
+  await send(sellerEmail, subject, html);
+}
+
+export async function sendOutOfStockAlert(
+  sellerEmail: string,
+  productName: string,
+  lang: Lang = "en"
+) {
+  const isEn = lang === "en";
+  const subject = isEn
+    ? `🚨 Out of Stock: ${productName}`
+    : `🚨 Sem Estoque: ${productName}`;
+
+  const html = wrap(`
+    <h1 style="font-size:20px;color:#0f172a;margin:0 0 16px">${isEn ? "Out of Stock Alert" : "Alerta Sem Estoque"}</h1>
+    <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 8px">
+      <strong>${isEn ? "Product" : "Produto"}:</strong> ${productName}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 16px">
+      ${isEn ? "This product is now out of stock. Customers won't be able to purchase it until you restock." : "Este produto está agora sem estoque. Os clientes não poderão comprá-lo até que você reponha."}
+    </p>
+  `);
+
+  await send(sellerEmail, subject, html);
+}
+
+export async function sendNewReviewAlert(
+  sellerEmail: string,
+  productName: string,
+  customerName: string,
+  rating: number,
+  reviewContent: string,
+  lang: Lang = "en"
+) {
+  const isEn = lang === "en";
+  const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+  const subject = isEn
+    ? `⭐ New Review: ${productName}`
+    : `⭐ Nova Avaliação: ${productName}`;
+
+  const html = wrap(`
+    <h1 style="font-size:20px;color:#0f172a;margin:0 0 16px">${isEn ? "New Product Review" : "Nova Avaliação de Produto"}</h1>
+    <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 8px">
+      <strong>${isEn ? "Product" : "Produto"}:</strong> ${productName}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 8px">
+      <strong>${isEn ? "Customer" : "Cliente"}:</strong> ${customerName}
+    </p>
+    <p style="color:#475569;font-size:14px;margin:0 0 8px">
+      <strong>${isEn ? "Rating" : "Avaliação"}:</strong> ${stars} (${rating}/5)
+    </p>
+    <div style="background:#f8fafc;border-radius:8px;padding:16px;margin:16px 0">
+      <p style="color:#475569;font-size:14px;line-height:1.6;margin:0;font-style:italic">
+        "${reviewContent}"
+      </p>
+    </div>
+    <p style="color:#475569;font-size:14px;margin:0">
+      ${isEn ? "Check your dashboard to manage this review." : "Verifique o seu painel para gerir esta avaliação."}
+    </p>
+  `);
+
+  await send(sellerEmail, subject, html);
+}

@@ -3,6 +3,7 @@ import { customerReviews, catalogItems } from "@/lib/schema";
 import { getDb } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { getCustomerSession } from "@/lib/customer-session";
+import { notifyNewReview } from "@/lib/notification-service";
 
 export async function POST(
   request: NextRequest,
@@ -63,9 +64,8 @@ export async function POST(
       return NextResponse.json({ error: "You have already reviewed this product" }, { status: 400 });
     }
 
-    // For now, mark all reviews as published unless we implement moderation
-    // In the future, this could be "pending" for moderation
-    const status = "published";
+    // Reviews start as pending and require seller approval for moderation
+    const status = "pending";
 
     const [newReview] = await db
       .insert(customerReviews)
@@ -82,6 +82,9 @@ export async function POST(
         status,
       })
       .returning();
+
+    // Notify seller about the new review
+    await notifyNewReview(newReview.id, product.sellerId);
 
     return NextResponse.json({
       success: true,

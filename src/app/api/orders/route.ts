@@ -6,6 +6,7 @@ import { checkDbReadiness, isMissingTableError } from "@/lib/db-readiness";
 import { withRetry } from "@/lib/retry";
 import { emitEvent } from "@/lib/events";
 import { sendEmail } from "@/lib/email";
+import { notifyOrderPlaced, notifyOrderStatusChanged } from "@/lib/notification-service";
 
 function isDbUnavailable(error: unknown) {
   const text = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
@@ -110,17 +111,14 @@ export async function POST(req: NextRequest) {
       3,
     );
 
+    // Notify about new order (this handles both in-app and email notifications)
+    await notifyOrderPlaced(row.id, Number(resolvedSellerId), body.customerId || null);
+
     emitEvent({
       type: "order:new",
       sellerId: Number(resolvedSellerId),
       message: `New order #${row.id} from ${customerName}`,
       payload: { orderId: row.id, customerName },
-    });
-
-    await sendEmail({
-      to: process.env.MYSHOP_SELLER_EMAIL || "seller@myshop.local",
-      subject: `New order #${row.id}`,
-      body: `Customer: ${customerName}\nContact: ${customerContact}\nMessage: ${message || "-"}`,
     });
 
     return NextResponse.json({ ...row, referenceToken: `ORD-${row.id}` }, { status: 201 });
@@ -152,17 +150,14 @@ export async function PUT(req: NextRequest) {
       3,
     );
 
+    // Notify about status change (this handles both in-app and email notifications)
+    await notifyOrderStatusChanged(row.id, status, row.sellerId, row.customerId);
+
     emitEvent({
       type: "order:status",
       sellerId: row.sellerId,
       message: `Order #${row.id} moved to ${status}`,
       payload: { orderId: row.id, status },
-    });
-
-    await sendEmail({
-      to: process.env.MYSHOP_SELLER_EMAIL || "seller@myshop.local",
-      subject: `Order #${row.id} status updated`,
-      body: `Order #${row.id} status is now: ${status}`,
     });
 
     return NextResponse.json(row);

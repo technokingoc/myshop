@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { clearSession, fetchSession, type AuthSession } from "@/lib/auth";
 
 type SetupData = {
@@ -203,12 +204,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/dashboard/analytics")) return "analytics";
     if (pathname.startsWith("/dashboard/coupons")) return "coupons";
     if (pathname.startsWith("/dashboard/reviews")) return "reviews";
+    if (pathname.startsWith("/dashboard/notifications")) return "notifications";
     return "dashboard";
   }, [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [setup, setSetup] = useState<SetupPersisted | null>(null);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [events, setEvents] = useState<LiveEvent[]>([]);
 
   useEffect(() => {
     // Try localStorage first for legacy setup data
@@ -236,22 +236,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  useEffect(() => {
-    if (!setup?.sellerId) return;
-    const source = new EventSource(`/api/notifications/stream?sellerId=${setup.sellerId}`);
-    source.addEventListener("notification", (evt) => {
-      try {
-        const payload = JSON.parse((evt as MessageEvent).data) as LiveEvent;
-        setEvents((prev) => [payload, ...prev].slice(0, 20));
-      } catch {}
-    });
-    return () => source.close();
-  }, [setup?.sellerId]);
-
-  useEffect(() => {
-    setNotifOpen(false);
-  }, [pathname]);
-
   const slug = useMemo(() => {
     if (!setup?.data) return "";
     return setup.data.storefrontSlug || sanitizeSlug(setup.data.storeName) || "myshop-demo";
@@ -271,6 +255,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   ];
 
   const accountItems = [
+    { label: t.notifications, icon: Bell, href: "/dashboard/notifications", key: "notifications" },
     { label: t.settings, icon: Settings, href: "/dashboard/settings", key: "settings" },
     { label: t.analytics, icon: BarChart3, href: "/dashboard/analytics", key: "analytics" },
   ];
@@ -286,6 +271,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const insightsDropdownItems = [
     { label: t.analytics, icon: BarChart3, href: "/dashboard/analytics", key: "analytics" },
+    { label: t.notifications, icon: Bell, href: "/dashboard/notifications", key: "notifications" },
     { label: t.settings, icon: Settings, href: "/dashboard/settings", key: "settings" },
   ];
 
@@ -419,15 +405,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
               <div className="relative flex items-center gap-2.5">
                 <LanguageSwitch />
-                <button
-                  onClick={() => setNotifOpen((v) => !v)}
-                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  aria-label={t.notifications}
-                  aria-expanded={notifOpen}
-                >
-                  <Bell className="h-4 w-4" />
-                  {events.length > 0 && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blue-600" />}
-                </button>
+                <NotificationBell t={t} sellerId={setup?.sellerId} />
 
                 <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 sm:flex">
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-semibold text-indigo-700">{ownerInitial}</div>
@@ -444,24 +422,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">{t.logout}</span>
                 </button>
-
-                {notifOpen && (
-                  <div className="absolute right-0 top-12 z-50 w-[22rem] max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-4 shadow-md">
-                    <h3 className="text-sm font-semibold text-slate-800">{t.notifications}</h3>
-                    <ul className="mt-2 max-h-80 space-y-2 overflow-y-auto pr-1">
-                      {events.length === 0 ? (
-                        <li className="text-sm text-slate-500">{t.noNotifications}</li>
-                      ) : (
-                        events.map((evt) => (
-                          <li key={evt.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-                            <p className="text-slate-800">{evt.message}</p>
-                            <p className="text-xs text-slate-400">{new Date(evt.createdAt).toLocaleString()}</p>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                )}
               </div>
             </div>
           </header>

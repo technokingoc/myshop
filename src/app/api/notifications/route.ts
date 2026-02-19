@@ -3,23 +3,40 @@ import { getDb } from "@/lib/db";
 import { notifications, orders } from "@/lib/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { getSessionFromCookie } from "@/lib/session";
+import { getCustomerSession } from "@/lib/customer-session";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSessionFromCookie();
-    const sellerId = session?.sellerId;
-    
-    if (!sellerId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const url = new URL(req.url);
+    const isCustomer = url.searchParams.get("customer") === "true";
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
     const unreadOnly = url.searchParams.get("unread") === "true";
 
     const db = getDb();
-    
-    const filters = [eq(notifications.sellerId, Number(sellerId))];
+    let filters: any[] = [];
+
+    if (isCustomer) {
+      // Handle customer notifications
+      const customerSession = await getCustomerSession();
+      const customerId = customerSession?.customerId;
+      
+      if (!customerId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      filters = [eq(notifications.customerId, Number(customerId))];
+    } else {
+      // Handle seller notifications
+      const session = await getSessionFromCookie();
+      const sellerId = session?.sellerId;
+      
+      if (!sellerId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      filters = [eq(notifications.sellerId, Number(sellerId))];
+    }
+
     if (unreadOnly) {
       filters.push(eq(notifications.read, false));
     }
@@ -87,13 +104,6 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await getSessionFromCookie();
-    const sellerId = session?.sellerId;
-    
-    if (!sellerId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await req.json();
     const { ids, read } = body;
 
@@ -101,16 +111,38 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
     }
 
+    // Check both session types
+    const sellerSession = await getSessionFromCookie();
+    const customerSession = await getCustomerSession();
+    
+    if (!sellerSession?.sellerId && !customerSession?.customerId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const db = getDb();
     
-    await db
-      .update(notifications)
-      .set({ read })
-      .where(and(
-        eq(notifications.sellerId, Number(sellerId)),
+    // Build where clause based on user type
+    let whereClause;
+    if (sellerSession?.sellerId) {
+      whereClause = and(
+        eq(notifications.sellerId, Number(sellerSession.sellerId)),
         // @ts-ignore - drizzle should handle this
         notifications.id.in(ids.map(id => Number(id)))
-      ));
+      );
+    } else if (customerSession?.customerId) {
+      whereClause = and(
+        eq(notifications.customerId, Number(customerSession.customerId)),
+        // @ts-ignore - drizzle should handle this
+        notifications.id.in(ids.map(id => Number(id)))
+      );
+    }
+
+    if (whereClause) {
+      await db
+        .update(notifications)
+        .set({ read })
+        .where(whereClause);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

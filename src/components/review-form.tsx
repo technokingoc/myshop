@@ -22,6 +22,7 @@ const dict = {
     cancel: "Cancel",
     error: "Error submitting review. Please try again.",
     success: "Review submitted successfully!",
+    successHint: "Your review is under moderation and will be published once approved by the seller.",
     ratingRequired: "Please select a rating",
     contentRequired: "Please write your review",
     loginRequired: "Please login to write a review",
@@ -51,6 +52,7 @@ const dict = {
     cancel: "Cancelar",
     error: "Erro ao enviar avaliação. Tente novamente.",
     success: "Avaliação enviada com sucesso!",
+    successHint: "Sua avaliação está em moderação e será publicada após aprovação do vendedor.",
     ratingRequired: "Selecione uma classificação",
     contentRequired: "Escreva sua avaliação",
     loginRequired: "Entre para escrever uma avaliação",
@@ -211,7 +213,7 @@ export default function ReviewForm({
           </svg>
         </div>
         <h3 className="mt-4 text-lg font-semibold text-slate-900">{t.success}</h3>
-        <p className="mt-2 text-sm text-slate-600">Your review will be published shortly.</p>
+        <p className="mt-2 text-sm text-slate-600">{t.successHint}</p>
       </div>
     );
   }
