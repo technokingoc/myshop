@@ -307,7 +307,6 @@ export function PublicHeader() {
             </div>
           )}
         </div>
-        </div>
       </div>
     </header>
   );
