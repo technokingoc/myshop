@@ -1,5 +1,50 @@
 import { pgTable, serial, text, varchar, numeric, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 
+// Unified users table (replaces both sellers and customers)
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 256 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  phone: varchar("phone", { length: 64 }).default(""),
+  avatarUrl: text("avatar_url").default(""),
+  city: varchar("city", { length: 256 }).default(""),
+  country: varchar("country", { length: 64 }).default(""),
+  role: varchar("role", { length: 32 }).default("user"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Stores table (replaces seller business info, one store per user)
+export const stores = pgTable("stores", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description").default(""),
+  logoUrl: text("logo_url").default(""),
+  bannerUrl: text("banner_url").default(""),
+  businessType: varchar("business_type", { length: 128 }).default("Retail"),
+  currency: varchar("currency", { length: 16 }).default("USD"),
+  socialLinks: jsonb("social_links").$type<{
+    whatsapp?: string;
+    instagram?: string;
+    facebook?: string;
+  }>().default({}),
+  plan: varchar("plan", { length: 32 }).default("free"),
+  themeColor: varchar("theme_color", { length: 32 }).default("indigo"),
+  storeTemplate: varchar("store_template", { length: 32 }).default("classic"),
+  headerTemplate: varchar("header_template", { length: 32 }).default("compact"),
+  businessHours: jsonb("business_hours").$type<Record<string, { open: string; close: string }>>().default({}),
+  address: text("address").default(""),
+  city: varchar("city", { length: 256 }).default(""),
+  country: varchar("country", { length: 64 }).default(""),
+  emailNotifications: boolean("email_notifications").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Legacy tables for backward compatibility during migration (can be removed later)
 export const sellers = pgTable("sellers", {
   id: serial("id").primaryKey(),
   slug: varchar("slug", { length: 128 }).notNull().unique(),
@@ -31,6 +76,18 @@ export const sellers = pgTable("sellers", {
   headerTemplate: varchar("header_template", { length: 32 }).default("compact"),
 });
 
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 256 }).notNull(),
+  email: varchar("email", { length: 256 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  phone: varchar("phone", { length: 64 }).default(""),
+  address: text("address").default(""),
+  city: varchar("city", { length: 256 }).default(""),
+  country: varchar("country", { length: 64 }).default(""),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const platformSettings = pgTable("platform_settings", {
   key: varchar("key", { length: 128 }).primaryKey(),
   value: text("value"),
@@ -39,7 +96,7 @@ export const platformSettings = pgTable("platform_settings", {
 
 export const catalogItems = pgTable("catalog_items", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => stores.id, { onDelete: "cascade" }), // Now references stores
   name: varchar("name", { length: 256 }).notNull(),
   type: varchar("type", { length: 32 }).notNull().default("Product"),
   price: numeric("price", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -75,7 +132,7 @@ export const productVariants = pgTable("product_variants", {
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
   catalogItemId: integer("catalog_item_id").references(() => catalogItems.id, { onDelete: "cascade" }),
-  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => stores.id, { onDelete: "cascade" }), // Now references stores
   authorName: varchar("author_name", { length: 100 }).notNull(),
   authorEmail: varchar("author_email", { length: 255 }),
   content: text("content").notNull(),
@@ -85,7 +142,7 @@ export const comments = pgTable("comments", {
 
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => stores.id, { onDelete: "cascade" }), // Now references stores
   itemId: integer("item_id"),
   customerName: varchar("customer_name", { length: 256 }).notNull(),
   customerContact: varchar("customer_contact", { length: 512 }).notNull(),
@@ -95,7 +152,7 @@ export const orders = pgTable("orders", {
   statusHistory: jsonb("status_history").$type<Array<{ status: string; at: string; note?: string }>>().default([]),
   couponCode: varchar("coupon_code", { length: 64 }).default(""),
   discountAmount: numeric("discount_amount", { precision: 10, scale: 2 }).default("0"),
-  customerId: integer("customer_id").references(() => customers.id),
+  customerId: integer("customer_id").references(() => users.id), // Now references users
   trackingToken: varchar("tracking_token", { length: 128 }).unique(),
   cancelReason: text("cancel_reason"),
   refundReason: text("refund_reason"),
@@ -103,21 +160,9 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const customers = pgTable("customers", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 256 }).notNull(),
-  email: varchar("email", { length: 256 }).notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
-  phone: varchar("phone", { length: 64 }).default(""),
-  address: text("address").default(""),
-  city: varchar("city", { length: 256 }).default(""),
-  country: varchar("country", { length: 64 }).default(""),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const coupons = pgTable("coupons", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => stores.id, { onDelete: "cascade" }), // Now references stores
   code: varchar("code", { length: 64 }).notNull(),
   type: varchar("type", { length: 16 }).notNull().default("percentage"),
   value: numeric("value", { precision: 10, scale: 2 }).notNull(),
@@ -156,15 +201,15 @@ export const locations = pgTable("locations", {
 
 export const wishlists = pgTable("wishlists", {
   id: serial("id").primaryKey(),
-  customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }), // Now references users
   catalogItemId: integer("catalog_item_id").notNull().references(() => catalogItems.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }),
-  customerId: integer("customer_id").references(() => customers.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => stores.id, { onDelete: "cascade" }), // Now references stores
+  customerId: integer("customer_id").references(() => users.id, { onDelete: "cascade" }), // Now references users
   type: varchar("type", { length: 64 }).notNull().default("order_status"),
   title: varchar("title", { length: 256 }).notNull(),
   message: text("message").notNull(),

@@ -4,183 +4,134 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import Link from "next/link";
-import { ImageUpload } from "@/components/image-upload";
-import { LocationSelect } from "@/components/location-select";
 
 const dict = {
   en: {
-    title: "Create your store",
-    subtitle: "Set up your MyShop seller account in minutes.",
-    step1: "Store details",
-    step2: "Your account",
-    step3: "Review & register",
-    storeName: "Store name",
-    storeNamePh: "Ex: Nanda Beauty Corner",
-    slug: "Store URL slug",
-    slugPh: "Ex: nanda-beauty",
-    slugHint: "Lowercase letters, numbers and dashes only. This becomes your store URL.",
-    logo: "Store logo (optional)",
-    ownerName: "Your name",
-    city: "City",
-    ownerNamePh: "Ex: Fernanda Silva",
-    email: "Email",
-    emailPh: "name@domain.com",
+    title: "Create your account",
+    subtitle: "Join MyShop and start shopping or selling",
+    name: "Full name",
+    namePh: "John Doe",
+    email: "Email address",
+    emailPh: "john@example.com",
     password: "Password",
-    passwordPh: "Minimum 8 characters",
-    confirmPassword: "Confirm password",
-    confirmPasswordPh: "Re-enter your password",
-    review: "Review your details",
-    store: "Store",
-    account: "Account",
-    back: "Back",
-    next: "Next",
+    passwordPh: "At least 6 characters",
+    phone: "Phone number (optional)",
+    phonePh: "+258 84 123 4567",
+    city: "City (optional)",
+    cityPh: "Maputo",
+    country: "Country (optional)",
+    countryPh: "Mozambique",
     register: "Create account",
     registering: "Creating account...",
-    success: "Account created successfully!",
-    successSub: "You can now log in with your email and password.",
-    goLogin: "Go to login",
+    success: "Welcome to MyShop!",
+    successSub: "Your account has been created successfully.",
+    continue: "Continue",
     haveAccount: "Already have an account?",
-    login: "Log in",
+    login: "Sign in",
+    storeOptionTitle: "Want to sell on MyShop?",
+    storeOptionDesc: "You can open your store anytime from your profile",
     errors: {
-      required: "This field is required.",
-      slugFormat: "Use only lowercase letters, numbers and dashes.",
+      nameRequired: "Full name is required.",
       emailInvalid: "Please enter a valid email address.",
-      passwordShort: "Password must be at least 8 characters.",
-      passwordMismatch: "Passwords do not match.",
-      emailTaken: "This email is already registered.",
-      slugTaken: "This store URL is already taken.",
+      passwordShort: "Password must be at least 6 characters.",
+      emailTaken: "An account with this email already exists.",
       generic: "Something went wrong. Please try again.",
     },
   },
   pt: {
-    title: "Crie a sua loja",
-    subtitle: "Configure a sua conta de vendedor MyShop em minutos.",
-    step1: "Dados da loja",
-    step2: "Sua conta",
-    step3: "Revisar e registar",
-    storeName: "Nome da loja",
-    storeNamePh: "Ex: Nanda Beauty Corner",
-    slug: "URL da loja",
-    slugPh: "Ex: nanda-beauty",
-    slugHint: "Use apenas minúsculas, números e hífen. Este será o URL da sua loja.",
-    logo: "Logo da loja (opcional)",
-    ownerName: "Seu nome",
-    city: "Cidade",
-    ownerNamePh: "Ex: Fernanda Silva",
+    title: "Criar conta",
+    subtitle: "Junte-se ao MyShop para comprar ou vender",
+    name: "Nome completo",
+    namePh: "João Silva",
     email: "Email",
-    emailPh: "nome@dominio.com",
+    emailPh: "joao@exemplo.com",
     password: "Palavra-passe",
-    passwordPh: "Mínimo 8 caracteres",
-    confirmPassword: "Confirmar palavra-passe",
-    confirmPasswordPh: "Re-introduza a palavra-passe",
-    review: "Revise os seus dados",
-    store: "Loja",
-    account: "Conta",
-    back: "Voltar",
-    next: "Próximo",
+    passwordPh: "Mínimo 6 caracteres",
+    phone: "Telemóvel (opcional)",
+    phonePh: "+258 84 123 4567",
+    city: "Cidade (opcional)",
+    cityPh: "Maputo",
+    country: "País (opcional)",
+    countryPh: "Moçambique",
     register: "Criar conta",
     registering: "A criar conta...",
-    success: "Conta criada com sucesso!",
-    successSub: "Pode agora entrar com o seu email e palavra-passe.",
-    goLogin: "Ir para login",
+    success: "Bem-vindo ao MyShop!",
+    successSub: "A sua conta foi criada com sucesso.",
+    continue: "Continuar",
     haveAccount: "Já tem conta?",
     login: "Entrar",
+    storeOptionTitle: "Quer vender no MyShop?",
+    storeOptionDesc: "Pode abrir a sua loja a qualquer momento no seu perfil",
     errors: {
-      required: "Este campo é obrigatório.",
-      slugFormat: "Use apenas minúsculas, números e hífen.",
+      nameRequired: "Nome completo é obrigatório.",
       emailInvalid: "Introduza um email válido.",
-      passwordShort: "A palavra-passe deve ter pelo menos 8 caracteres.",
-      passwordMismatch: "As palavras-passe não coincidem.",
-      emailTaken: "Este email já está registado.",
-      slugTaken: "Este URL de loja já está em uso.",
+      passwordShort: "A palavra-passe deve ter pelo menos 6 caracteres.",
+      emailTaken: "Já existe uma conta com este email.",
       generic: "Algo correu mal. Tente novamente.",
     },
   },
 };
 
-function sanitizeSlug(raw: string) {
-  return raw.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
-}
-
-export default function RegisterPage() {
+export default function UnifiedRegisterPage() {
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
   const router = useRouter();
 
-  const [step, setStep] = useState(1);
-  const [storeName, setStoreName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [ownerName, setOwnerName] = useState("");
-  const [city, setCity] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    city: "",
+    country: "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [logoUrl, setLogoUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [done, setDone] = useState(false);
 
-  const effectiveSlug = slug || sanitizeSlug(storeName);
+  const updateField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
 
-  const validateStep1 = () => {
+  const validate = () => {
     const e: Record<string, string> = {};
-    if (!storeName.trim()) e.storeName = t.errors.required;
-    if (!city.trim()) e.city = t.errors.required;
-    const s = effectiveSlug;
-    if (!s) e.slug = t.errors.required;
-    else if (!/^[a-z0-9-]+$/.test(s)) e.slug = t.errors.slugFormat;
+    
+    if (!formData.name.trim()) e.name = t.errors.nameRequired;
+    if (!formData.email.includes("@")) e.email = t.errors.emailInvalid;
+    if (formData.password.length < 6) e.password = t.errors.passwordShort;
+    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const validateStep2 = () => {
-    const e: Record<string, string> = {};
-    if (!ownerName.trim()) e.ownerName = t.errors.required;
-    if (!email.includes("@")) e.email = t.errors.emailInvalid;
-    if (password.length < 8) e.password = t.errors.passwordShort;
-    if (password !== confirmPassword) e.confirmPassword = t.errors.passwordMismatch;
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
 
-  const onNext = () => {
-    if (step === 1 && validateStep1()) setStep(2);
-    else if (step === 2 && validateStep2()) setStep(3);
-  };
-
-  const onBack = () => {
-    setErrors({});
-    setApiError("");
-    setStep((s) => Math.max(1, s - 1));
-  };
-
-  const onSubmit = async () => {
-    if (!validateStep1() || !validateStep2()) return;
     setLoading(true);
     setApiError("");
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/unified/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storeName,
-          slug: effectiveSlug,
-          ownerName,
-          city,
-          email,
-          password,
-          logoUrl: logoUrl || undefined,
-        }),
+        credentials: "include",
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.error?.includes("email")) setApiError(t.errors.emailTaken);
-        else if (data.error?.includes("slug")) setApiError(t.errors.slugTaken);
-        else setApiError(data.error || t.errors.generic);
+        if (data.error?.toLowerCase().includes("email")) {
+          setApiError(t.errors.emailTaken);
+        } else {
+          setApiError(data.error || t.errors.generic);
+        }
         setLoading(false);
         return;
       }
@@ -188,9 +139,12 @@ export default function RegisterPage() {
       setDone(true);
     } catch {
       setApiError(t.errors.generic);
-    } finally {
       setLoading(false);
     }
+  };
+
+  const onContinue = () => {
+    router.push("/"); // Go to home page after registration
   };
 
   if (done) {
@@ -204,18 +158,23 @@ export default function RegisterPage() {
           </div>
           <h1 className="mt-4 text-xl font-bold text-slate-900">{t.success}</h1>
           <p className="mt-2 text-sm text-slate-600">{t.successSub}</p>
+          
+          {/* Store option hint */}
+          <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-3 text-left">
+            <h3 className="text-sm font-medium text-blue-900">{t.storeOptionTitle}</h3>
+            <p className="mt-1 text-xs text-blue-700">{t.storeOptionDesc}</p>
+          </div>
+          
           <button
-            onClick={() => router.push("/login")}
+            onClick={onContinue}
             className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
-            {t.goLogin}
+            {t.continue}
           </button>
         </div>
       </main>
     );
   }
-
-  const steps = [t.step1, t.step2, t.step3];
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-14">
@@ -223,99 +182,72 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{t.subtitle}</p>
 
-        {/* Step indicator */}
-        <div className="mt-5 flex gap-2">
-          {steps.map((label, i) => (
-            <div key={label} className="flex-1">
-              <div className={`h-1.5 rounded-full ${i + 1 <= step ? "bg-blue-600" : "bg-slate-200"}`} />
-              <p className={`mt-1.5 text-xs ${i + 1 === step ? "font-medium text-slate-900" : "text-slate-500"}`}>{label}</p>
-            </div>
-          ))}
-        </div>
-
         {apiError && (
           <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{apiError}</div>
         )}
 
-        <div className="mt-5 grid gap-3">
-          {step === 1 && (
-            <>
-              <Field label={t.storeName} value={storeName} placeholder={t.storeNamePh} error={errors.storeName} onChange={setStoreName} />
-              <div>
-                <label className="text-sm text-slate-700">{t.city}</label>
-                <div className="mt-1">
-                  <LocationSelect value={city} onChange={setCity} />
-                </div>
-                {errors.city && <span className="text-xs text-rose-600">{errors.city}</span>}
-              </div>
-              <div>
-                <Field label={t.slug} value={slug} placeholder={t.slugPh} error={errors.slug} onChange={(v) => setSlug(sanitizeSlug(v))} />
-                <p className="mt-1 text-xs text-slate-500">{t.slugHint}</p>
-                {effectiveSlug && !errors.slug && (
-                  <p className="mt-1 text-xs text-slate-500">→ /s/{effectiveSlug}</p>
-                )}
-              </div>
-              <div>
-                <label className="text-sm text-slate-700">{t.logo}</label>
-                <div className="mt-1">
-                  <ImageUpload currentUrl={logoUrl} onUrlChange={setLogoUrl} />
-                </div>
-              </div>
-            </>
-          )}
+        <form onSubmit={onSubmit} className="mt-5 grid gap-3">
+          <Field
+            label={t.name}
+            value={formData.name}
+            placeholder={t.namePh}
+            error={errors.name}
+            onChange={(v) => updateField("name", v)}
+            required
+          />
 
-          {step === 2 && (
-            <>
-              <Field label={t.ownerName} value={ownerName} placeholder={t.ownerNamePh} error={errors.ownerName} onChange={setOwnerName} />
-              <div>
-                <label className="text-sm text-slate-700">{t.city}</label>
-                <LocationSelect
-                  value={city}
-                  onChange={setCity}
-                  className="mt-1"
-                  placeholder={lang === "pt" ? "Selecionar cidade" : "Select city"}
-                />
-              </div>
-              <Field label={t.email} value={email} placeholder={t.emailPh} error={errors.email} onChange={setEmail} type="email" />
-              <Field label={t.password} value={password} placeholder={t.passwordPh} error={errors.password} onChange={setPassword} type="password" />
-              <Field label={t.confirmPassword} value={confirmPassword} placeholder={t.confirmPasswordPh} error={errors.confirmPassword} onChange={setConfirmPassword} type="password" />
-            </>
-          )}
+          <Field
+            label={t.email}
+            value={formData.email}
+            placeholder={t.emailPh}
+            error={errors.email}
+            onChange={(v) => updateField("email", v)}
+            type="email"
+            required
+          />
 
-          {step === 3 && (
-            <div className="grid gap-3">
-              <h3 className="font-medium text-slate-800">{t.review}</h3>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs font-semibold uppercase text-slate-500">{t.store}</p>
-                <p className="mt-1 text-sm text-slate-800">{storeName}</p>
-                <p className="text-sm text-slate-600">/s/{effectiveSlug}</p>
-                <p className="text-sm text-slate-600">{city}</p>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs font-semibold uppercase text-slate-500">{t.account}</p>
-                <p className="mt-1 text-sm text-slate-800">{ownerName}</p>
-                <p className="text-sm text-slate-600">{email}</p>
-              </div>
-            </div>
-          )}
-        </div>
+          <Field
+            label={t.password}
+            value={formData.password}
+            placeholder={t.passwordPh}
+            error={errors.password}
+            onChange={(v) => updateField("password", v)}
+            type="password"
+            required
+          />
 
-        <div className="mt-5 flex gap-2">
-          {step > 1 && (
-            <button onClick={onBack} className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
-              {t.back}
-            </button>
-          )}
-          {step < 3 ? (
-            <button onClick={onNext} className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-              {t.next}
-            </button>
-          ) : (
-            <button onClick={onSubmit} disabled={loading} className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
-              {loading ? t.registering : t.register}
-            </button>
-          )}
-        </div>
+          <Field
+            label={t.phone}
+            value={formData.phone}
+            placeholder={t.phonePh}
+            error={errors.phone}
+            onChange={(v) => updateField("phone", v)}
+          />
+
+          <Field
+            label={t.city}
+            value={formData.city}
+            placeholder={t.cityPh}
+            error={errors.city}
+            onChange={(v) => updateField("city", v)}
+          />
+
+          <Field
+            label={t.country}
+            value={formData.country}
+            placeholder={t.countryPh}
+            error={errors.country}
+            onChange={(v) => updateField("country", v)}
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            {loading ? t.registering : t.register}
+          </button>
+        </form>
 
         <p className="mt-4 text-center text-sm text-slate-600">
           {t.haveAccount}{" "}
@@ -333,6 +265,7 @@ function Field({
   placeholder,
   error,
   type = "text",
+  required = false,
 }: {
   label: string;
   value: string;
@@ -340,10 +273,14 @@ function Field({
   placeholder?: string;
   error?: string;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-slate-700">{label}</span>
+      <span className="text-slate-700">
+        {label}
+        {required && <span className="text-rose-500 ml-1">*</span>}
+      </span>
       <input
         type={type}
         value={value}

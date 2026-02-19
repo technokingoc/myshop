@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X, Home } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, Home, Store, ShoppingBag, User, Plus } from "lucide-react";
 import { LanguageSwitch } from "@/components/language-switch";
 import { useLanguage } from "@/lib/language";
 
@@ -12,10 +12,18 @@ const dict = {
     home: "Home",
     stores: "Stores",
     pricing: "Pricing",
-    login: "Login",
+    login: "Sign In",
     register: "Register",
     dashboard: "Dashboard",
     startFree: "Start free",
+    openStore: "Open Store",
+    shopping: "Shopping",
+    myStore: "My Store",
+    switchToShopping: "Switch to Shopping",
+    switchToSelling: "Switch to My Store",
+    profile: "Profile",
+    orders: "Orders",
+    logout: "Sign Out",
   },
   pt: {
     home: "Início",
@@ -25,6 +33,14 @@ const dict = {
     register: "Criar conta",
     dashboard: "Painel",
     startFree: "Começar grátis",
+    openStore: "Abrir Loja",
+    shopping: "Compras",
+    myStore: "Minha Loja",
+    switchToShopping: "Mudar para Compras",
+    switchToSelling: "Mudar para Minha Loja",
+    profile: "Perfil",
+    orders: "Encomendas",
+    logout: "Sair",
   },
 };
 
@@ -32,23 +48,58 @@ export function PublicHeader() {
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Determine current mode based on path
+  const isSellerMode = pathname?.startsWith("/dashboard") || pathname?.startsWith("/seller");
+  const isShoppingMode = !isSellerMode;
 
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
+    fetch("/api/auth/unified/me", { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => {
-        if (d?.session) {
-          setLoggedIn(true);
-          if (d.session.role === "admin") setIsAdmin(true);
+      .then((data) => {
+        if (data?.success) {
+          setSession(data.user);
         }
+        setLoading(false);
       })
-      .catch(() => {});
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
-  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => { 
+    setOpen(false);
+    setShowProfileMenu(false);
+  }, [pathname]);
+
+  const handleModeSwitch = (toSellerMode: boolean) => {
+    if (toSellerMode && session?.hasStore) {
+      router.push("/dashboard");
+    } else if (toSellerMode && !session?.hasStore) {
+      router.push("/open-store");
+    } else {
+      router.push("/");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/unified/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      setSession(null);
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const navLinks = [
     { href: "/", label: t.home },
@@ -76,6 +127,36 @@ export function PublicHeader() {
             <span>MyShop</span>
           </Link>
 
+          {/* Mode switcher - only show when logged in */}
+          {session && (
+            <div className="hidden md:flex items-center">
+              <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1">
+                <button
+                  onClick={() => handleModeSwitch(false)}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-all ${
+                    isShoppingMode
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <ShoppingBag className="h-3 w-3" />
+                  {t.shopping}
+                </button>
+                <button
+                  onClick={() => handleModeSwitch(true)}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-all ${
+                    isSellerMode
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Store className="h-3 w-3" />
+                  {session.hasStore ? t.myStore : t.openStore}
+                </button>
+              </div>
+            </div>
+          )}
+
           <nav className="hidden items-center gap-0.5 md:flex">
             {navLinks.map((link) => (
               <Link
@@ -90,56 +171,105 @@ export function PublicHeader() {
                 {link.label}
               </Link>
             ))}
-            {loggedIn ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
-                >
-                  {t.dashboard}
-                </Link>
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-50 hover:text-violet-700"
-                  >
-                    Admin
-                  </Link>
-                )}
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  pathname === "/login"
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
-                }`}
-              >
-                {t.login}
-              </Link>
-            )}
           </nav>
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="flex items-center gap-3">
           <LanguageSwitch />
-          {loggedIn ? (
-            <Link href="/dashboard" className="ui-btn ui-btn-primary">
-              {t.dashboard}
-            </Link>
-          ) : (
-            <Link href="/register" className="ui-btn ui-btn-primary">
-              {t.startFree}
-            </Link>
-          )}
-        </div>
+          
+          {loading ? (
+            <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200"></div>
+          ) : session ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:block">{session.name}</span>
+              </button>
+              
+              {showProfileMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                  <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-100">
+                    {session.email}
+                  </div>
+                  
+                  {/* Mobile mode switcher */}
+                  <div className="md:hidden border-b border-slate-100 p-2">
+                    <button
+                      onClick={() => handleModeSwitch(!isSellerMode)}
+                      className="flex w-full items-center gap-2 rounded px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      {isSellerMode ? (
+                        <>
+                          <ShoppingBag className="h-3 w-3" />
+                          {t.switchToShopping}
+                        </>
+                      ) : (
+                        <>
+                          <Store className="h-3 w-3" />
+                          {session.hasStore ? t.switchToSelling : t.openStore}
+                        </>
+                      )}
+                    </button>
+                  </div>
 
-        <div className="flex items-center gap-2 md:hidden">
-          <LanguageSwitch />
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <User className="h-4 w-4" />
+                    {t.profile}
+                  </Link>
+                  
+                  <Link
+                    href="/orders"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    {t.orders}
+                  </Link>
+
+                  {session.hasStore && (
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      <Store className="h-4 w-4" />
+                      {t.dashboard}
+                    </Link>
+                  )}
+                  
+                  <div className="border-t border-slate-100 mt-1 pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+                    >
+                      <X className="h-4 w-4" />
+                      {t.logout}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                {t.login}
+              </Link>
+              <Link href="/register" className="ui-btn ui-btn-primary">
+                {t.startFree}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Mobile menu */}
       {open && (
         <div className="border-t border-slate-200 bg-white p-4 md:hidden">
           <div className="space-y-1">
@@ -153,18 +283,8 @@ export function PublicHeader() {
                 {link.label}
               </Link>
             ))}
-            {loggedIn ? (
-              <>
-                <Link href="/dashboard" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                  {t.dashboard}
-                </Link>
-                {isAdmin && (
-                  <Link href="/admin" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-violet-600 hover:bg-violet-50">
-                    Admin
-                  </Link>
-                )}
-              </>
-            ) : (
+            
+            {!session && (
               <>
                 <Link href="/login" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                   {t.login}
@@ -175,17 +295,14 @@ export function PublicHeader() {
               </>
             )}
           </div>
-          <div className="mt-3">
-            {loggedIn ? (
-              <Link href="/dashboard" onClick={() => setOpen(false)} className="ui-btn ui-btn-primary w-full justify-center">
-                {t.dashboard}
-              </Link>
-            ) : (
+          
+          {!session && (
+            <div className="mt-3">
               <Link href="/register" onClick={() => setOpen(false)} className="ui-btn ui-btn-primary w-full justify-center">
                 {t.startFree}
               </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </header>

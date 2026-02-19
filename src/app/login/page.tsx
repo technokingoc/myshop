@@ -8,14 +8,14 @@ import Link from "next/link";
 
 const dict = {
   en: {
-    title: "Seller login",
-    subtitle: "Access your seller workspace",
+    title: "Welcome back",
+    subtitle: "Sign in to your MyShop account",
     email: "Email",
     emailPh: "name@domain.com",
     password: "Password",
     passwordPh: "Enter your password",
     remember: "Remember email",
-    login: "Log in",
+    login: "Sign in",
     loading: "Signing in...",
     noAccount: "Don't have an account?",
     register: "Create one",
@@ -25,8 +25,8 @@ const dict = {
     genericError: "Something went wrong. Please try again.",
   },
   pt: {
-    title: "Login do vendedor",
-    subtitle: "Aceda ao seu espaço de vendedor",
+    title: "Bem-vindo de volta",
+    subtitle: "Faça login na sua conta MyShop",
     email: "Email",
     emailPh: "nome@dominio.com",
     password: "Palavra-passe",
@@ -43,7 +43,7 @@ const dict = {
   },
 };
 
-export default function LoginPage() {
+export default function UnifiedLoginPage() {
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
   const router = useRouter();
@@ -75,7 +75,7 @@ export default function LoginPage() {
     setApiError("");
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/unified/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -92,10 +92,14 @@ export default function LoginPage() {
 
       if (remember) rememberEmail(email);
 
+      // Route users based on whether they have a store
       const redirect = typeof window !== "undefined"
         ? new URLSearchParams(window.location.search).get("redirect")
         : null;
-      router.replace(redirect || "/dashboard");
+      
+      // If they have a store, go to dashboard, otherwise go to browse/home
+      const defaultRoute = data.user.hasStore ? "/dashboard" : "/";
+      router.replace(redirect || defaultRoute);
     } catch {
       setApiError(t.genericError);
       setLoading(false);
