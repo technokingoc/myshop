@@ -25,7 +25,7 @@ interface Props {
 }
 
 export default function ProductPage({ product, seller, store, reviews, slug }: Props) {
-  const { t, lang } = useLanguage();
+  const { lang } = useLanguage();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -85,7 +85,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
     
     // Show success message
     const event = new CustomEvent('show-toast', {
-      detail: { message: t.addedToCart || 'Added to cart', type: 'success' }
+      detail: { message: lang === 'pt' ? 'Adicionado ao carrinho' : 'Added to cart', type: 'success' }
     });
     window.dispatchEvent(event);
   };
@@ -313,7 +313,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
             
             <button
               onClick={addToCart}
-              className={`flex-1 ${theme.bg} ${theme.hover} text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2`}
+              className={`flex-1 ${theme.bg} hover:opacity-90 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2`}
             >
               <ShoppingCart className="h-5 w-5" />
               <span>Add to Cart</span>
