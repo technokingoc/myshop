@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, Store, Loader2, X, Star, ShoppingBag, Package, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/lib/language";
+import { FAB } from "@/components/fab";
 import { StoreCard } from "@/components/store-card";
 import { Footer } from "@/components/footer";
 import { useCategories, flattenCategories } from "@/components/category-select";
@@ -223,7 +224,7 @@ function StoresContent() {
         <div className="mx-auto max-w-5xl px-4 pb-4 pt-8 sm:px-6 sm:pt-10">
           {/* Search bar */}
           <form onSubmit={handleSearch} className="mx-auto max-w-2xl">
-            <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
+            <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-green-300 focus-within:ring-2 focus-within:ring-green-100">
               <Search className="ml-4 h-5 w-5 shrink-0 text-slate-400" />
               <input
                 type="text"
@@ -232,7 +233,7 @@ function StoresContent() {
                 placeholder={t.searchPh}
                 className="min-w-0 flex-1 border-0 bg-transparent px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
               />
-              <button type="submit" className="mr-1.5 shrink-0 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+              <button type="submit" className="mr-1.5 shrink-0 rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700">
                 {t.searchBtn}
               </button>
             </div>
@@ -244,7 +245,7 @@ function StoresContent() {
             <button
               onClick={() => setCategory("")}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                !category ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
+                !category ? "bg-green-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:border-green-300"
               }`}
             >
               {t.all}
@@ -254,7 +255,7 @@ function StoresContent() {
                 key={cat.slug}
                 onClick={() => setCategory(cat.slug === category ? "" : cat.slug)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  category === cat.slug ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
+                  category === cat.slug ? "bg-green-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:border-green-300"
                 }`}
               >
                 {cat.label}
@@ -311,7 +312,7 @@ function StoresContent() {
               onClick={() => { setTab(tb); setCategory(""); setOffset(0); }}
               className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 tab === tb
-                  ? "border-indigo-600 text-indigo-600"
+                  ? "border-green-600 text-green-600"
                   : "border-transparent text-slate-500 hover:text-slate-700"
               }`}
             >
@@ -376,6 +377,11 @@ function StoresContent() {
       </section>
 
       <Footer />
+      
+      {/* FAB for mobile */}
+      <FAB href="/register" icon={Store}>
+        Open Store
+      </FAB>
     </div>
   );
 }
@@ -402,7 +408,7 @@ function EmptyState({ icon: Icon, title, sub }: { icon: typeof Store; title: str
           </Link>
           <Link 
             href="/register" 
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700"
           >
             <Store className="h-4 w-4" />
             {lang === "pt" ? "Criar Loja" : "Create Store"}
@@ -417,7 +423,7 @@ function ProductSearchCard({ product, t }: { product: ProductData; t: Record<str
   return (
     <Link
       href={`/s/${product.sellerSlug}`}
-      className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-indigo-200 hover:shadow-xl hover:-translate-y-1"
+      className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-green-200 hover:shadow-xl hover:-translate-y-1"
     >
       {/* Product image with overlay effects */}
       <div className="relative aspect-square overflow-hidden bg-slate-50">
@@ -440,7 +446,7 @@ function ProductSearchCard({ product, t }: { product: ProductData; t: Record<str
       
       {/* Content with enhanced spacing and typography */}
       <div className="p-4">
-        <h3 className="truncate text-sm font-bold text-slate-900 group-hover:text-indigo-900 transition-colors">
+        <h3 className="truncate text-sm font-bold text-slate-900 group-hover:text-green-900 transition-colors">
           {product.name}
         </h3>
         
@@ -462,7 +468,7 @@ function ProductSearchCard({ product, t }: { product: ProductData; t: Record<str
         
         {/* Price with enhanced styling */}
         <div className="mt-3 flex items-center justify-between">
-          <span className="text-base font-bold text-indigo-600">
+          <span className="text-base font-bold text-green-600">
             {product.sellerCurrency || "USD"} {product.price}
           </span>
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">

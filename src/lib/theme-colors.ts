@@ -12,18 +12,18 @@ export const themeColorMap: Record<string, {
   pillActive: string;
   gradient: string;
 }> = {
-  indigo: {
-    btn: "bg-indigo-600",
-    btnHover: "hover:bg-indigo-700",
-    text: "text-indigo-600",
-    border: "border-indigo-300",
-    bg: "bg-indigo-50",
-    bgLight: "bg-indigo-50/50",
-    tab: "text-indigo-600",
-    tabBorder: "border-indigo-600",
-    pill: "border-indigo-300 bg-indigo-50 text-indigo-700",
-    pillActive: "border-indigo-300 bg-indigo-50 text-indigo-700",
-    gradient: "from-indigo-500 to-slate-400",
+  green: {
+    btn: "bg-green-600",
+    btnHover: "hover:bg-green-700",
+    text: "text-green-600",
+    border: "border-green-300",
+    bg: "bg-green-50",
+    bgLight: "bg-green-50/50",
+    tab: "text-green-600",
+    tabBorder: "border-green-600",
+    pill: "border-green-300 bg-green-50 text-green-700",
+    pillActive: "border-green-300 bg-green-50 text-green-700",
+    gradient: "from-green-500 to-slate-400",
   },
   emerald: {
     btn: "bg-emerald-600",
@@ -93,5 +93,5 @@ export const themeColorMap: Record<string, {
 };
 
 export function getTheme(color: string) {
-  return themeColorMap[color] || themeColorMap.indigo;
+  return themeColorMap[color] || themeColorMap.green;
 }

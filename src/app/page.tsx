@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { Footer } from "@/components/footer";
+import { FAB } from "@/components/fab";
 import {
   ArrowRight,
   Search,
@@ -164,14 +165,14 @@ export default function HomePage() {
   return (
     <div className="min-h-screen text-slate-900">
       {/* Hero — above the fold */}
-      <section className="relative bg-gradient-to-b from-indigo-50/80 via-white to-white overflow-hidden">
+      <section className="relative bg-gradient-to-b from-green-50/80 via-white to-white overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 bg-grid-slate-100/40 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
         <div className="absolute left-1/2 top-0 -z-10 -translate-x-1/2 blur-3xl opacity-20">
-          <div className="h-64 w-64 rounded-full bg-gradient-to-br from-indigo-400 to-purple-600" />
+          <div className="h-64 w-64 rounded-full bg-gradient-to-br from-green-400 to-emerald-600" />
         </div>
 
-        <div className="relative mx-auto max-w-4xl px-4 pb-8 pt-16 text-center sm:pt-20 lg:pt-24">
+        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-16 text-center sm:pt-20 lg:pt-32">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
             {t.heroTitle}
           </h1>
@@ -181,7 +182,7 @@ export default function HomePage() {
 
           {/* Enhanced search bar */}
           <form onSubmit={handleSearch} className="mx-auto mt-8 max-w-2xl">
-            <div className="flex items-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100 transition-all">
+            <div className="flex items-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg focus-within:border-green-400 focus-within:ring-4 focus-within:ring-green-100 transition-all">
               <Search className="ml-5 h-5 w-5 shrink-0 text-slate-400" />
               <input
                 type="text"
@@ -192,7 +193,7 @@ export default function HomePage() {
               />
               <button
                 type="submit"
-                className="mr-2 shrink-0 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-indigo-700 hover:shadow-md sm:px-8 sm:py-4"
+                className="mr-2 shrink-0 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-green-700 hover:shadow-md sm:px-8 sm:py-4"
               >
                 {t.searchBtn}
               </button>
@@ -208,7 +209,7 @@ export default function HomePage() {
                   <Link
                     key={cat.slug}
                     href={`/stores?category=${encodeURIComponent(cat.slug)}`}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 hover:shadow-md hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-green-300 hover:bg-green-50 hover:text-green-700 hover:shadow-md hover:-translate-y-0.5"
                   >
                     <Icon className="h-4 w-4" />
                     {cat.label}
@@ -249,11 +250,11 @@ export default function HomePage() {
       </section>
 
       {/* Featured stores — horizontal scroll */}
-      <section className="py-8">
+      <section className="py-16 bg-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900">{t.featured}</h2>
-            <Link href="/stores" className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700">
+            <Link href="/stores" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700">
               {t.viewAll} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -267,15 +268,15 @@ export default function HomePage() {
           ) : (
             <div className="mt-8 text-center">
               <div className="mx-auto w-full max-w-lg rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/30 px-6 py-12">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100">
-                  <Store className="h-8 w-8 text-indigo-600" />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                  <Store className="h-8 w-8 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">{t.noStores}</h3>
                 <p className="mt-2 text-sm text-slate-600">
                   Join our growing marketplace and start your business journey today. 
                 </p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                  <Link href="/register" className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md">
+                  <Link href="/register" className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700 hover:shadow-md">
                     {t.createStore} <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link href="/pricing" className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
@@ -289,7 +290,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works — ultra compact */}
-      <section className="border-y border-slate-100 bg-slate-50/50 py-8">
+      <section className="border-y border-slate-100 bg-slate-50/50 py-16">
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 sm:flex-row sm:justify-center sm:gap-12">
           {[
             { icon: UserPlus, text: t.how1 },
@@ -297,11 +298,11 @@ export default function HomePage() {
             { icon: Rocket, text: t.how3 },
           ].map((step, i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-600">
                 <step.icon className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-semibold text-indigo-500">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-[10px] font-semibold text-green-500">{String(i + 1).padStart(2, "0")}</span>
                 <p className="text-sm font-medium text-slate-800">{step.text}</p>
               </div>
             </div>
@@ -310,12 +311,12 @@ export default function HomePage() {
       </section>
 
       {/* CTA — single line */}
-      <section className="py-8">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 rounded-xl bg-indigo-600 px-6 py-5 sm:px-8">
+      <section className="py-16 bg-white">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 rounded-2xl bg-green-600 px-8 py-8 sm:px-12">
           <p className="text-sm font-semibold text-white sm:text-base">{t.ctaLine}</p>
           <Link
             href="/register"
-            className="shrink-0 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 sm:px-6"
+            className="shrink-0 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 sm:px-6"
           >
             {t.ctaBtn}
           </Link>
@@ -323,6 +324,11 @@ export default function HomePage() {
       </section>
 
       <Footer />
+      
+      {/* FAB for mobile */}
+      <FAB href="/stores" icon={Store}>
+        Browse Stores
+      </FAB>
     </div>
   );
 }
@@ -332,10 +338,10 @@ function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, s
   return (
     <Link
       href={`/s/${store.slug}`}
-      className="group flex w-64 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-indigo-200 hover:shadow-xl hover:-translate-y-1 sm:w-72"
+      className="group flex w-64 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-green-200 hover:shadow-xl hover:-translate-y-1 sm:w-72"
     >
       {/* Banner */}
-      <div className="relative h-24 bg-gradient-to-br from-indigo-100 via-purple-50 to-slate-100">
+      <div className="relative h-24 bg-gradient-to-br from-green-100 via-emerald-50 to-slate-100">
         {store.bannerUrl && (
           <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
         )}
@@ -350,7 +356,7 @@ function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, s
             {store.logoUrl ? (
               <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white">
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-green-500 to-emerald-600 text-sm font-bold text-white">
                 {store.name.charAt(0)}
               </div>
             )}
@@ -358,7 +364,7 @@ function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, s
           
           {/* Store info */}
           <div className="min-w-0 flex-1 pt-1">
-            <h3 className="truncate text-base font-bold text-slate-900 group-hover:text-indigo-900">{store.name}</h3>
+            <h3 className="truncate text-base font-bold text-slate-900 group-hover:text-green-900">{store.name}</h3>
             {store.city && (
               <p className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
                 <MapPin className="h-3 w-3" />
@@ -390,7 +396,7 @@ function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, s
         
         {/* Visit CTA */}
         <div className="mt-auto pt-3">
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 group-hover:text-indigo-700 group-hover:gap-2 transition-all">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-600 group-hover:text-green-700 group-hover:gap-2 transition-all">
             {t.visit}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </span>

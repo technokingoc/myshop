@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Megaphone,
   Zap,
+  Truck,
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -50,6 +51,7 @@ const dict = {
     promotions: "Promotions",
     flashSales: "Flash Sales",
     reviews: "Reviews",
+    shipping: "Shipping",
     setup: "Setup",
     pricing: "Pricing",
     notifications: "Notifications",
@@ -75,6 +77,7 @@ const dict = {
     promotions: "Promoções",
     flashSales: "Vendas Relâmpago",
     reviews: "Avaliações",
+    shipping: "Envio",
     setup: "Configurar",
     pricing: "Preços",
     notifications: "Notificações",
@@ -212,6 +215,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/dashboard/promotions")) return "promotions";
     if (pathname.startsWith("/dashboard/flash-sales")) return "flash-sales";
     if (pathname.startsWith("/dashboard/reviews")) return "reviews";
+    if (pathname.startsWith("/dashboard/shipping")) return "shipping";
     if (pathname.startsWith("/dashboard/notifications")) return "notifications";
     return "dashboard";
   }, [pathname]);
@@ -257,6 +261,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     { label: t.dashboard, icon: LayoutDashboard, href: "/dashboard", key: "dashboard" },
     { label: t.orders, icon: ShoppingCart, href: "/dashboard/orders", key: "orders" },
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
+    { label: t.shipping, icon: Truck, href: "/dashboard/shipping", key: "shipping" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
     { label: t.promotions, icon: Megaphone, href: "/dashboard/promotions", key: "promotions" },
@@ -274,6 +279,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const storeDropdownItems = [
     { label: t.orders, icon: ShoppingCart, href: "/dashboard/orders", key: "orders" },
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
+    { label: t.shipping, icon: Truck, href: "/dashboard/shipping", key: "shipping" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
     { label: t.promotions, icon: Megaphone, href: "/dashboard/promotions", key: "promotions" },

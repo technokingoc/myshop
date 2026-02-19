@@ -6,10 +6,19 @@ import { eq, and } from "drizzle-orm";
 import { CartItem, CartAddress } from "@/lib/cart";
 import { sendEmail } from "@/lib/email";
 
+interface ShippingMethod {
+  id: number;
+  name: string;
+  type: string;
+  cost: number;
+  estimatedDays: number;
+}
+
 export interface CheckoutRequest {
   items: CartItem[];
   shippingAddress: CartAddress;
   billingAddress?: CartAddress;
+  shippingMethod?: ShippingMethod;
   paymentMethod: 'bank_transfer' | 'cash_on_delivery' | 'mobile_money';
   notes?: string;
   couponCode?: string;
@@ -19,7 +28,7 @@ export interface CheckoutRequest {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as CheckoutRequest;
-    const { items, shippingAddress, billingAddress, paymentMethod, notes, couponCode, guestCheckout } = body;
+    const { items, shippingAddress, billingAddress, shippingMethod, paymentMethod, notes, couponCode, guestCheckout } = body;
     
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -159,6 +168,10 @@ export async function POST(request: NextRequest) {
       const storeDiscountAmount = totalOrderValue > 0 ? 
         (discountAmount * storeSubtotal / totalOrderValue) : 0;
       
+      // Calculate estimated delivery date
+      const estimatedDelivery = shippingMethod ? 
+        new Date(Date.now() + (shippingMethod.estimatedDays * 24 * 60 * 60 * 1000)) : null;
+
       // Create order record
       const orderData = {
         sellerId: storeId,
@@ -167,6 +180,7 @@ export async function POST(request: NextRequest) {
         message: [
           notes && `Notes: ${notes}`,
           `Payment method: ${paymentMethod}`,
+          shippingMethod && `Shipping: ${shippingMethod.name} ($${shippingMethod.cost.toFixed(2)})`,
           billingAddress && billingAddress !== shippingAddress ? 
             `Billing address: ${billingAddress.address}, ${billingAddress.city}, ${billingAddress.country}` : null,
           `Items ordered:\n${storeItems.map(item => 
@@ -183,6 +197,18 @@ export async function POST(request: NextRequest) {
         discountAmount: storeDiscountAmount.toString(),
         customerId: customerId,
         trackingToken: trackingToken,
+        // Shipping fields
+        shippingMethodId: shippingMethod?.id,
+        shippingCost: shippingMethod?.cost?.toString() || '0',
+        shippingAddress: {
+          name: shippingAddress.name,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          country: shippingAddress.country
+        },
+        estimatedDelivery,
         createdAt: new Date(),
       };
       
@@ -226,6 +252,7 @@ export async function POST(request: NextRequest) {
         orders: createdOrders,
         shippingAddress,
         billingAddress: billingAddress || shippingAddress,
+        shippingMethod,
         paymentMethod,
         discountAmount,
         couponCode,
@@ -285,6 +312,7 @@ async function sendOrderConfirmationEmail({
   orders,
   shippingAddress,
   billingAddress,
+  shippingMethod,
   paymentMethod,
   discountAmount,
   couponCode,
@@ -295,6 +323,7 @@ async function sendOrderConfirmationEmail({
   orders: any[];
   shippingAddress: CartAddress;
   billingAddress: CartAddress;
+  shippingMethod?: ShippingMethod;
   paymentMethod: string;
   discountAmount: number;
   couponCode?: string;
@@ -304,7 +333,8 @@ async function sendOrderConfirmationEmail({
     sum + items.reduce((itemSum: number, item: any) => itemSum + (item.price * item.quantity), 0), 0
   );
   
-  const total = subtotal - discountAmount;
+  const shippingCost = shippingMethod?.cost || 0;
+  const total = subtotal - discountAmount + shippingCost;
   
   const paymentMethodNames = {
     bank_transfer: 'Bank Transfer',
@@ -332,6 +362,7 @@ async function sendOrderConfirmationEmail({
     
     <h3>Pricing</h3>
     <p>Subtotal: $${subtotal.toFixed(2)}</p>
+    ${shippingMethod ? `<p>Shipping (${shippingMethod.name}): $${shippingCost.toFixed(2)}</p>` : ''}
     ${discountAmount > 0 ? `<p>Discount${couponCode ? ` (${couponCode})` : ''}: -$${discountAmount.toFixed(2)}</p>` : ''}
     <p><strong>Total: $${total.toFixed(2)}</strong></p>
     
@@ -342,6 +373,15 @@ async function sendOrderConfirmationEmail({
       ${shippingAddress.city}, ${shippingAddress.country}<br>
       Phone: ${shippingAddress.phone}
     </p>
+    
+    ${shippingMethod ? `
+    <h3>Shipping Information</h3>
+    <p>
+      <strong>Method:</strong> ${shippingMethod.name}<br>
+      <strong>Estimated Delivery:</strong> ${shippingMethod.estimatedDays} business days
+      ${shippingMethod.type === 'pickup' ? '<br><strong>Note:</strong> This is a pickup order. You will be contacted when ready for pickup.' : ''}
+    </p>
+    ` : ''}
     
     <h3>Payment Method</h3>
     <p>${paymentMethodNames[paymentMethod as keyof typeof paymentMethodNames]}</p>

@@ -1,9 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CartAddress } from '@/lib/cart';
 import { getDict, type AppLang } from '@/lib/i18n';
-import { User, Mail, Phone, MapPin, Globe, Check } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Globe, Check, Truck, Package, Clock, Loader2 } from 'lucide-react';
+
+interface ShippingMethod {
+  id: number;
+  name: string;
+  type: string;
+  cost: number;
+  estimatedDays: number;
+  description: string;
+  pickupAddress?: string;
+  pickupInstructions?: string;
+}
 
 interface ShippingFormProps {
   lang: AppLang;
@@ -13,6 +24,7 @@ interface ShippingFormProps {
     billingAddress?: CartAddress;
     useSameAddress: boolean;
     saveAddress: boolean;
+    selectedShippingMethod?: ShippingMethod;
   };
   customerSession: any;
   onUpdate: (data: any) => void;
@@ -39,8 +51,76 @@ export default function ShippingForm({
     }
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [loadingMethods, setLoadingMethods] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<ShippingMethod | null>(
+    data.selectedShippingMethod || null
+  );
   const dict = getDict(lang);
   
+  // Load shipping methods when address changes
+  useEffect(() => {
+    if (formData.city && formData.country) {
+      loadShippingMethods();
+    }
+  }, [formData.city, formData.country]);
+
+  const loadShippingMethods = async () => {
+    if (!formData.city || !formData.country) return;
+
+    setLoadingMethods(true);
+    try {
+      // Get sellerId from the first item in cart (assuming single-seller cart for now)
+      const cart = JSON.parse(localStorage.getItem('myshop_cart') || '{"items":[]}');
+      if (cart.items.length === 0) return;
+
+      const sellerId = cart.items[0].sellerId;
+      const cartTotal = cart.items.reduce((total: number, item: any) => 
+        total + (item.price * item.quantity), 0
+      );
+
+      const response = await fetch('/api/shipping/methods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sellerId,
+          customerLocation: {
+            city: formData.city,
+            country: formData.country
+          },
+          cartTotal
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setShippingMethods(result.methods || []);
+        
+        // Auto-select the first method if none selected
+        if (!selectedMethod && result.methods.length > 0) {
+          const firstMethod = result.methods[0];
+          setSelectedMethod(firstMethod);
+          onUpdate({
+            ...data,
+            selectedShippingMethod: firstMethod
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load shipping methods:', error);
+    } finally {
+      setLoadingMethods(false);
+    }
+  };
+
+  const handleMethodSelect = (method: ShippingMethod) => {
+    setSelectedMethod(method);
+    onUpdate({
+      ...data,
+      selectedShippingMethod: method
+    });
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
@@ -64,6 +144,10 @@ export default function ShippingForm({
     
     if (!formData.city.trim()) {
       newErrors.city = dict.checkout.cityRequired;
+    }
+
+    if (shippingMethods.length > 0 && !selectedMethod) {
+      newErrors.shipping = 'Please select a shipping method';
     }
     
     setErrors(newErrors);
@@ -272,6 +356,88 @@ export default function ShippingForm({
               </div>
             </div>
             
+            {/* Shipping Methods */}
+            {(shippingMethods.length > 0 || loadingMethods) && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  <Truck className="w-4 h-4 inline mr-2" />
+                  Shipping Method *
+                </label>
+                
+                {loadingMethods ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                    <span className="ml-2 text-gray-600">Loading shipping options...</span>
+                  </div>
+                ) : shippingMethods.length === 0 ? (
+                  <div className="text-center py-6 text-gray-500">
+                    <Truck className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>No shipping methods available for your location</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {shippingMethods.map((method) => (
+                      <div
+                        key={method.id}
+                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                          selectedMethod?.id === method.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => handleMethodSelect(method)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="radio"
+                              checked={selectedMethod?.id === method.id}
+                              onChange={() => handleMethodSelect(method)}
+                              className="w-4 h-4 text-blue-600"
+                            />
+                            <div className="flex items-center space-x-2">
+                              {method.type === 'pickup' ? (
+                                <Package className="w-4 h-4 text-gray-600" />
+                              ) : (
+                                <Truck className="w-4 h-4 text-gray-600" />
+                              )}
+                              <span className="font-medium text-gray-900">{method.name}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900">
+                              {method.cost === 0 ? 'Free' : `$${method.cost.toFixed(2)}`}
+                            </div>
+                            <div className="flex items-center text-sm text-gray-500">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {method.estimatedDays} days
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {method.description && (
+                          <p className="text-sm text-gray-600 mt-2">{method.description}</p>
+                        )}
+                        
+                        {method.type === 'pickup' && method.pickupAddress && (
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <p className="font-medium text-blue-900 mb-1">Pickup Location:</p>
+                            <p className="text-sm text-blue-800">{method.pickupAddress}</p>
+                            {method.pickupInstructions && (
+                              <p className="text-sm text-blue-700 mt-1">{method.pickupInstructions}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {errors.shipping && (
+                  <p className="text-sm text-red-600 mt-2">{errors.shipping}</p>
+                )}
+              </div>
+            )}
+            
             {/* Options */}
             <div className="space-y-3">
               {!customerSession && (
@@ -340,6 +506,24 @@ export default function ShippingForm({
           )}
         </div>
         
+        {selectedMethod && (
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h3 className="font-medium text-gray-900 mb-4">Selected Shipping</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{selectedMethod.name}</span>
+                <span className="font-medium text-gray-900">
+                  {selectedMethod.cost === 0 ? 'Free' : `$${selectedMethod.cost.toFixed(2)}`}
+                </span>
+              </div>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="w-3 h-3 mr-1" />
+                Estimated delivery: {selectedMethod.estimatedDays} days
+              </div>
+            </div>
+          </div>
+        )}
+
         {data.useSameAddress && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center">

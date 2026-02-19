@@ -18,6 +18,7 @@ import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-im
 import { getTheme } from "@/lib/theme-colors";
 import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
 import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
+import { FAB } from "@/components/fab";
 import { useCategories, flattenCategories } from "@/components/category-select";
 import { StorefrontSearch } from "@/components/storefront-search";
 import ProductReviews from "@/components/product-reviews";
@@ -311,7 +312,7 @@ export default function StorefrontPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-green-200 border-t-green-600" />
           <span className="mt-3 block text-sm text-slate-500">{t.loading}</span>
         </div>
       </div>
@@ -324,14 +325,14 @@ export default function StorefrontPage() {
         <AlertCircle className="h-10 w-10 text-slate-400" />
         <h1 className="mt-3 text-xl font-bold text-slate-900">{t.notFound}</h1>
         <p className="mt-1 text-sm text-slate-500">{t.notFoundHint}</p>
-        <Link href="/" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+        <Link href="/" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
           <Home className="h-4 w-4" /> {t.goHome}
         </Link>
       </div>
     );
   }
 
-  const theme = getTheme(seller.themeColor || "indigo");
+  const theme = getTheme(seller.themeColor || "green");
   const template = getTemplate(seller.storeTemplate || "classic");
   const social = seller.socialLinks || {};
   const bType = (seller.businessType || "").toLowerCase();
@@ -446,7 +447,7 @@ export default function StorefrontPage() {
               <Heart className="mx-auto h-10 w-10 text-red-400" />
               <p className="mt-3 text-sm font-medium text-slate-700">{t.loginToSave}</p>
               <div className="mt-4 flex gap-2">
-                <Link href={`/customer/login?redirect=/s/${slug}`} className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-indigo-700 transition">{t.login}</Link>
+                <Link href={`/customer/login?redirect=/s/${slug}`} className="flex-1 rounded-xl bg-green-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-green-700 transition">{t.login}</Link>
                 <button onClick={() => setLoginPrompt(false)} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">{t.close}</button>
               </div>
             </div>
@@ -459,6 +460,11 @@ export default function StorefrontPage() {
 
       {/* Toast Notifications */}
       <SimpleToast />
+      
+      {/* FAB for mobile */}
+      <FAB href="#contact" icon={MessageCircle}>
+        Contact Store
+      </FAB>
     </div>
   );
 }
@@ -515,7 +521,7 @@ function StorefrontActions({
             {wishlistCount > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{wishlistCount}</span>}
           </Link>
           <Link href="/customer/profile" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">{customer.name.charAt(0).toUpperCase()}</div>
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-[10px] font-bold text-green-600">{customer.name.charAt(0).toUpperCase()}</div>
             <span className="hidden sm:inline max-w-[80px] truncate">{customer.name.split(" ")[0]}</span>
           </Link>
         </>

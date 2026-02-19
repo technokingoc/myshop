@@ -92,12 +92,12 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`relative flex flex-col rounded-2xl border p-6 ${
                   isPro
-                    ? "border-indigo-500 bg-white shadow-lg ring-1 ring-indigo-500"
+                    ? "border-green-500 bg-white shadow-lg ring-1 ring-green-500"
                     : "border-slate-200 bg-white"
                 }`}
               >
                 {isPro && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-semibold text-white">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-green-600 px-3 py-0.5 text-xs font-semibold text-white">
                     {t.mostPopular}
                   </span>
                 )}
@@ -138,7 +138,7 @@ export default function PricingPage() {
                     onClick={() => setShowModal(true)}
                     className={`mt-6 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition ${
                       isPro
-                        ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                        ? "bg-green-600 text-white hover:bg-green-700"
                         : "bg-slate-900 text-white hover:bg-slate-800"
                     }`}
                   >
@@ -216,7 +216,7 @@ export default function PricingPage() {
               <button onClick={() => setShowModal(false)} className="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                 {t.close}
               </button>
-              <a href="mailto:support@myshop.co.mz" className="flex-1 rounded-lg bg-indigo-600 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-700">
+              <a href="mailto:support@myshop.co.mz" className="flex-1 rounded-lg bg-green-600 py-2 text-center text-sm font-semibold text-white hover:bg-green-700">
                 {t.contactUs}
               </a>
             </div>

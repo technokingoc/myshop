@@ -157,6 +157,21 @@ export const orders = pgTable("orders", {
   cancelReason: text("cancel_reason"),
   refundReason: text("refund_reason"),
   refundAmount: numeric("refund_amount", { precision: 10, scale: 2 }),
+  // Shipping fields
+  shippingMethodId: integer("shipping_method_id").references(() => shippingMethods.id),
+  shippingCost: numeric("shipping_cost", { precision: 10, scale: 2 }).default("0"),
+  shippingAddress: jsonb("shipping_address").$type<{
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country: string;
+  }>(),
+  estimatedDelivery: timestamp("estimated_delivery"),
+  trackingNumber: varchar("tracking_number", { length: 128 }).default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -317,6 +332,36 @@ export const flashSales = pgTable("flash_sales", {
   bannerColor: varchar("banner_color", { length: 16 }).default("#ef4444"), // red by default
   showCountdown: boolean("show_countdown").default(true),
   active: boolean("active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const shippingZones = pgTable("shipping_zones", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 256 }).notNull(),
+  regions: jsonb("regions").$type<string[]>().default([]), // array of city/region names or location IDs
+  countries: jsonb("countries").$type<string[]>().default([]), // array of country codes or names
+  active: boolean("active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const shippingMethods = pgTable("shipping_methods", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  zoneId: integer("zone_id").notNull().references(() => shippingZones.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 256 }).notNull(),
+  type: varchar("type", { length: 32 }).notNull().default("flat_rate"), // 'flat_rate', 'weight_based', 'free', 'pickup'
+  rate: numeric("rate", { precision: 10, scale: 2 }).default("0"), // base rate for flat_rate, rate per kg for weight_based
+  freeShippingMinOrder: numeric("free_shipping_min_order", { precision: 10, scale: 2 }).default("0"), // minimum order for free shipping
+  estimatedDays: integer("estimated_days").default(3), // estimated delivery days
+  maxWeight: numeric("max_weight", { precision: 8, scale: 2 }).default("0"), // maximum weight for this method (0 = no limit)
+  pickupAddress: text("pickup_address").default(""), // for pickup methods
+  pickupInstructions: text("pickup_instructions").default(""), // for pickup methods
+  active: boolean("active").default(true),
+  sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

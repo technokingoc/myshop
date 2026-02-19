@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/language";
 import { fetchSession, type AuthSession } from "@/lib/auth";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
+import { FAB } from "@/components/fab";
 import {
   ShoppingCart,
   DollarSign,
@@ -221,12 +222,12 @@ export default function DashboardPage() {
             {t.welcome}, {storeName} 👋
           </h1>
           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-            data.plan === "business" ? "bg-violet-100 text-violet-700" : data.plan === "pro" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
+            data.plan === "business" ? "bg-violet-100 text-violet-700" : data.plan === "pro" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"
           }`}>
             {(data.plan || "free").charAt(0).toUpperCase() + (data.plan || "free").slice(1)} {t.planBadge}
           </span>
           {data.plan === "free" && (
-            <Link href="/pricing" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+            <Link href="/pricing" className="text-xs font-medium text-green-600 hover:text-green-700">
               {t.upgrade} →
             </Link>
           )}
@@ -348,12 +349,17 @@ export default function DashboardPage() {
         </a>
         <Link
           href="/api/orders/export.csv"
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-green-200 hover:bg-green-50/50"
         >
-          <Download className="h-4 w-4 text-indigo-600" />
+          <Download className="h-4 w-4 text-green-600" />
           {t.exportOrders}
         </Link>
       </div>
+      
+      {/* FAB for mobile */}
+      <FAB href="/dashboard/catalog" icon={Plus}>
+        Add Product
+      </FAB>
     </>
   );
 }

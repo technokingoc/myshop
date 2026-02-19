@@ -20,10 +20,19 @@ interface CheckoutFlowProps {
 
 type CheckoutStep = 'review' | 'shipping' | 'payment' | 'confirmation';
 
+interface ShippingMethod {
+  id: number;
+  name: string;
+  type: string;
+  cost: number;
+  estimatedDays: number;
+}
+
 interface CheckoutData {
   guestCheckout: boolean;
   shippingAddress?: CartAddress;
   billingAddress?: CartAddress;
+  selectedShippingMethod?: ShippingMethod;
   paymentMethod?: 'bank_transfer' | 'cash_on_delivery' | 'mobile_money';
   notes?: string;
   useSameAddress: boolean;
@@ -134,6 +143,7 @@ export default function CheckoutFlow({ lang }: CheckoutFlowProps) {
           items: cart.items,
           shippingAddress: checkoutData.shippingAddress,
           billingAddress: checkoutData.useSameAddress ? checkoutData.shippingAddress : checkoutData.billingAddress,
+          shippingMethod: checkoutData.selectedShippingMethod,
           paymentMethod: checkoutData.paymentMethod,
           notes: checkoutData.notes,
           couponCode: cart.couponCode,

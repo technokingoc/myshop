@@ -11,6 +11,7 @@ import {
   ZoomIn, Settings, AlertCircle, Filter
 } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
+import { FAB } from "@/components/fab";
 
 type ProductVariant = {
   id: number;
@@ -796,6 +797,17 @@ export default function EnhancedCatalogPage() {
           </div>
         </div>
       )}
+      
+      {/* FAB for mobile */}
+      <FAB 
+        onClick={() => {
+          setEditingItem(null);
+          setShowForm(true);
+        }} 
+        icon={Plus}
+      >
+        Add Product
+      </FAB>
     </>
   );
 }
