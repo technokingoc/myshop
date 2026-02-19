@@ -17,7 +17,7 @@ Must be production-ready for real Mozambique merchants.
 - [x] **S40: Customer Checkout Flow** ✅ — Cart review → Shipping info → Payment method → Order confirmation. Guest checkout option. Save shipping address. Order summary email. Mobile-optimized checkout.
 - [x] **S41: Customer Account Premium** ✅ — Order history with reorder. Wishlist management. Saved addresses. Review management. Account settings.
 - [x] **S42: Product Reviews & Ratings** ✅ — Star rating + text review. Photo reviews. Review moderation for sellers. Average rating display. Sort reviews by helpful/recent.
-- [ ] **S43: Notifications System** — In-app notification center. Email notifications (order placed, shipped, delivered). Seller alerts (new order, low stock, new review). Notification preferences.
+- [x] **S43: Notifications System** ✅ — Deployed 2026-02-19 — In-app notification center. Email notifications (order placed, shipped, delivered). Seller alerts (new order, low stock, new review). Notification preferences.
 
 ### Phase 3: Seller Tools
 - [ ] **S44: Coupon & Promotion Engine** — Percentage/fixed discount coupons. Minimum order threshold. Usage limits. Expiration dates. Automatic promotion banners. Flash sale support.
