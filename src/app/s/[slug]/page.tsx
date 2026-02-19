@@ -15,6 +15,7 @@ import { getTheme } from "@/lib/theme-colors";
 import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
 import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
 import { useCategories, flattenCategories } from "@/components/category-select";
+import { StorefrontSearch } from "@/components/storefront-search";
 
 /* ── Safe image wrapper ── */
 function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; alt?: string; className?: string; fallback?: React.ReactNode }) {
@@ -74,6 +75,13 @@ const dict = {
     menu: "Menu", services: "Services", memberSince: "Member since",
     openNow: "Open now", closed: "Closed", delivery: "Delivery",
     follow: "Follow", shareStore: "Share store",
+    searchProducts: "Search products...", filters: "Filters", 
+    sortRecent: "Recent", sortPriceAsc: "Price: Low to High", 
+    sortPriceDesc: "Price: High to Low", sortRating: "Highest Rated", 
+    sortPopular: "Most Popular", allRatings: "All ratings",
+    minPrice: "Min price", maxPrice: "Max price", priceRange: "Price Range",
+    category: "Category", clearFilters: "Clear all",
+    applyFilters: "Apply filters",
   },
   pt: {
     loading: "A carregar loja...", notFound: "Loja não encontrada",
@@ -107,6 +115,13 @@ const dict = {
     menu: "Menu", services: "Serviços", memberSince: "Membro desde",
     openNow: "Aberto agora", closed: "Fechado", delivery: "Entrega",
     follow: "Seguir", shareStore: "Partilhar loja",
+    searchProducts: "Pesquisar produtos...", filters: "Filtros", 
+    sortRecent: "Recentes", sortPriceAsc: "Preço: Baixo para Alto", 
+    sortPriceDesc: "Preço: Alto para Baixo", sortRating: "Melhor Avaliados", 
+    sortPopular: "Mais Populares", allRatings: "Todas as avaliações",
+    minPrice: "Preço mín.", maxPrice: "Preço máx.", priceRange: "Faixa de Preço",
+    category: "Categoria", clearFilters: "Limpar tudo",
+    applyFilters: "Aplicar filtros",
   },
 };
 
@@ -127,6 +142,9 @@ export default function StorefrontPage() {
   const [loginPrompt, setLoginPrompt] = useState(false);
   const [storeComments, setStoreComments] = useState<Comment[]>([]);
   const [gridCols, setGridCols] = useState(2); // mobile default
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
 
   // Load customer session
   useEffect(() => {
@@ -153,7 +171,14 @@ export default function StorefrontPage() {
     setLoading(true);
     fetch(`/api/storefront/${slug}`)
       .then((r) => { if (r.status === 404) { setNotFound(true); setLoading(false); return null; } return r.json(); })
-      .then((data) => { if (!data) return; setSeller(data.seller); setProducts((data.products || []).filter((p: Product) => p.status === "Published")); setLoading(false); })
+      .then((data) => { 
+        if (!data) return; 
+        setSeller(data.seller); 
+        const publishedProducts = (data.products || []).filter((p: Product) => p.status === "Published");
+        setProducts(publishedProducts);
+        setDisplayProducts(publishedProducts);
+        setLoading(false); 
+      })
       .catch(() => { setNotFound(true); setLoading(false); });
   }, [slug]);
 
@@ -177,6 +202,15 @@ export default function StorefrontPage() {
     }
   }, [customer, wishlistIds]);
 
+  const handleSearchResults = useCallback((data: any) => {
+    setSearchResults(data);
+    setDisplayProducts(data.products || []);
+  }, []);
+
+  const handleSearchLoading = useCallback((loading: boolean) => {
+    setSearchLoading(loading);
+  }, []);
+
   // Fetch global categories for localized names
   const { categories: globalCats } = useCategories();
   const globalCatMap = useMemo(() => {
@@ -187,25 +221,27 @@ export default function StorefrontPage() {
   }, [globalCats, lang]);
 
   const categories = useMemo(() => {
+    const productsToUse = searchResults ? displayProducts : products;
     const catMap = new Map<string, number>();
-    products.forEach((p) => {
+    productsToUse.forEach((p) => {
       const cat = p.category || "";
       if (cat) catMap.set(cat, (catMap.get(cat) || 0) + 1);
     });
     return [
-      { name: "all", count: products.length },
+      { name: "all", count: productsToUse.length },
       ...Array.from(catMap.entries()).map(([name, count]) => ({
         name,
         displayName: globalCatMap.get(name) || name,
         count,
       })),
     ];
-  }, [products, globalCatMap]);
+  }, [products, displayProducts, globalCatMap, searchResults]);
 
   const filtered = useMemo(() => {
-    if (category === "all") return products;
-    return products.filter((p) => p.category === category);
-  }, [products, category]);
+    const productsToUse = searchResults ? displayProducts : products;
+    if (category === "all" || !category) return productsToUse;
+    return productsToUse.filter((p) => p.category === category);
+  }, [products, displayProducts, category, searchResults]);
 
   // Rating summary
   const ratingInfo = useMemo(() => {
@@ -321,6 +357,11 @@ export default function StorefrontPage() {
             wishlistIds={wishlistIds} toggleWishlist={toggleWishlist}
             gridCols={gridCols} setGridCols={setGridCols}
             template={template}
+            storeSlug={seller.slug}
+            onSearchResults={handleSearchResults}
+            onSearchLoading={handleSearchLoading}
+            searchLoading={searchLoading}
+            globalCatMap={globalCatMap}
           />
         )}
         {activeTab === "about" && <AboutTab seller={seller} t={t} />}
@@ -478,12 +519,15 @@ function PriceDisplay({ price, compareAtPrice, currency, theme, size = "sm" }: {
 /* ── Products Tab ── */
 function ProductsTab({
   products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist, gridCols, setGridCols, template,
+  storeSlug, onSearchResults, onSearchLoading, searchLoading, globalCatMap,
 }: {
   products: Product[]; categories: { name: string; displayName?: string; count: number }[]; category: string; setCategory: (c: string) => void;
   currency: string; t: Record<string, string>; theme: ReturnType<typeof getTheme>;
   onProductClick: (p: Product) => void; wishlistIds: Set<number>; toggleWishlist: (id: number) => void;
   gridCols: number; setGridCols: (n: number) => void;
   template: StoreTemplate;
+  storeSlug: string; onSearchResults: (data: any) => void; onSearchLoading: (loading: boolean) => void;
+  searchLoading: boolean; globalCatMap: Map<string, string>;
 }) {
   const isNew = (p: Product) => {
     if (!p.createdAt) return false;
@@ -501,8 +545,25 @@ function ProductsTab({
         : `grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 ${template.gap}`;
   const gridClass = templateGrid;
 
+  // Create global categories for search component
+  const globalCategories = useMemo(() => {
+    return Array.from(globalCatMap.entries()).map(([slug, label]) => ({ slug, label }));
+  }, [globalCatMap]);
+
   return (
     <>
+      {/* Search Component */}
+      <div className="mb-6">
+        <StorefrontSearch
+          storeSlug={storeSlug}
+          onResults={onSearchResults}
+          onLoading={onSearchLoading}
+          currency={currency}
+          globalCategories={globalCategories}
+          t={t}
+        />
+      </div>
+
       <div className="mb-5 flex items-center justify-between gap-2">
         {/* Category pills with counts */}
         <div className="flex flex-1 gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -530,7 +591,12 @@ function ProductsTab({
         </div>
       </div>
 
-      {products.length === 0 ? (
+      {searchLoading ? (
+        <div className="py-16 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
+          <p className="mt-3 text-sm text-slate-500">Searching...</p>
+        </div>
+      ) : products.length === 0 ? (
         <div className="py-16 text-center">
           <Package className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 text-sm font-medium text-slate-500">{t.noProducts}</p>
