@@ -1,27 +1,86 @@
 import { NextRequest, NextResponse } from "next/server";
-import { upsertPaymentStatus } from "@/lib/dev-store";
+import { paymentService } from "@/lib/payment-service";
 import { emitEvent } from "@/lib/events";
 
-// Mock webhook endpoint (dev-safe): accepts signed provider callbacks later.
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const orderId = Number(body.orderId || 0);
-  const sellerId = Number(body.sellerId || 0);
-  const status = body.status as "pending" | "paid" | "failed" | "manual";
+  try {
+    const body = await req.json();
+    const provider = req.nextUrl.searchParams.get('provider') as 'vodacom' | 'movitel' | null;
+    
+    // Legacy support for old webhook format
+    if (body.orderId && body.status) {
+      const orderId = Number(body.orderId);
+      const sellerId = Number(body.sellerId || 0);
+      const status = body.status as "pending" | "paid" | "failed" | "manual";
 
-  if (!orderId || !status) {
-    return NextResponse.json({ error: "orderId and status are required" }, { status: 400 });
+      // Handle legacy webhook - find payment by order ID and update
+      const payment = await paymentService.getPaymentByOrderId(orderId);
+      if (payment) {
+        const newStatus = status === 'paid' ? 'completed' : 
+                         status === 'failed' ? 'failed' : 
+                         status === 'manual' ? 'completed' : 'pending';
+        
+        await paymentService.updatePaymentStatus(
+          payment.id,
+          newStatus,
+          `Legacy webhook: ${status}`,
+          { legacyWebhook: body }
+        );
+
+        if (sellerId) {
+          emitEvent({
+            type: "payment:status",
+            sellerId,
+            message: `Payment ${newStatus} for order #${orderId}`,
+            payload: { paymentId: payment.id, status: newStatus, orderId },
+          });
+        }
+
+        return NextResponse.json({ 
+          ok: true, 
+          payment: { paymentId: payment.id, status: newStatus } 
+        });
+      }
+    }
+
+    // New M-Pesa webhook format
+    if (!provider) {
+      return NextResponse.json({ 
+        error: "Provider parameter required for M-Pesa webhooks" 
+      }, { status: 400 });
+    }
+
+    // Process M-Pesa webhook
+    const result = await paymentService.processWebhook(body, provider);
+    
+    if (result.success && result.paymentId) {
+      const payment = await paymentService.getPayment(result.paymentId);
+      if (payment) {
+        emitEvent({
+          type: "payment:status",
+          sellerId: payment.sellerId,
+          message: `M-Pesa payment ${result.status} for order #${payment.orderId}`,
+          payload: { 
+            paymentId: result.paymentId, 
+            status: result.status, 
+            orderId: payment.orderId,
+            method: 'mpesa',
+            provider 
+          },
+        });
+      }
+    }
+
+    return NextResponse.json(result);
+
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    return NextResponse.json(
+      { 
+        error: error instanceof Error ? error.message : "Webhook processing failed",
+        success: false 
+      },
+      { status: 500 }
+    );
   }
-
-  const row = await upsertPaymentStatus(orderId, status, body.externalUrl);
-  if (sellerId) {
-    emitEvent({
-      type: "payment:status",
-      sellerId,
-      message: `Webhook received: payment ${status} for order #${orderId}`,
-      payload: body,
-    });
-  }
-
-  return NextResponse.json({ ok: true, payment: row });
 }

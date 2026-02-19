@@ -5,6 +5,7 @@ import { getCustomerSession } from "@/lib/customer-session";
 import { eq, and } from "drizzle-orm";
 import { CartItem, CartAddress } from "@/lib/cart";
 import { sendEmail } from "@/lib/email";
+import { paymentService } from "@/lib/payment-service";
 
 interface ShippingMethod {
   id: number;
@@ -19,7 +20,8 @@ export interface CheckoutRequest {
   shippingAddress: CartAddress;
   billingAddress?: CartAddress;
   shippingMethod?: ShippingMethod;
-  paymentMethod: 'bank_transfer' | 'cash_on_delivery' | 'mobile_money';
+  paymentMethod: 'bank_transfer' | 'cash_on_delivery' | 'mpesa';
+  customerPhone?: string; // Required for M-Pesa
   notes?: string;
   couponCode?: string;
   guestCheckout?: boolean;
@@ -28,7 +30,7 @@ export interface CheckoutRequest {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as CheckoutRequest;
-    const { items, shippingAddress, billingAddress, shippingMethod, paymentMethod, notes, couponCode, guestCheckout } = body;
+    const { items, shippingAddress, billingAddress, shippingMethod, paymentMethod, customerPhone, notes, couponCode, guestCheckout } = body;
     
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -40,6 +42,16 @@ export async function POST(request: NextRequest) {
     
     if (!paymentMethod) {
       return NextResponse.json({ error: "Payment method is required" }, { status: 400 });
+    }
+
+    // Validate payment method
+    if (!["bank_transfer", "cash_on_delivery", "mpesa"].includes(paymentMethod)) {
+      return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
+    }
+
+    // Validate phone number for M-Pesa
+    if (paymentMethod === "mpesa" && !customerPhone) {
+      return NextResponse.json({ error: "Phone number is required for M-Pesa payments" }, { status: 400 });
     }
     
     // Get customer session (if not guest checkout)
@@ -286,6 +298,65 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+
+    // Create payment records for orders that require payment
+    const paymentResults = [];
+    if (paymentMethod !== "cash_on_delivery") {
+      for (const { order } of createdOrders) {
+        try {
+          // Calculate order total from shipping address and items
+          const orderTotal = order.message?.match(/\$(\d+\.\d+)/)?.[1];
+          let amount = parseFloat(orderTotal || "0") || 0;
+          
+          // Convert USD to MZN (approximate rate: 1 USD = 64 MZN)
+          const usdToMzn = 64;
+          amount = Math.round(amount * usdToMzn * 100) / 100;
+
+          if (amount <= 0) continue; // Skip if no valid amount
+
+          // Create payment using existing service
+          const paymentRequest = {
+            orderId: order.id,
+            sellerId: order.sellerId,
+            customerId: order.customerId || undefined,
+            method: paymentMethod as "mpesa" | "bank_transfer",
+            amount,
+            currency: "MZN",
+            customerPhone,
+            customerName: shippingAddress.name,
+            customerEmail: shippingAddress.email,
+            metadata: {
+              provider: paymentMethod === "mpesa" ? "vodacom" : undefined, // Default to Vodacom for M-Pesa
+              checkoutTimestamp: new Date().toISOString(),
+            },
+          };
+
+          const paymentResult = await paymentService.createPayment(paymentRequest);
+
+          paymentResults.push({
+            orderId: order.id,
+            payment: {
+              id: paymentResult.id,
+              method: paymentMethod,
+              status: paymentResult.status,
+              amount: amount.toString(),
+              currency: "MZN",
+              externalId: paymentResult.externalId,
+              confirmationCode: paymentResult.confirmationCode,
+              instructions: paymentResult.instructions,
+            },
+            ...(paymentResult.metadata && { metadata: paymentResult.metadata }),
+          });
+        } catch (paymentError) {
+          console.error(`Payment creation failed for order ${order.id}:`, paymentError);
+          // Don't fail the entire checkout if payment creation fails
+          paymentResults.push({
+            orderId: order.id,
+            error: "Payment setup failed",
+          });
+        }
+      }
+    }
     
     return NextResponse.json({
       success: true,
@@ -294,7 +365,8 @@ export async function POST(request: NextRequest) {
         trackingToken: order.trackingToken,
         status: order.status
       })),
-      trackingTokens
+      trackingTokens,
+      payments: paymentResults,
     });
     
   } catch (error) {
@@ -339,7 +411,7 @@ async function sendOrderConfirmationEmail({
   const paymentMethodNames = {
     bank_transfer: 'Bank Transfer',
     cash_on_delivery: 'Cash on Delivery',
-    mobile_money: 'Mobile Money (M-Pesa)'
+    mpesa: 'M-Pesa Mobile Money'
   };
   
   const emailContent = `

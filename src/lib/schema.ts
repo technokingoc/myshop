@@ -457,3 +457,234 @@ export const warehouses = pgTable("warehouses", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Payment system tables
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").references(() => users.id, { onDelete: "set null" }),
+  
+  // Payment details
+  method: varchar("method", { length: 32 }).notNull(), // 'mpesa', 'bank_transfer', 'cash_on_delivery'
+  provider: varchar("provider", { length: 64 }).default(""), // 'vodacom', 'movitel', etc.
+  status: varchar("status", { length: 32 }).notNull().default("pending"), // 'pending', 'processing', 'completed', 'failed', 'cancelled'
+  
+  // Amounts
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  fees: numeric("fees", { precision: 10, scale: 2 }).default("0"), // transaction fees
+  netAmount: numeric("net_amount", { precision: 12, scale: 2 }).notNull(), // amount - fees
+  currency: varchar("currency", { length: 8 }).default("MZN"),
+  
+  // External references
+  externalId: varchar("external_id", { length: 128 }).unique(), // payment provider transaction ID
+  externalReference: varchar("external_reference", { length: 256 }).default(""), // external reference number
+  confirmationCode: varchar("confirmation_code", { length: 64 }).default(""), // M-Pesa confirmation code
+  
+  // Payment details
+  payerPhone: varchar("payer_phone", { length: 32 }).default(""), // for mobile money
+  payerName: varchar("payer_name", { length: 256 }).default(""),
+  payerEmail: varchar("payer_email", { length: 256 }).default(""),
+  
+  // Settlement tracking
+  settled: boolean("settled").default(false),
+  settledAt: timestamp("settled_at"),
+  settledAmount: numeric("settled_amount", { precision: 12, scale: 2 }).default("0"),
+  
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    bankDetails?: { bank: string; account: string; };
+    mobileDetails?: { network: string; phone: string; };
+    webhookData?: Record<string, any>;
+  }>().default({}),
+  
+  // Timestamps
+  initiatedAt: timestamp("initiated_at", { withTimezone: true }).defaultNow().notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  failedAt: timestamp("failed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Payment status history for tracking
+export const paymentStatusHistory = pgTable("payment_status_history", {
+  id: serial("id").primaryKey(),
+  paymentId: integer("payment_id").notNull().references(() => payments.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 32 }).notNull(),
+  previousStatus: varchar("previous_status", { length: 32 }).default(""),
+  reason: text("reason").default(""), // reason for status change
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  createdBy: varchar("created_by", { length: 64 }).default("system"), // 'system', 'webhook', 'admin', user_id
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Payment instructions for different methods (bank transfers, etc.)
+export const paymentInstructions = pgTable("payment_instructions", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  method: varchar("method", { length: 32 }).notNull(), // 'bank_transfer', 'mpesa', etc.
+  
+  // Bank transfer details
+  bankName: varchar("bank_name", { length: 256 }).default(""),
+  accountNumber: varchar("account_number", { length: 64 }).default(""),
+  accountName: varchar("account_name", { length: 256 }).default(""),
+  swiftCode: varchar("swift_code", { length: 32 }).default(""),
+  iban: varchar("iban", { length: 64 }).default(""),
+  
+  // Mobile money details
+  mobileNumber: varchar("mobile_number", { length: 32 }).default(""),
+  networkProvider: varchar("network_provider", { length: 64 }).default(""), // Vodacom, Movitel
+  
+  // Instructions text
+  instructionsEn: text("instructions_en").default(""),
+  instructionsPt: text("instructions_pt").default(""),
+  
+  // Settings
+  active: boolean("active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Settlement records for revenue tracking
+export const settlements = pgTable("settlements", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  
+  // Settlement period
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+  
+  // Amounts
+  grossAmount: numeric("gross_amount", { precision: 12, scale: 2 }).notNull(), // total payment amount
+  platformFees: numeric("platform_fees", { precision: 10, scale: 2 }).default("0"), // MyShop platform fees
+  paymentFees: numeric("payment_fees", { precision: 10, scale: 2 }).default("0"), // M-Pesa/payment provider fees
+  netAmount: numeric("net_amount", { precision: 12, scale: 2 }).notNull(), // amount paid to seller
+  
+  // Payment details
+  paymentMethod: varchar("payment_method", { length: 32 }).default(""), // how settlement is paid to seller
+  paymentReference: varchar("payment_reference", { length: 256 }).default(""), // bank reference, etc.
+  
+  // Status
+  status: varchar("status", { length: 32 }).notNull().default("pending"), // 'pending', 'processing', 'completed', 'failed'
+  paymentIds: text("payment_ids").default(""), // comma-separated payment IDs included in settlement
+  
+  // Metadata
+  notes: text("notes").default(""),
+  metadata: jsonb("metadata").$type<{
+    bankDetails?: { bank: string; account: string; };
+    paymentBreakdown?: Array<{ paymentId: number; amount: number; fees: number; }>;
+  }>().default({}),
+  
+  // Timestamps
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Duplicate table definition removed - using the first payments table definition above
+
+// Payment methods configuration per store
+export const paymentMethods = pgTable("payment_methods", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  
+  // Method configuration
+  method: varchar("method", { length: 32 }).notNull(), // 'mpesa', 'bank_transfer'
+  enabled: boolean("enabled").default(true),
+  
+  // Bank transfer configuration
+  bankName: varchar("bank_name", { length: 256 }).default(""),
+  bankAccount: varchar("bank_account", { length: 128 }).default(""),
+  bankAccountName: varchar("bank_account_name", { length: 256 }).default(""),
+  bankSwiftCode: varchar("bank_swift_code", { length: 32 }).default(""),
+  bankBranch: varchar("bank_branch", { length: 256 }).default(""),
+  bankInstructions: text("bank_instructions").default(""),
+  
+  // M-Pesa configuration
+  mpesaBusinessNumber: varchar("mpesa_business_number", { length: 64 }).default(""),
+  mpesaBusinessName: varchar("mpesa_business_name", { length: 256 }).default(""),
+  mpesaApiKey: varchar("mpesa_api_key", { length: 512 }).default(""), // encrypted
+  mpesaApiSecret: varchar("mpesa_api_secret", { length: 512 }).default(""), // encrypted
+  mpesaEnvironment: varchar("mpesa_environment", { length: 16 }).default("sandbox"), // 'sandbox' or 'production'
+  
+  // Display settings
+  displayName: varchar("display_name", { length: 256 }).default(""),
+  instructions: text("instructions").default(""),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Payment receipts/invoices
+export const paymentReceipts = pgTable("payment_receipts", {
+  id: serial("id").primaryKey(),
+  paymentId: integer("payment_id").notNull().references(() => payments.id, { onDelete: "cascade" }),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  
+  // Receipt details
+  receiptNumber: varchar("receipt_number", { length: 128 }).notNull().unique(),
+  receiptDate: timestamp("receipt_date").notNull(),
+  
+  // Customer details
+  customerName: varchar("customer_name", { length: 256 }).notNull(),
+  customerEmail: varchar("customer_email", { length: 256 }).default(""),
+  customerPhone: varchar("customer_phone", { length: 64 }).default(""),
+  
+  // Payment details for receipt
+  paymentMethod: varchar("payment_method", { length: 32 }).notNull(),
+  paymentAmount: numeric("payment_amount", { precision: 12, scale: 2 }).notNull(),
+  paymentReference: varchar("payment_reference", { length: 128 }).notNull(),
+  
+  // Order summary for receipt
+  orderItems: jsonb("order_items").$type<Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    total: number;
+  }>>().default([]),
+  orderSubtotal: numeric("order_subtotal", { precision: 12, scale: 2 }).notNull(),
+  orderDiscount: numeric("order_discount", { precision: 12, scale: 2 }).default("0"),
+  orderShipping: numeric("order_shipping", { precision: 12, scale: 2 }).default("0"),
+  orderTotal: numeric("order_total", { precision: 12, scale: 2 }).notNull(),
+  
+  // Store details at time of receipt
+  storeName: varchar("store_name", { length: 256 }).notNull(),
+  storeAddress: text("store_address").default(""),
+  storePhone: varchar("store_phone", { length: 64 }).default(""),
+  storeEmail: varchar("store_email", { length: 256 }).default(""),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Revenue tracking
+export const revenues = pgTable("revenues", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  paymentId: integer("payment_id").notNull().references(() => payments.id, { onDelete: "cascade" }),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  
+  // Revenue details
+  grossAmount: numeric("gross_amount", { precision: 12, scale: 2 }).notNull(), // full payment amount
+  platformFeeRate: numeric("platform_fee_rate", { precision: 8, scale: 4 }).default("0"), // percentage
+  platformFeeAmount: numeric("platform_fee_amount", { precision: 12, scale: 2 }).default("0"),
+  netAmount: numeric("net_amount", { precision: 12, scale: 2 }).notNull(), // amount after fees
+  currency: varchar("currency", { length: 8 }).notNull().default("MZN"),
+  
+  // Settlement details
+  settlementStatus: varchar("settlement_status", { length: 32 }).default("pending"), // 'pending', 'settled', 'held'
+  settlementDate: timestamp("settlement_date"),
+  settlementReference: varchar("settlement_reference", { length: 128 }).default(""),
+  settlementNotes: text("settlement_notes").default(""),
+  
+  // Dates
+  revenueDate: timestamp("revenue_date").notNull(), // when payment was confirmed
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Note: using the first settlements table definition above

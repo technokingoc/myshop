@@ -283,6 +283,7 @@ export default function CheckoutFlow({ lang }: CheckoutFlowProps) {
             lang={lang}
             orderResult={orderResult}
             shippingAddress={checkoutData.shippingAddress!}
+            paymentMethod={checkoutData.paymentMethod}
           />
         )}
       </div>
