@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { StoreCreationWizard } from "@/components/store-creation-wizard";
+import { OnboardingWizard } from "@/components/onboarding-wizard";
 
 export default function OpenStorePage() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function OpenStorePage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-slate-600">Loading...</div>
       </main>
     );
@@ -46,8 +46,8 @@ export default function OpenStorePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-14">
-      <StoreCreationWizard
-        onSuccess={(store) => {
+      <OnboardingWizard
+        onComplete={() => {
           // Redirect to dashboard after successful store creation
           router.push("/dashboard");
         }}

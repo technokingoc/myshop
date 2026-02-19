@@ -21,7 +21,7 @@ Must be production-ready for real Mozambique merchants.
 
 ### Phase 3: Seller Tools
 - [x] **S44: Coupon & Promotion Engine** ✅ — Deployed 2026-02-19 — Percentage/fixed discount coupons. Minimum order threshold. Usage limits. Expiration dates. Automatic promotion banners. Flash sale support.
-- [x] **S45: Shipping & Delivery** ✅ — Deployed 2026-02-19 — Shipping zones by location. Flat rate / weight-based / free shipping rules. Delivery time estimates. Pickup option. Multiple shipping methods per store.
+- [x] **S45: Shipping & Delivery** ✅ — Deployed 2026-02-19 20:45 — Shipping zones by location. Flat rate / weight-based / free shipping rules. Delivery time estimates. Pickup option. Multiple shipping methods per store.
 - [ ] **S46: Seller Onboarding v2** — Step-by-step store setup wizard. Product import (CSV). Store customization preview. Business verification flow. First sale checklist.
 - [ ] **S47: Inventory Management** — Stock level tracking. Low stock alerts. Restock reminders. Stock history. Multi-warehouse support (future).
 

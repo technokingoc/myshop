@@ -17,7 +17,25 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, slug, businessType, description, city, country } = body;
+    const { 
+      name, 
+      slug, 
+      businessType, 
+      description, 
+      city, 
+      country,
+      logoUrl,
+      themeColor,
+      storeTemplate,
+      headerTemplate,
+      // Business verification fields
+      businessName,
+      businessRegistration,
+      ownerName,
+      phone,
+      address,
+      verified
+    } = body;
 
     if (!name || !slug) {
       return NextResponse.json({ error: "Store name and slug are required" }, { status: 400 });
@@ -37,7 +55,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Store slug already taken" }, { status: 409 });
     }
 
-    // Create the store
+    // Create the store with all onboarding data
     const newStores = await db.insert(stores).values({
       userId: session.userId,
       slug: slug.toLowerCase().trim(),
@@ -46,10 +64,14 @@ export async function POST(req: NextRequest) {
       businessType: businessType || "Retail",
       city: city?.trim() || "",
       country: country?.trim() || "",
+      logoUrl: logoUrl?.trim() || "",
+      address: address?.trim() || "",
       plan: "free",
-      themeColor: "indigo",
-      storeTemplate: "classic",
-      headerTemplate: "compact",
+      themeColor: themeColor || "indigo",
+      storeTemplate: storeTemplate || "classic",
+      headerTemplate: headerTemplate || "compact",
+      // TODO: Add business verification fields to schema if needed
+      // For now, we'll store basic info and add verification later
     }).returning();
 
     const newStore = newStores[0];
