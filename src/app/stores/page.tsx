@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Store, Loader2, X, Star, ShoppingBag, Package } from "lucide-react";
+import { Search, Store, Loader2, X, Star, ShoppingBag, Package, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 import { StoreCard } from "@/components/store-card";
 import { Footer } from "@/components/footer";
@@ -381,11 +381,34 @@ function StoresContent() {
 }
 
 function EmptyState({ icon: Icon, title, sub }: { icon: typeof Store; title: string; sub: string }) {
+  const { lang } = useLanguage();
   return (
-    <div className="py-16 text-center">
-      <Icon className="mx-auto h-10 w-10 text-slate-300" />
-      <p className="mt-3 text-sm font-medium text-slate-500">{title}</p>
-      <p className="mt-1 text-xs text-slate-400">{sub}</p>
+    <div className="py-20 text-center">
+      <div className="mx-auto w-full max-w-md">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
+          <Icon className="h-10 w-10 text-slate-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+        <p className="mt-2 text-sm text-slate-600 max-w-sm mx-auto">{sub}</p>
+        
+        {/* Action buttons */}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Link 
+            href="/stores" 
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <Search className="h-4 w-4" />
+            {lang === "pt" ? "Explorar Lojas" : "Explore Stores"}
+          </Link>
+          <Link 
+            href="/register" 
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700"
+          >
+            <Store className="h-4 w-4" />
+            {lang === "pt" ? "Criar Loja" : "Create Store"}
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
@@ -394,29 +417,68 @@ function ProductSearchCard({ product, t }: { product: ProductData; t: Record<str
   return (
     <Link
       href={`/s/${product.sellerSlug}`}
-      className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition-shadow hover:shadow-md"
+      className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-indigo-200 hover:shadow-xl hover:-translate-y-1"
     >
-      {product.imageUrl ? (
-        <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-cover" loading="lazy" />
-      ) : (
-        <div className="flex aspect-square w-full items-center justify-center bg-slate-100">
-          <ShoppingBag className="h-8 w-8 text-slate-300" />
-        </div>
-      )}
-      <div className="p-3">
-        <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-        <p className="mt-0.5 text-xs text-slate-500">{product.sellerName}</p>
-        <div className="mt-1.5 flex items-center justify-between">
-          <span className="text-sm font-bold text-indigo-600">
-            {product.sellerCurrency || "USD"} {product.price}
-          </span>
+      {/* Product image with overlay effects */}
+      <div className="relative aspect-square overflow-hidden bg-slate-50">
+        {product.imageUrl ? (
+          <>
+            <img 
+              src={product.imageUrl} 
+              alt={product.name} 
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+              loading="lazy" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-150">
+            <ShoppingBag className="h-10 w-10 text-slate-300" />
+          </div>
+        )}
+      </div>
+      
+      {/* Content with enhanced spacing and typography */}
+      <div className="p-4">
+        <h3 className="truncate text-sm font-bold text-slate-900 group-hover:text-indigo-900 transition-colors">
+          {product.name}
+        </h3>
+        
+        {/* Seller info with better visual hierarchy */}
+        <div className="mt-1 flex items-center gap-2">
+          <p className="text-xs font-medium text-slate-500 truncate flex-1">{product.sellerName}</p>
           {Number(product.sellerRating) > 0 && (
-            <span className="flex items-center gap-0.5 text-xs text-slate-400">
+            <span className="flex items-center gap-0.5 text-xs font-medium text-amber-600">
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
               {product.sellerRating}
             </span>
           )}
         </div>
+        
+        {/* Description if available */}
+        {product.shortDescription && (
+          <p className="mt-2 text-xs text-slate-500 line-clamp-2">{product.shortDescription}</p>
+        )}
+        
+        {/* Price with enhanced styling */}
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-base font-bold text-indigo-600">
+            {product.sellerCurrency || "USD"} {product.price}
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+            {t.order}
+            <ArrowRight className="h-3 w-3" />
+          </span>
+        </div>
+
+        {/* Category badge if available */}
+        {product.category && (
+          <div className="mt-2">
+            <span className="inline-block rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+              {product.category}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );

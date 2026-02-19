@@ -89,7 +89,7 @@ function sanitizeSlug(raw: string) {
     .replace(/-+/g, "-");
 }
 
-/* ── Compact mobile sidebar nav item ── */
+/* ── Enhanced mobile sidebar nav item ── */
 function NavItem({
   item,
   activePage,
@@ -105,16 +105,18 @@ function NavItem({
       href={item.href}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={`group flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium leading-none transition-colors ${
+      className={`group flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-all duration-200 ${
         active
-          ? "bg-indigo-50/90 text-slate-900"
-          : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
+          ? "bg-indigo-100 text-indigo-900 shadow-sm"
+          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
       }`}
     >
-      <span className="flex h-4 w-4 items-center justify-center">
-        <item.icon className={`h-3.5 w-3.5 ${active ? "text-indigo-600" : "text-slate-500 group-hover:text-slate-700"}`} />
+      <span className={`flex h-5 w-5 items-center justify-center rounded-lg transition-colors ${
+        active ? "bg-indigo-200/50" : "group-hover:bg-slate-100"
+      }`}>
+        <item.icon className={`h-4 w-4 ${active ? "text-indigo-700" : "text-slate-500 group-hover:text-slate-700"}`} />
       </span>
-      <span>{item.label}</span>
+      <span className="font-semibold">{item.label}</span>
     </Link>
   );
 }
@@ -289,49 +291,76 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate>
       <div className="min-h-screen bg-slate-50">
-        {/* ── Mobile sidebar ── */}
+        {/* ── Enhanced Mobile sidebar ── */}
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-900/35 lg:hidden" onClick={() => setMobileNavOpen(false)}>
+          <div className="fixed inset-0 z-50 bg-slate-900/40 lg:hidden" onClick={() => setMobileNavOpen(false)}>
             <nav
-              className="absolute left-0 top-0 h-full w-72 bg-white px-3 py-3"
+              className="absolute left-0 top-0 h-full w-80 bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Compact profile card */}
-              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
-                      {ownerInitial}
+              <div className="flex h-full flex-col">
+                {/* Enhanced profile card */}
+                <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-900/5">
+                        <span className="text-sm font-bold text-indigo-600">{ownerInitial}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold uppercase tracking-wide text-indigo-600/80">{t.profileLabel}</p>
+                        <p className="truncate text-lg font-bold text-slate-900">{storeName}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t.profileLabel}</p>
-                      <p className="truncate text-sm font-semibold text-slate-900">{storeName}</p>
+                    <button 
+                      onClick={() => setMobileNavOpen(false)} 
+                      className="rounded-lg p-2 text-slate-600 hover:bg-white/60 transition-colors" 
+                      aria-label="Close menu"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Navigation content */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="space-y-6">
+                    <div>
+                      <p className="mb-3 px-2 text-xs font-bold uppercase tracking-wider text-slate-400">{t.storeGroup}</p>
+                      <ul className="space-y-1">
+                        {storeItems.map((item) => (
+                          <li key={item.key}>
+                            <NavItem item={item} activePage={activePage} onClick={() => setMobileNavOpen(false)} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-4">
+                      <p className="mb-3 px-2 text-xs font-bold uppercase tracking-wider text-slate-400">{t.accountGroup}</p>
+                      <ul className="space-y-1">
+                        {accountItems.map((item) => (
+                          <li key={item.key}>
+                            <NavItem item={item} activePage={activePage} onClick={() => setMobileNavOpen(false)} />
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                  <button onClick={() => setMobileNavOpen(false)} className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100" aria-label="Close menu">
-                    <X className="h-4 w-4" />
+                </div>
+
+                {/* Footer with logout */}
+                <div className="border-t border-slate-100 p-4">
+                  <button
+                    onClick={async () => {
+                      await clearSession();
+                      window.location.href = "/login";
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {t.logout}
                   </button>
                 </div>
-              </div>
-
-              <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t.storeGroup}</p>
-              <ul className="space-y-1">
-                {storeItems.map((item) => (
-                  <li key={item.key}>
-                    <NavItem item={item} activePage={activePage} onClick={() => setMobileNavOpen(false)} />
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-5 border-t border-slate-200 pt-4">
-                <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t.accountGroup}</p>
-                <ul className="space-y-1">
-                  {accountItems.map((item) => (
-                    <li key={item.key}>
-                      <NavItem item={item} activePage={activePage} onClick={() => setMobileNavOpen(false)} />
-                    </li>
-                  ))}
-                </ul>
               </div>
             </nav>
           </div>
@@ -433,25 +462,31 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
           <div className="mx-auto w-full max-w-[90rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
 
-          {/* ── Mobile bottom nav ── */}
-          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
-            <ul className="grid grid-cols-5">
-              {[...storeItems.slice(0, 3), ...accountItems].map((item) => {
-                const active = item.key === activePage;
-                return (
-                  <li key={item.key}>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex h-14 flex-col items-center justify-center gap-1 text-xs ${active ? "text-slate-900" : "text-slate-500"}`}
-                    >
-                      <item.icon className={`h-4 w-4 ${active ? "text-indigo-600" : "text-slate-400"}`} />
-                      <span>{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+          {/* ── Enhanced Mobile bottom nav ── */}
+          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md lg:hidden">
+            <div className="mx-auto max-w-md">
+              <ul className="grid grid-cols-5 gap-1 px-2 py-1">
+                {[...storeItems.slice(0, 3), ...accountItems.slice(0, 2)].map((item) => {
+                  const active = item.key === activePage;
+                  return (
+                    <li key={item.key}>
+                      <Link
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        className={`flex h-12 flex-col items-center justify-center gap-1 rounded-xl text-xs transition-all duration-200 ${
+                          active 
+                            ? "bg-indigo-50 text-indigo-700 shadow-sm" 
+                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                        }`}
+                      >
+                        <item.icon className={`h-4 w-4 ${active ? "text-indigo-600" : "text-slate-400"}`} />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </nav>
         </main>
       </div>

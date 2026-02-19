@@ -164,59 +164,86 @@ export default function HomePage() {
   return (
     <div className="min-h-screen text-slate-900">
       {/* Hero — above the fold */}
-      <section className="relative bg-gradient-to-b from-indigo-50/80 via-white to-white">
-        <div className="mx-auto max-w-3xl px-4 pb-6 pt-12 text-center sm:pt-16">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+      <section className="relative bg-gradient-to-b from-indigo-50/80 via-white to-white overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-grid-slate-100/40 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+        <div className="absolute left-1/2 top-0 -z-10 -translate-x-1/2 blur-3xl opacity-20">
+          <div className="h-64 w-64 rounded-full bg-gradient-to-br from-indigo-400 to-purple-600" />
+        </div>
+
+        <div className="relative mx-auto max-w-4xl px-4 pb-8 pt-16 text-center sm:pt-20 lg:pt-24">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
             {t.heroTitle}
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500 sm:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg lg:text-xl">
             {t.heroSub}
           </p>
 
-          {/* Integrated search bar */}
-          <form onSubmit={handleSearch} className="mx-auto mt-6 max-w-xl">
-            <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
-              <Search className="ml-4 h-5 w-5 shrink-0 text-slate-400" />
+          {/* Enhanced search bar */}
+          <form onSubmit={handleSearch} className="mx-auto mt-8 max-w-2xl">
+            <div className="flex items-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100 transition-all">
+              <Search className="ml-5 h-5 w-5 shrink-0 text-slate-400" />
               <input
                 type="text"
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
                 placeholder={t.searchPh}
-                className="min-w-0 flex-1 border-0 bg-transparent px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none sm:py-3.5"
+                className="min-w-0 flex-1 border-0 bg-transparent px-4 py-4 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none sm:py-5"
               />
               <button
                 type="submit"
-                className="mr-1.5 shrink-0 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 sm:px-6"
+                className="mr-2 shrink-0 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-indigo-700 hover:shadow-md sm:px-8 sm:py-4"
               >
                 {t.searchBtn}
               </button>
             </div>
           </form>
 
-          {/* Category pills from DB */}
+          {/* Enhanced category pills */}
           {categoryPills.length > 0 && (
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {categoryPills.map((cat) => {
+            <div className="mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
+              {categoryPills.slice(0, 8).map((cat) => {
                 const Icon = resolveCategoryIcon(cat.icon || null);
                 return (
                   <Link
                     key={cat.slug}
                     href={`/stores?category=${encodeURIComponent(cat.slug)}`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 hover:shadow-md hover:-translate-y-0.5"
                   >
-                    <Icon className="h-3.5 w-3.5 opacity-70" />
+                    <Icon className="h-4 w-4" />
                     {cat.label}
                   </Link>
                 );
               })}
+              {categoryPills.length > 8 && (
+                <Link
+                  href="/stores"
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500 shadow-sm transition-all hover:text-slate-700"
+                >
+                  +{categoryPills.length - 8} more
+                </Link>
+              )}
             </div>
           )}
 
-          {/* Inline stats */}
+          {/* Enhanced stats with better presentation */}
           {stats && (stats.sellers > 0 || stats.products > 0) && (
-            <p className="mt-4 text-xs text-slate-400">
-              {stats.sellers} {t.statsStores} · {stats.products} {t.statsProducts} · {stats.orders} {t.statsOrders}
-            </p>
+            <div className="mt-8 flex justify-center">
+              <div className="flex items-center divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white px-6 py-3 shadow-sm">
+                <div className="px-3 text-center">
+                  <p className="text-lg font-bold text-slate-900">{stats.sellers}</p>
+                  <p className="text-xs font-medium text-slate-500">{t.statsStores}</p>
+                </div>
+                <div className="px-3 text-center">
+                  <p className="text-lg font-bold text-slate-900">{stats.products}</p>
+                  <p className="text-xs font-medium text-slate-500">{t.statsProducts}</p>
+                </div>
+                <div className="px-3 text-center">
+                  <p className="text-lg font-bold text-slate-900">{stats.orders}</p>
+                  <p className="text-xs font-medium text-slate-500">{t.statsOrders}</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </section>
@@ -232,18 +259,30 @@ export default function HomePage() {
           </div>
 
           {stores.length > 0 ? (
-            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="mt-6 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               {stores.map((store) => (
                 <FeaturedStoreCard key={store.slug} store={store} t={t} />
               ))}
             </div>
           ) : (
-            <div className="mt-6 text-center">
-              <Store className="mx-auto h-8 w-8 text-slate-300" />
-              <p className="mt-2 text-sm text-slate-500">{t.noStores}</p>
-              <Link href="/register" className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
-                {t.createStore} <ArrowRight className="h-4 w-4" />
-              </Link>
+            <div className="mt-8 text-center">
+              <div className="mx-auto w-full max-w-lg rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/30 px-6 py-12">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100">
+                  <Store className="h-8 w-8 text-indigo-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900">{t.noStores}</h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  Join our growing marketplace and start your business journey today. 
+                </p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <Link href="/register" className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md">
+                    {t.createStore} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/pricing" className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                    Learn More <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -288,47 +327,74 @@ export default function HomePage() {
   );
 }
 
-/* Featured store card — compact horizontal scroll card */
+/* Featured store card — premium design with enhanced visual hierarchy */
 function FeaturedStoreCard({ store, t }: { store: StoreData; t: Record<string, string> }) {
   return (
     <Link
       href={`/s/${store.slug}`}
-      className="group flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-shadow hover:shadow-md sm:w-64"
+      className="group flex w-64 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-indigo-200 hover:shadow-xl hover:-translate-y-1 sm:w-72"
     >
       {/* Banner */}
-      <div className="relative h-20 bg-gradient-to-br from-indigo-100 to-slate-100">
+      <div className="relative h-24 bg-gradient-to-br from-indigo-100 via-purple-50 to-slate-100">
         {store.bannerUrl && (
           <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
       </div>
+      
       {/* Content */}
-      <div className="flex flex-1 flex-col px-3 pb-3 pt-1">
-        <div className="flex items-start gap-2">
-          <div className="-mt-5 h-10 w-10 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-indigo-50 shadow-sm">
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-2">
+        <div className="flex items-start gap-3">
+          {/* Logo with enhanced styling */}
+          <div className="-mt-6 h-12 w-12 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-white shadow-lg ring-1 ring-slate-900/5">
             {store.logoUrl ? (
               <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm font-bold text-indigo-400">
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white">
                 {store.name.charAt(0)}
               </div>
             )}
           </div>
-          <div className="min-w-0 pt-0.5">
-            <p className="truncate text-sm font-semibold text-slate-900">{store.name}</p>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              {Number(store.avgRating) > 0 && (
-                <span className="flex items-center gap-0.5">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  {store.avgRating}
-                </span>
-              )}
-              <span>{store.productCount} {t.products}</span>
-            </div>
+          
+          {/* Store info */}
+          <div className="min-w-0 flex-1 pt-1">
+            <h3 className="truncate text-base font-bold text-slate-900 group-hover:text-indigo-900">{store.name}</h3>
+            {store.city && (
+              <p className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                <MapPin className="h-3 w-3" />
+                {store.city}
+              </p>
+            )}
           </div>
         </div>
-        <span className="mt-auto pt-2 text-xs font-semibold text-indigo-600 group-hover:text-indigo-700">
-          {t.visit} →
-        </span>
+        
+        {/* Stats */}
+        <div className="mt-3 flex items-center gap-4 text-xs text-slate-600">
+          {Number(store.avgRating) > 0 && (
+            <span className="flex items-center gap-1 font-medium">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              {store.avgRating}
+              {store.reviewCount > 0 && <span className="text-slate-400">({store.reviewCount})</span>}
+            </span>
+          )}
+          <span className="flex items-center gap-1">
+            <Package className="h-3.5 w-3.5 text-slate-400" />
+            {store.productCount} {t.products}
+          </span>
+        </div>
+
+        {/* Description if available */}
+        {store.description && (
+          <p className="mt-2 text-xs text-slate-500 line-clamp-2">{store.description}</p>
+        )}
+        
+        {/* Visit CTA */}
+        <div className="mt-auto pt-3">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 group-hover:text-indigo-700 group-hover:gap-2 transition-all">
+            {t.visit}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </div>
       </div>
     </Link>
   );

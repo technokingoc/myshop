@@ -371,12 +371,16 @@ function StatCard({
 }) {
   const [iconColor, bgColor] = color.split(" ");
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className={`inline-flex rounded-lg p-2 ${bgColor}`}>
-        <Icon className={`h-4 w-4 ${iconColor}`} />
+    <div className="group rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-200 hover:shadow-lg hover:border-slate-300">
+      <div className="flex items-center justify-between">
+        <div className={`inline-flex rounded-xl p-3 ${bgColor} group-hover:scale-110 transition-transform duration-200`}>
+          <Icon className={`h-5 w-5 ${iconColor}`} />
+        </div>
       </div>
-      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
-      <p className="mt-0.5 text-xs text-slate-500">{label}</p>
+      <div className="mt-4">
+        <p className="text-3xl font-bold text-slate-900 tracking-tight">{value}</p>
+        <p className="mt-1 text-sm font-medium text-slate-600">{label}</p>
+      </div>
     </div>
   );
 }
