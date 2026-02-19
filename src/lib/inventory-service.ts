@@ -95,8 +95,8 @@ export async function recordStockChange({
         .limit(1);
       
       if (!variant) throw new Error('Variant not found');
-      currentStock = variant.stockQuantity;
-      lowStockThreshold = variant.lowStockThreshold;
+      currentStock = variant.stockQuantity || 0;
+      lowStockThreshold = variant.lowStockThreshold || 5;
     } else if (productId) {
       const [product] = await db
         .select({ stockQuantity: catalogItems.stockQuantity, lowStockThreshold: catalogItems.lowStockThreshold })
@@ -354,20 +354,20 @@ export async function getRestockReminders(sellerId: number): Promise<RestockRemi
       productId: result.reminder.productId || undefined,
       variantId: result.reminder.variantId || undefined,
       warehouseId: result.reminder.warehouseId || undefined,
-      triggerQuantity: result.reminder.triggerQuantity,
-      targetQuantity: result.reminder.targetQuantity,
-      leadTimeDays: result.reminder.leadTimeDays,
+      triggerQuantity: result.reminder.triggerQuantity || 5,
+      targetQuantity: result.reminder.targetQuantity || 10,
+      leadTimeDays: result.reminder.leadTimeDays || 7,
       supplierName: result.reminder.supplierName || undefined,
       supplierEmail: result.reminder.supplierEmail || undefined,
       supplierPhone: result.reminder.supplierPhone || undefined,
       lastOrderDate: result.reminder.lastOrderDate || undefined,
-      averageLeadTime: result.reminder.averageLeadTime,
+      averageLeadTime: result.reminder.averageLeadTime || 7,
       status: result.reminder.status as 'active' | 'snoozed' | 'disabled',
       lastTriggered: result.reminder.lastTriggered || undefined,
       snoozeUntil: result.reminder.snoozeUntil || undefined,
-      emailNotifications: result.reminder.emailNotifications,
-      autoReorderEnabled: result.reminder.autoReorderEnabled,
-      minOrderQuantity: result.reminder.minOrderQuantity,
+      emailNotifications: result.reminder.emailNotifications ?? true,
+      autoReorderEnabled: result.reminder.autoReorderEnabled ?? false,
+      minOrderQuantity: result.reminder.minOrderQuantity || 1,
       productName: result.product?.name || undefined,
       variantName: result.variant?.name || undefined,
       currentStock: result.variant?.stockQuantity || result.product?.stockQuantity || 0,

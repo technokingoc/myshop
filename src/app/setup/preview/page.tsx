@@ -58,11 +58,11 @@ function StorePreviewContent() {
   const getThemeClasses = (color: string) => {
     const colors: Record<string, string> = {
       green: "bg-green-600 border-green-600 text-green-600",
-      blue: "bg-green-600 border-green-600 text-green-600", 
-      green: "bg-green-600 border-green-600 text-green-600",
+      blue: "bg-blue-600 border-blue-600 text-blue-600", 
       purple: "bg-purple-600 border-purple-600 text-purple-600",
       pink: "bg-pink-600 border-pink-600 text-pink-600",
       red: "bg-red-600 border-red-600 text-red-600",
+      indigo: "bg-indigo-600 border-indigo-600 text-indigo-600",
     };
     return colors[color] || colors.green;
   };
