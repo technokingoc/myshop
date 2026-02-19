@@ -20,6 +20,8 @@ import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
 import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
 import { useCategories, flattenCategories } from "@/components/category-select";
 import { StorefrontSearch } from "@/components/storefront-search";
+import ProductReviews from "@/components/product-reviews";
+import ReviewForm from "@/components/review-form";
 
 /* ── Safe image wrapper ── */
 function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; alt?: string; className?: string; fallback?: React.ReactNode }) {
@@ -153,6 +155,7 @@ export default function StorefrontPage() {
   const [searchResults, setSearchResults] = useState<any>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  const [productRatings, setProductRatings] = useState<Record<number, { average: number; count: number }>>({});
 
   // Load customer session
   useEffect(() => {
@@ -198,6 +201,20 @@ export default function StorefrontPage() {
       .then((data) => { if (Array.isArray(data)) setStoreComments(data); })
       .catch(() => {});
   }, [seller]);
+
+  // Load product ratings
+  useEffect(() => {
+    if (products.length === 0) return;
+    const productIds = products.map(p => p.id).join(',');
+    fetch(`/api/products/ratings?productIds=${productIds}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data === 'object' && !Array.isArray(data)) {
+          setProductRatings(data);
+        }
+      })
+      .catch(() => {});
+  }, [products]);
 
   const toggleWishlist = useCallback(async (itemId: number) => {
     if (!customer) { setLoginPrompt(true); return; }
@@ -394,6 +411,7 @@ export default function StorefrontPage() {
             globalCatMap={globalCatMap}
             seller={seller}
             addProductToCart={addProductToCart}
+            productRatings={productRatings}
           />
         )}
         {activeTab === "about" && <AboutTab seller={seller} t={t} />}
@@ -568,7 +586,7 @@ function PriceDisplay({ price, compareAtPrice, currency, theme, size = "sm" }: {
 /* ── Products Tab ── */
 function ProductsTab({
   products, categories, category, setCategory, currency, t, theme, onProductClick, wishlistIds, toggleWishlist, gridCols, setGridCols, template,
-  storeSlug, onSearchResults, onSearchLoading, searchLoading, globalCatMap, seller, addProductToCart,
+  storeSlug, onSearchResults, onSearchLoading, searchLoading, globalCatMap, seller, addProductToCart, productRatings,
 }: {
   products: Product[]; categories: { name: string; displayName?: string; count: number }[]; category: string; setCategory: (c: string) => void;
   currency: string; t: Record<string, string>; theme: ReturnType<typeof getTheme>;
@@ -578,6 +596,7 @@ function ProductsTab({
   storeSlug: string; onSearchResults: (data: any) => void; onSearchLoading: (loading: boolean) => void;
   searchLoading: boolean; globalCatMap: Map<string, string>;
   seller: Seller; addProductToCart: (product: Product, seller: Seller) => void;
+  productRatings: Record<number, { average: number; count: number }>;
 }) {
   const isNew = (p: Product) => {
     if (!p.createdAt) return false;
@@ -682,6 +701,7 @@ function ProductsTab({
                       </button>
                     </div>
                     {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
+                    <ProductRatingDisplay productId={product.id} productRatings={productRatings} size="sm" />
                   </div>
                   <div className="flex items-center justify-between mt-1.5">
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
@@ -724,6 +744,7 @@ function ProductsTab({
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} size="lg" />
                   </div>
                   {product.shortDescription && <p className="mt-1 text-sm text-slate-500 line-clamp-2">{product.shortDescription}</p>}
+                  <ProductRatingDisplay productId={product.id} productRatings={productRatings} size="lg" />
                   <div className="mt-3 flex gap-2">
                     <button 
                       onClick={(e) => { 
@@ -762,6 +783,7 @@ function ProductsTab({
                 <div className={template.padding}>
                   <p className={`truncate ${template.titleSize} font-semibold text-slate-900`}>{product.name}</p>
                   {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
+                  <ProductRatingDisplay productId={product.id} productRatings={productRatings} size="sm" />
                   <div className="mt-1.5">
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
                   </div>
@@ -952,7 +974,7 @@ function ProductModal({
   theme: ReturnType<typeof getTheme>; onClose: () => void; customer: CustomerInfo;
   isWished: boolean; toggleWishlist: (id: number) => void;
 }) {
-  const [tab, setTab] = useState<"details" | "reviews" | "order">("details");
+  const [tab, setTab] = useState<"details" | "reviews" | "order" | "review-form">("details");
   const images = getProductImages(product);
   const [activeImg, setActiveImg] = useState(0);
 
@@ -986,13 +1008,27 @@ function ProductModal({
 
         {/* Mini tabs */}
         <div className="flex border-b border-slate-100">
-          {([
-            { id: "details" as const, label: t.details },
-            { id: "reviews" as const, label: t.reviews },
-            { id: "order" as const, label: t.orderTab },
-          ]).map((tb) => (
-            <button key={tb.id} onClick={() => setTab(tb.id)} className={`flex-1 py-2.5 text-xs font-medium transition-all ${tab === tb.id ? `border-b-2 ${theme.tabBorder} ${theme.tab}` : "text-slate-500"}`}>{tb.label}</button>
-          ))}
+          {tab === "review-form" ? (
+            <>
+              <button 
+                onClick={() => setTab("reviews")} 
+                className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                <ChevronLeft className="h-3 w-3" /> {t.reviews}
+              </button>
+              <div className="flex-1 text-center py-2.5 text-xs font-medium text-slate-900">
+                {t.writeReview}
+              </div>
+            </>
+          ) : (
+            ([
+              { id: "details" as const, label: t.details },
+              { id: "reviews" as const, label: t.reviews },
+              { id: "order" as const, label: t.orderTab },
+            ]).map((tb) => (
+              <button key={tb.id} onClick={() => setTab(tb.id)} className={`flex-1 py-2.5 text-xs font-medium transition-all ${tab === tb.id ? `border-b-2 ${theme.tabBorder} ${theme.tab}` : "text-slate-500"}`}>{tb.label}</button>
+            ))
+          )}
         </div>
 
         <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(92vh - 110px)" }}>
@@ -1035,10 +1071,32 @@ function ProductModal({
               </button>
             </div>
           )}
-          {tab === "reviews" && <div className="p-5"><ProductReviews itemId={product.id} t={t} /></div>}
+          {tab === "reviews" && (
+            <div className="p-5">
+              <ProductReviews 
+                productId={product.id} 
+                customer={customer}
+                onWriteReview={() => setTab("review-form")}
+              />
+            </div>
+          )}
           {tab === "order" && (
             <div className="p-5">
               <OrderForm product={product} sellerId={sellerId} slug={slug} currency={currency} t={t} theme={theme} onClose={onClose} customer={customer} />
+            </div>
+          )}
+          {tab === "review-form" && (
+            <div className="p-5">
+              <ReviewForm
+                productId={product.id}
+                productName={product.name}
+                customer={customer}
+                onSuccess={() => {
+                  setTab("reviews");
+                  // Refresh reviews
+                }}
+                onCancel={() => setTab("reviews")}
+              />
             </div>
           )}
         </div>
@@ -1057,57 +1115,7 @@ function ProductModal({
 }
 
 /* ── Product Reviews ── */
-function ProductReviews({ itemId, t }: { itemId: number; t: Record<string, string> }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState(""); const [content, setContent] = useState(""); const [rating, setRating] = useState(5);
-  const [sending, setSending] = useState(false); const [sent, setSent] = useState(false);
-
-  useEffect(() => {
-    fetch(`/api/comments?itemId=${itemId}`).then((r) => r.json()).then((data) => { if (Array.isArray(data)) setComments(data); }).catch(() => {});
-  }, [itemId]);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !content.trim()) return;
-    setSending(true);
-    try {
-      const res = await fetch("/api/comments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ catalogItemId: itemId, authorName: name.trim(), content: content.trim(), rating }) });
-      if (res.ok) { const c = await res.json(); setComments((prev) => [c, ...prev]); setName(""); setContent(""); setRating(5); setSent(true); setShowForm(false); setTimeout(() => setSent(false), 3000); }
-    } catch {} finally { setSending(false); }
-  };
-
-  return (
-    <>
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-700">{t.reviews} ({comments.length})</span>
-        {!showForm && !sent && <button onClick={() => setShowForm(true)} className="text-xs font-medium text-indigo-600 hover:text-indigo-700">{t.writeReview}</button>}
-        {sent && <span className="text-xs text-emerald-600">✓ {t.reviewSubmitted}</span>}
-      </div>
-      {showForm && (
-        <form onSubmit={submit} className="mt-3 space-y-2 rounded-xl bg-slate-50 p-4">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.yourName} required className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none" />
-          <StarRatingInput value={rating} onChange={setRating} />
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.yourReview} required rows={2} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-300 focus:outline-none" />
-          <div className="flex gap-2">
-            <button type="submit" disabled={sending} className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{sending ? t.submitting : t.submitReview}</button>
-            <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs text-slate-600">{t.close}</button>
-          </div>
-        </form>
-      )}
-      {comments.length === 0 && !showForm && <p className="mt-6 text-center text-sm text-slate-400">{t.noReviews}</p>}
-      <div className="mt-3 space-y-2">
-        {comments.map((c) => (
-          <div key={c.id} className="rounded-xl bg-slate-50 p-3">
-            <div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-800">{c.authorName}</span><span className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span></div>
-            {c.rating && <StarRating rating={c.rating} />}
-            <p className="mt-1 text-sm text-slate-600">{c.content}</p>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
+// Function removed - replaced with new ProductReviews component
 
 /* ── Order Form with Coupon Integration ── */
 function OrderForm({
@@ -1294,4 +1302,43 @@ function getProductImages(product: Product): string[] {
   if (product.imageUrls) { try { const parsed = JSON.parse(product.imageUrls); if (Array.isArray(parsed)) urls.push(...parsed.filter(Boolean)); } catch {} }
   if (urls.length === 0 && product.imageUrl) urls.push(product.imageUrl);
   return urls;
+}
+
+/* ── Product Rating Display ── */
+function ProductRatingDisplay({ productId, productRatings, size = 'sm' }: {
+  productId: number;
+  productRatings: Record<number, { average: number; count: number }>;
+  size?: 'sm' | 'lg';
+}) {
+  const rating = productRatings[productId];
+  
+  if (!rating || rating.count === 0) {
+    return null;
+  }
+
+  const starSize = size === 'lg' ? 'h-4 w-4' : 'h-3 w-3';
+  const textSize = size === 'lg' ? 'text-sm' : 'text-xs';
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`${starSize} ${
+              star <= Math.round(rating.average) 
+                ? "fill-yellow-400 text-yellow-400" 
+                : "text-slate-300"
+            }`}
+          />
+        ))}
+      </div>
+      <span className={`${textSize} font-medium text-slate-600`}>
+        {rating.average}
+      </span>
+      <span className={`${textSize} text-slate-400`}>
+        ({rating.count})
+      </span>
+    </div>
+  );
 }
