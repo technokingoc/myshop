@@ -206,6 +206,40 @@ export const wishlists = pgTable("wishlists", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const customerAddresses = pgTable("customer_addresses", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  label: varchar("label", { length: 100 }).notNull().default("Home"), // e.g. "Home", "Work", "Other"
+  fullName: varchar("full_name", { length: 256 }).notNull(),
+  addressLine1: varchar("address_line1", { length: 256 }).notNull(),
+  addressLine2: varchar("address_line2", { length: 256 }).default(""),
+  city: varchar("city", { length: 256 }).notNull(),
+  state: varchar("state", { length: 256 }).default(""),
+  postalCode: varchar("postal_code", { length: 32 }).default(""),
+  country: varchar("country", { length: 64 }).notNull().default("Mozambique"),
+  phone: varchar("phone", { length: 64 }).default(""),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const customerReviews = pgTable("customer_reviews", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  orderId: integer("order_id").references(() => orders.id, { onDelete: "cascade" }),
+  catalogItemId: integer("catalog_item_id").notNull().references(() => catalogItems.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(), // 1-5 stars
+  title: varchar("title", { length: 256 }).default(""),
+  content: text("content").default(""),
+  imageUrls: text("image_urls").default(""), // comma-separated URLs for photo reviews
+  helpful: integer("helpful").default(0), // helpful votes from other customers
+  verified: boolean("verified").default(false), // verified purchase
+  status: varchar("status", { length: 32 }).default("published"), // published, pending, hidden
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }),
