@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     if (!sellerId) return NextResponse.json({ error: "sellerId required" }, { status: 400 });
 
     const filters = [eq(orders.sellerId, Number(sellerId))];
-    if (status && ["new", "contacted", "processing", "shipped", "completed", "cancelled"].includes(status)) filters.push(eq(orders.status, status));
+    if (status && ["placed", "confirmed", "processing", "shipped", "delivered", "cancelled", "new", "contacted", "completed"].includes(status)) filters.push(eq(orders.status, status));
     if (q) {
       filters.push(or(ilike(orders.customerName, `%${q}%`), ilike(orders.customerContact, `%${q}%`), ilike(orders.message, `%${q}%`))!);
     }
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
             customerName,
             customerContact,
             message: message || "",
-            status: "new",
+            status: "placed",
           })
           .returning(),
       3,

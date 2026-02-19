@@ -13,7 +13,7 @@ import { OrderStatsBar } from "@/components/orders/order-stats-bar";
 import { OrderFilters } from "@/components/orders/order-filters";
 import { OrderListView } from "@/components/orders/order-list-view";
 import { OrderPipelineView } from "@/components/orders/order-pipeline-view";
-import { OrderDetailPanel } from "@/components/orders/order-detail-panel";
+import { OrderDetailPanelEnhanced } from "@/components/orders/order-detail-panel-enhanced";
 
 type DbOrder = {
   id: number; customerName: string; customerContact: string; message: string;
@@ -147,6 +147,91 @@ export default function OrdersPage() {
     toast.success(toastText.noteSaved);
   }, [orders, sellerId, dbHealth, toast, toastText]);
 
+  const handleCancelRefund = useCallback(async (id: string, action: "cancel" | "refund", reason: string, refundAmount?: number) => {
+    if (sellerId && (!dbHealth || dbHealth.ok)) {
+      try {
+        await fetchJsonWithRetry(`/api/orders/${id}/status`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: action === "cancel" ? "cancelled" : "completed",
+            note: `${action === "cancel" ? "Cancelled" : "Refunded"}: ${reason}`,
+            cancelReason: action === "cancel" ? reason : undefined,
+            refundReason: action === "refund" ? reason : undefined,
+            refundAmount: refundAmount,
+          }),
+        }, 3, "orders:cancel-refund");
+        
+        const newStatus = action === "cancel" ? "cancelled" : "completed";
+        const historyEntry = { 
+          status: newStatus, 
+          at: new Date().toISOString(), 
+          note: `${action === "cancel" ? "Cancelled" : "Refunded"}: ${reason}` 
+        };
+        
+        setOrders(prev => prev.map(o => o.id === id ? { 
+          ...o, 
+          status: newStatus as OrderStatus,
+          statusHistory: [...(o.statusHistory || []), historyEntry] 
+        } : o));
+        
+        setSelectedOrder(prev => prev?.id === id ? { 
+          ...prev, 
+          status: newStatus as OrderStatus, 
+          statusHistory: [...(prev.statusHistory || []), historyEntry] 
+        } : prev);
+        
+        toast.success(action === "cancel" ? (toastText.orderCancelled || "Order cancelled") : (toastText.refundProcessed || "Refund processed"));
+      } catch {
+        toast.error(toastText.syncFailed || "Failed to update order");
+      }
+    }
+  }, [sellerId, dbHealth, toast, toastText]);
+
+  const handleRefund = useCallback(async (orderId: string, amount: string, reason: string, note: string) => {
+    if (!sellerId || !dbHealth?.ok) return;
+    
+    try {
+      await fetchJsonWithRetry(`/api/orders/${orderId}/refund`, {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "refund", amount, reason, note }),
+      }, 3, "orders:refund");
+      
+      // Update local state
+      setOrders(prev => prev.map(o => 
+        o.id === orderId 
+          ? { ...o, status: "cancelled" as OrderStatus, refundStatus: "completed", refundAmount: amount }
+          : o
+      ));
+      setSelectedOrder(prev => prev?.id === orderId ? { ...prev, status: "cancelled" as OrderStatus } : prev);
+      toast.success(toastText.refundProcessed || "Refund processed successfully");
+    } catch (error) {
+      console.error("Refund error:", error);
+      toast.error(toastText.refundFailed || "Failed to process refund");
+    }
+  }, [sellerId, dbHealth, toast, toastText]);
+
+  const handleCancelOrder = useCallback(async (orderId: string, reason: string) => {
+    if (!sellerId || !dbHealth?.ok) return;
+    
+    try {
+      await fetchJsonWithRetry(`/api/orders/${orderId}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "cancel", reason, note: reason }),
+      }, 3, "orders:cancel");
+      
+      // Update local state
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "cancelled" as OrderStatus } : o));
+      setSelectedOrder(prev => prev?.id === orderId ? { ...prev, status: "cancelled" as OrderStatus } : prev);
+      toast.success(toastText.orderCancelled || "Order cancelled successfully");
+    } catch (error) {
+      console.error("Cancel error:", error);
+      toast.error(toastText.cancelFailed || "Failed to cancel order");
+    }
+  }, [sellerId, dbHealth, toast, toastText]);
+
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -201,10 +286,21 @@ export default function OrdersPage() {
       )}
 
       {selectedOrder && (
-        <OrderDetailPanel
-          order={selectedOrder} onClose={() => setSelectedOrder(null)}
-          onStatusChange={handleStatus} onAddNote={handleAddNote}
-          t={t} sellerId={sellerId}
+        <OrderDetailPanelEnhanced
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)}
+          onStatusChange={handleStatus} 
+          onAddNote={handleAddNote}
+          onCancelRefund={handleCancelRefund}
+          t={t} 
+          sellerId={sellerId}
+          sellerInfo={{
+            name: "MyShop Store",
+            logoUrl: "",
+            address: "",
+            phone: "",
+            email: "",
+          }}
         />
       )}
     </>

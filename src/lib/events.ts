@@ -1,4 +1,4 @@
-export type AppEventType = "order:new" | "order:status" | "payment:status";
+export type AppEventType = "order:new" | "order:status" | "order:refunded" | "order:cancelled" | "payment:status";
 
 export type AppEvent = {
   id: string;

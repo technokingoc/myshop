@@ -90,12 +90,16 @@ export const orders = pgTable("orders", {
   customerName: varchar("customer_name", { length: 256 }).notNull(),
   customerContact: varchar("customer_contact", { length: 512 }).notNull(),
   message: text("message").default(""),
-  status: varchar("status", { length: 32 }).notNull().default("new"),
+  status: varchar("status", { length: 32 }).notNull().default("placed"),
   notes: text("notes").default(""),
   statusHistory: jsonb("status_history").$type<Array<{ status: string; at: string; note?: string }>>().default([]),
   couponCode: varchar("coupon_code", { length: 64 }).default(""),
   discountAmount: numeric("discount_amount", { precision: 10, scale: 2 }).default("0"),
   customerId: integer("customer_id").references(() => customers.id),
+  trackingToken: varchar("tracking_token", { length: 128 }).unique(),
+  cancelReason: text("cancel_reason"),
+  refundReason: text("refund_reason"),
+  refundAmount: numeric("refund_amount", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -155,4 +159,17 @@ export const wishlists = pgTable("wishlists", {
   customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
   catalogItemId: integer("catalog_item_id").notNull().references(() => catalogItems.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").references(() => customers.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 64 }).notNull().default("order_status"),
+  title: varchar("title", { length: 256 }).notNull(),
+  message: text("message").notNull(),
+  orderId: integer("order_id").references(() => orders.id, { onDelete: "cascade" }),
+  read: boolean("read").default(false),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });

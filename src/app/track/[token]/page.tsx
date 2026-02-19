@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
 import { Clock, Phone, Package, Truck, CheckCircle, Ban, MessageCircle } from "lucide-react";
+import { OrderTimeline } from "@/components/orders/order-timeline";
 
 type Tracking = {
   token: string;
@@ -31,13 +32,19 @@ const dict = {
     item: "Item",
     created: "Created",
     contactSeller: "Contact seller",
+    estimatedDelivery: "Estimated delivery",
+    orderTimeline: "Order timeline",
     statusLabels: {
-      new: "Order Received",
-      contacted: "Seller Contacted",
+      placed: "Order Placed",
+      confirmed: "Order Confirmed", 
       processing: "Processing",
       shipped: "Shipped",
-      completed: "Completed",
+      delivered: "Delivered",
       cancelled: "Cancelled",
+      // Legacy status labels
+      new: "Order Placed",
+      contacted: "Order Confirmed",
+      completed: "Delivered",
     } as Record<string, string>,
   },
   pt: {
@@ -46,31 +53,41 @@ const dict = {
     notFound: "Registo de rastreio não encontrado.",
     order: "Pedido",
     payment: "Pagamento",
-    seller: "Vendedor",
+    seller: "Vendedor", 
     item: "Item",
     created: "Criado",
     contactSeller: "Contactar vendedor",
+    estimatedDelivery: "Entrega estimada",
+    orderTimeline: "Linha do tempo",
     statusLabels: {
-      new: "Pedido Recebido",
-      contacted: "Vendedor Contactou",
+      placed: "Pedido Feito",
+      confirmed: "Pedido Confirmado",
       processing: "Em Processamento",
       shipped: "Enviado",
-      completed: "Concluído",
+      delivered: "Entregue",
       cancelled: "Cancelado",
+      // Legacy status labels  
+      new: "Pedido Feito",
+      contacted: "Pedido Confirmado",
+      completed: "Entregue",
     } as Record<string, string>,
   },
 };
 
-const STEPS = ["new", "contacted", "processing", "shipped", "completed"];
-const stepIcons = [Clock, Phone, Package, Truck, CheckCircle];
+const STEPS = ["placed", "confirmed", "processing", "shipped", "delivered"];
+const stepIcons = [Clock, CheckCircle, Package, Truck, CheckCircle];
 
 const statusBg: Record<string, string> = {
-  new: "bg-blue-500",
-  contacted: "bg-amber-500",
-  processing: "bg-orange-500",
+  placed: "bg-slate-500",
+  confirmed: "bg-blue-500",
+  processing: "bg-amber-500", 
   shipped: "bg-purple-500",
-  completed: "bg-emerald-500",
+  delivered: "bg-emerald-500",
   cancelled: "bg-red-500",
+  // Legacy status mappings
+  new: "bg-slate-500",
+  contacted: "bg-blue-500",
+  completed: "bg-emerald-500",
 };
 
 export default function TrackingPage() {
@@ -102,42 +119,12 @@ export default function TrackingPage() {
           {/* Status stepper */}
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <p className="text-sm text-slate-500 mb-4">#{data.token}</p>
-
-            {isCancelled ? (
-              <div className="flex items-center gap-3 rounded-lg bg-red-50 border border-red-200 p-4">
-                <Ban className="h-6 w-6 text-red-500" />
-                <div>
-                  <p className="font-semibold text-red-700">{t.statusLabels.cancelled}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                {STEPS.map((step, idx) => {
-                  const Icon = stepIcons[idx];
-                  const isActive = idx <= currentStepIdx;
-                  const isCurrent = idx === currentStepIdx;
-                  return (
-                    <div key={step} className="flex flex-1 items-center">
-                      <div className="flex flex-col items-center">
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all ${
-                          isCurrent ? `${statusBg[step]} text-white ring-4 ring-opacity-20 ring-current` :
-                          isActive ? `${statusBg[step]} text-white` :
-                          "bg-slate-100 text-slate-400"
-                        }`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <p className={`mt-1.5 text-[10px] sm:text-xs text-center leading-tight ${isCurrent ? "font-semibold text-slate-900" : isActive ? "text-slate-700" : "text-slate-400"}`}>
-                          {t.statusLabels[step] || step}
-                        </p>
-                      </div>
-                      {idx < STEPS.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-1 ${idx < currentStepIdx ? "bg-emerald-400" : "bg-slate-200"}`} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <OrderTimeline
+              currentStatus={data.orderStatus}
+              statusHistory={data.statusHistory}
+              t={Object.fromEntries(Object.entries(t.statusLabels).map(([k, v]) => [k, v]))}
+              variant="stepper"
+            />
           </div>
 
           {/* Order details */}
@@ -179,18 +166,27 @@ export default function TrackingPage() {
             </div>
           )}
 
-          {/* Timeline history */}
+          {/* Enhanced Timeline history */}
           {data.statusHistory && data.statusHistory.length > 0 && (
             <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">{lang === "en" ? "Timeline" : "Linha do tempo"}</h3>
+              <h3 className="text-sm font-semibold text-slate-900 mb-4">{t.orderTimeline}</h3>
               <div className="space-y-0">
                 {[...data.statusHistory].reverse().map((entry, idx) => (
-                  <div key={idx} className="flex gap-3 pb-3">
-                    <div className={`h-2 w-2 mt-1.5 rounded-full flex-shrink-0 ${statusBg[entry.status] || "bg-slate-300"}`} />
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">{t.statusLabels[entry.status] || entry.status}</p>
-                      {entry.note && <p className="text-xs text-slate-500">{entry.note}</p>}
-                      <p className="text-xs text-slate-400">{new Date(entry.at).toLocaleString()}</p>
+                  <div key={idx} className="flex gap-3 pb-4">
+                    <div className="flex flex-col items-center">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${statusBg[entry.status] ? statusBg[entry.status] : "bg-slate-300"} text-white`}>
+                        <div className="h-2 w-2 rounded-full bg-white" />
+                      </div>
+                      {idx < data.statusHistory!.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 mt-2" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900">{t.statusLabels[entry.status] || entry.status}</p>
+                      {entry.note && (
+                        <p className="text-sm text-slate-600 mt-1 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                          {entry.note}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-400 mt-2">{new Date(entry.at).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}

@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Clock, Phone, Package, Truck, CheckCircle, Ban, MessageCircle, Mail, Printer } from "lucide-react";
+import { X, Clock, Phone, Package, Truck, CheckCircle, Ban, MessageCircle, Mail, Printer, RefreshCw } from "lucide-react";
 import type { OrderItem, OrderStatus } from "./types";
 import { STATUS_FLOW, statusColorMap } from "./types";
+import { PackingSlip } from "./packing-slip";
+import { RefundFlow } from "./refund-flow";
 
 const statusIcons: Record<string, typeof Clock> = {
-  new: Clock, contacted: Phone, processing: Package, shipped: Truck, completed: CheckCircle, cancelled: Ban,
+  placed: Clock, confirmed: Phone, processing: Package, shipped: Truck, delivered: CheckCircle, cancelled: Ban,
+  // Legacy mappings
+  new: Clock, contacted: Phone, completed: CheckCircle,
 };
 
 type PaymentState = "pending" | "paid" | "failed" | "manual";
@@ -16,15 +20,27 @@ type Props = {
   onClose: () => void;
   onStatusChange: (id: string, status: OrderStatus, note?: string) => void;
   onAddNote: (id: string, note: string) => void;
+  onRefund?: (orderId: string, amount: string, reason: string, note: string) => Promise<void>;
+  onCancel?: (orderId: string, reason: string) => Promise<void>;
   t: Record<string, string>;
   sellerId?: number | null;
+  sellerInfo?: {
+    name: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    logoUrl?: string;
+  };
+  language?: "en" | "pt";
 };
 
-export function OrderDetailPanel({ order, onClose, onStatusChange, onAddNote, t, sellerId }: Props) {
+export function OrderDetailPanel({ order, onClose, onStatusChange, onAddNote, onRefund, onCancel, t, sellerId, sellerInfo, language = "en" }: Props) {
   const [tab, setTab] = useState<"details" | "timeline" | "notes">("details");
   const [noteText, setNoteText] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<PaymentState>("pending");
   const [paymentLink, setPaymentLink] = useState("");
+  const [showRefundFlow, setShowRefundFlow] = useState(false);
+  const [showPackingSlip, setShowPackingSlip] = useState(false);
 
   useEffect(() => {
     fetch(`/api/payments/status?orderId=${order.id}`)
@@ -40,6 +56,31 @@ export function OrderDetailPanel({ order, onClose, onStatusChange, onAddNote, t,
       body: JSON.stringify({ orderId: Number(order.id), sellerId, status, externalUrl: paymentLink || undefined }),
     }).catch(() => null);
     setPaymentStatus(status);
+  };
+
+  const handlePrint = () => {
+    setShowPackingSlip(true);
+    // Allow time for the packing slip to render, then print
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
+  const handleRefund = async (orderId: string, amount: string, reason: string, note: string) => {
+    if (onRefund) {
+      await onRefund(orderId, amount, reason, note);
+    }
+    setShowRefundFlow(false);
+  };
+
+  const handleCancel = async (orderId: string, reason: string) => {
+    if (onCancel) {
+      await onCancel(orderId, reason);
+    } else {
+      // Fallback to status change
+      onStatusChange(orderId, "cancelled", reason);
+    }
+    setShowRefundFlow(false);
   };
 
   const isEmail = order.customerContact.includes("@");
@@ -68,19 +109,28 @@ export function OrderDetailPanel({ order, onClose, onStatusChange, onAddNote, t,
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => window.print()} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100" title={t.printOrder || "Print"}>
+              <button onClick={handlePrint} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100" title={t.printPackingSlip || "Print packing slip"}>
                 <Printer className="h-4 w-4" />
               </button>
+              {(onRefund || onCancel) && order.status !== "cancelled" && (
+                <button onClick={() => setShowRefundFlow(true)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100" title={t.refundCancel || "Refund/Cancel"}>
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+              )}
               <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
           {/* Status change */}
-          {order.status !== "completed" && order.status !== "cancelled" && (
+          {order.status !== "delivered" && order.status !== "cancelled" && (
             <select value={order.status} onChange={(e) => onStatusChange(order.id, e.target.value as OrderStatus)}
               className={`w-full rounded-lg border-0 px-3 py-1.5 text-sm font-medium ${colors.bg} ${colors.text}`}>
-              {STATUS_FLOW.map(s => <option key={s} value={s}>{t[s] || s}</option>)}
+              {STATUS_FLOW.filter(s => {
+                const currentIndex = STATUS_FLOW.indexOf(order.status as OrderStatus);
+                const statusIndex = STATUS_FLOW.indexOf(s);
+                return statusIndex >= currentIndex; // Only allow forward progression
+              }).map(s => <option key={s} value={s}>{t[s] || s}</option>)}
               <option value="cancelled">{t.cancelled || "Cancelled"}</option>
             </select>
           )}
@@ -210,6 +260,28 @@ export function OrderDetailPanel({ order, onClose, onStatusChange, onAddNote, t,
           )}
         </div>
       </div>
+
+      {/* Packing Slip */}
+      {showPackingSlip && (
+        <PackingSlip 
+          order={order} 
+          sellerInfo={sellerInfo} 
+          t={t} 
+          language={language} 
+        />
+      )}
+
+      {/* Refund Flow */}
+      {showRefundFlow && (
+        <RefundFlow
+          order={order}
+          onRefund={handleRefund}
+          onCancel={handleCancel}
+          onClose={() => setShowRefundFlow(false)}
+          t={t}
+          language={language}
+        />
+      )}
     </div>
   );
 }

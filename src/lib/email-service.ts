@@ -9,12 +9,17 @@ const FROM = process.env.RESEND_FROM_EMAIL || "MyShop <onboarding@resend.dev>";
 type Lang = "en" | "pt";
 
 const statusLabels: Record<string, Record<Lang, string>> = {
-  new: { en: "New", pt: "Novo" },
-  contacted: { en: "Contacted", pt: "Contactado" },
+  placed: { en: "Order Placed", pt: "Pedido Feito" },
+  confirmed: { en: "Order Confirmed", pt: "Pedido Confirmado" },
   processing: { en: "Processing", pt: "Em processamento" },
   shipped: { en: "Shipped", pt: "Enviado" },
-  completed: { en: "Completed", pt: "Concluído" },
+  delivered: { en: "Delivered", pt: "Entregue" },
   cancelled: { en: "Cancelled", pt: "Cancelado" },
+  refunded: { en: "Refunded", pt: "Reembolsado" },
+  // Legacy status labels
+  new: { en: "Order Placed", pt: "Pedido Feito" },
+  contacted: { en: "Order Confirmed", pt: "Pedido Confirmado" },
+  completed: { en: "Delivered", pt: "Entregue" },
 };
 
 function statusLabel(status: string, lang: Lang) {
