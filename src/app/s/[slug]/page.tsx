@@ -22,6 +22,9 @@ import { useCategories, flattenCategories } from "@/components/category-select";
 import { StorefrontSearch } from "@/components/storefront-search";
 import ProductReviews from "@/components/product-reviews";
 import ReviewForm from "@/components/review-form";
+import PromotionBanner from "@/components/promotions/promotion-banner";
+import FlashSaleBanner from "@/components/promotions/flash-sale-banner";
+import FlashSaleAutoApply from "@/components/promotions/flash-sale-auto-apply";
 
 /* ── Safe image wrapper ── */
 function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; alt?: string; className?: string; fallback?: React.ReactNode }) {
@@ -395,8 +398,14 @@ export default function StorefrontPage() {
         </div>
       </div>
 
+      {/* Promotion Banners */}
+      <div className="mx-auto max-w-5xl px-4 pt-3">
+        <FlashSaleBanner storeSlug={slug} className="mb-3" />
+        <PromotionBanner storeSlug={slug} className="mb-3" />
+      </div>
+
       {/* Content */}
-      <main className="mx-auto max-w-5xl px-4 pb-24 pt-5 sm:pb-8">
+      <main className="mx-auto max-w-5xl px-4 pb-24 pt-2 sm:pb-8">
         {activeTab === "products" && (
           <ProductsTab
             products={filtered} categories={categories} category={category} setCategory={setCategory}
@@ -444,6 +453,9 @@ export default function StorefrontPage() {
           </div>
         </div>
       )}
+
+      {/* Flash Sale Auto Apply */}
+      <FlashSaleAutoApply storeId={seller.id} storeName={seller.name} />
 
       {/* Toast Notifications */}
       <SimpleToast />

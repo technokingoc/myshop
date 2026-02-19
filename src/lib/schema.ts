@@ -280,3 +280,43 @@ export const notificationPreferences = pgTable("notification_preferences", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const promotions = pgTable("promotions", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description").default(""),
+  type: varchar("type", { length: 32 }).notNull().default("banner"), // 'banner', 'flash_sale', 'discount'
+  bannerImageUrl: text("banner_image_url").default(""),
+  backgroundColor: varchar("background_color", { length: 16 }).default("#3b82f6"), // hex color
+  textColor: varchar("text_color", { length: 16 }).default("#ffffff"), // hex color
+  linkUrl: text("link_url").default(""), // optional link when banner is clicked
+  priority: integer("priority").default(0), // higher number = higher priority
+  validFrom: timestamp("valid_from").defaultNow(),
+  validUntil: timestamp("valid_until"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const flashSales = pgTable("flash_sales", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description").default(""),
+  discountType: varchar("discount_type", { length: 16 }).notNull().default("percentage"), // 'percentage' or 'fixed'
+  discountValue: numeric("discount_value", { precision: 10, scale: 2 }).notNull(),
+  maxDiscount: numeric("max_discount", { precision: 10, scale: 2 }).default("0"), // for percentage discounts
+  minOrderAmount: numeric("min_order_amount", { precision: 10, scale: 2 }).default("0"),
+  maxUses: integer("max_uses").default(-1), // -1 = unlimited
+  usedCount: integer("used_count").default(0),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  products: text("products").default(""), // comma-separated product IDs, empty = all products
+  bannerText: varchar("banner_text", { length: 512 }).default(""),
+  bannerColor: varchar("banner_color", { length: 16 }).default("#ef4444"), // red by default
+  showCountdown: boolean("show_countdown").default(true),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

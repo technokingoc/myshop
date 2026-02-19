@@ -31,6 +31,9 @@ export interface CartState {
   notes?: string;
   couponCode?: string;
   discountAmount?: number;
+  flashSaleId?: number;
+  flashSaleName?: string;
+  flashSaleDiscount?: number;
 }
 
 export class CartManager {
@@ -134,8 +137,17 @@ export class CartManager {
   static getTotal(): number {
     const subtotal = this.getSubtotal();
     const cart = this.getCart();
-    const discount = cart.discountAmount || 0;
-    return Math.max(0, subtotal - discount);
+    const couponDiscount = cart.discountAmount || 0;
+    const flashSaleDiscount = cart.flashSaleDiscount || 0;
+    const totalDiscount = Math.max(couponDiscount, flashSaleDiscount); // Use the better discount, not both
+    return Math.max(0, subtotal - totalDiscount);
+  }
+  
+  static getTotalDiscount(): number {
+    const cart = this.getCart();
+    const couponDiscount = cart.discountAmount || 0;
+    const flashSaleDiscount = cart.flashSaleDiscount || 0;
+    return Math.max(couponDiscount, flashSaleDiscount);
   }
   
   static updateShippingAddress(address: CartAddress): void {
@@ -185,6 +197,22 @@ export class CartManager {
     const cart = this.getCart();
     delete cart.couponCode;
     delete cart.discountAmount;
+    this.saveCart(cart);
+  }
+  
+  static applyFlashSale(saleId: number, saleName: string, discount: number): void {
+    const cart = this.getCart();
+    cart.flashSaleId = saleId;
+    cart.flashSaleName = saleName;
+    cart.flashSaleDiscount = discount;
+    this.saveCart(cart);
+  }
+  
+  static removeFlashSale(): void {
+    const cart = this.getCart();
+    delete cart.flashSaleId;
+    delete cart.flashSaleName;
+    delete cart.flashSaleDiscount;
     this.saveCart(cart);
   }
   

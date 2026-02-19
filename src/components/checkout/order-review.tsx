@@ -15,6 +15,8 @@ export default function OrderReview({ lang, cart, onNext }: OrderReviewProps) {
   const subtotal = CartManager.getSubtotal();
   const total = CartManager.getTotal();
   const discount = cart.discountAmount || 0;
+  const flashSaleDiscount = cart.flashSaleDiscount || 0;
+  const totalDiscount = CartManager.getTotalDiscount();
   
   if (cart.items.length === 0) {
     return (
@@ -107,12 +109,19 @@ export default function OrderReview({ lang, cart, onNext }: OrderReviewProps) {
             </div>
             
             {discount > 0 && (
-              <>
-                <div className="flex justify-between text-green-600">
-                  <span>{dict.cart.discount} {cart.couponCode && `(${cart.couponCode})`}</span>
-                  <span>-${discount.toFixed(2)}</span>
-                </div>
-              </>
+              <div className="flex justify-between text-green-600">
+                <span>{dict.cart.discount} {cart.couponCode && `(${cart.couponCode})`}</span>
+                <span>-${discount.toFixed(2)}</span>
+              </div>
+            )}
+
+            {flashSaleDiscount > 0 && !discount && (
+              <div className="flex justify-between text-red-600">
+                <span className="flex items-center gap-1">
+                  ⚡ Flash Sale {cart.flashSaleName && `(${cart.flashSaleName})`}
+                </span>
+                <span>-${flashSaleDiscount.toFixed(2)}</span>
+              </div>
             )}
             
             <div className="pt-3 border-t">

@@ -19,6 +19,8 @@ import {
   ChevronDown,
   TicketPercent,
   MessageSquare,
+  Megaphone,
+  Zap,
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -45,6 +47,8 @@ const dict = {
     storefront: "Storefront",
     analytics: "Analytics",
     coupons: "Coupons",
+    promotions: "Promotions",
+    flashSales: "Flash Sales",
     reviews: "Reviews",
     setup: "Setup",
     pricing: "Pricing",
@@ -68,6 +72,8 @@ const dict = {
     storefront: "Loja",
     analytics: "Análises",
     coupons: "Cupons",
+    promotions: "Promoções",
+    flashSales: "Vendas Relâmpago",
     reviews: "Avaliações",
     setup: "Configurar",
     pricing: "Preços",
@@ -203,6 +209,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/dashboard/settings")) return "settings";
     if (pathname.startsWith("/dashboard/analytics")) return "analytics";
     if (pathname.startsWith("/dashboard/coupons")) return "coupons";
+    if (pathname.startsWith("/dashboard/promotions")) return "promotions";
+    if (pathname.startsWith("/dashboard/flash-sales")) return "flash-sales";
     if (pathname.startsWith("/dashboard/reviews")) return "reviews";
     if (pathname.startsWith("/dashboard/notifications")) return "notifications";
     return "dashboard";
@@ -251,6 +259,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
+    { label: t.promotions, icon: Megaphone, href: "/dashboard/promotions", key: "promotions" },
+    { label: t.flashSales, icon: Zap, href: "/dashboard/flash-sales", key: "flash-sales" },
     { label: t.storefront, icon: Store, href: slug ? `/s/${slug}` : "/", key: "storefront" },
   ];
 
@@ -266,6 +276,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     { label: t.catalog, icon: Package, href: "/dashboard/catalog", key: "catalog" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
+    { label: t.promotions, icon: Megaphone, href: "/dashboard/promotions", key: "promotions" },
+    { label: t.flashSales, icon: Zap, href: "/dashboard/flash-sales", key: "flash-sales" },
     { label: t.storefront, icon: Store, href: slug ? `/s/${slug}` : "/", key: "storefront" },
   ];
 
