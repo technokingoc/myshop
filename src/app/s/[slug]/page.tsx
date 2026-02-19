@@ -592,9 +592,17 @@ function ProductsTab({
       </div>
 
       {searchLoading ? (
-        <div className="py-16 text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
-          <p className="mt-3 text-sm text-slate-500">Searching...</p>
+        <div className={gridClass}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="aspect-square bg-slate-200" />
+              <div className="p-4 space-y-2">
+                <div className="h-4 bg-slate-200 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 rounded w-1/2" />
+                <div className="h-6 bg-slate-200 rounded w-1/3 mt-3" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : products.length === 0 ? (
         <div className="py-16 text-center">

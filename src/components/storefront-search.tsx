@@ -57,10 +57,12 @@ export function StorefrontSearch({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [error, setError] = useState<string | null>(null);
 
   // Search function
   const search = useCallback(async (searchFilters: SearchFilters, offset = 0) => {
     onLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       Object.entries(searchFilters).forEach(([key, value]) => {
@@ -80,9 +82,12 @@ export function StorefrontSearch({
             max: data.priceRange.maxPrice || 1000 
           });
         }
+      } else {
+        setError("Failed to search. Please try again.");
       }
     } catch (error) {
       console.error("Search error:", error);
+      setError("Search temporarily unavailable. Please try again.");
     } finally {
       onLoading(false);
     }
@@ -308,6 +313,13 @@ export function StorefrontSearch({
             ))}
           </select>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Mobile Filter Drawer */}
