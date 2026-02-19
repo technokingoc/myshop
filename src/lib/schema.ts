@@ -40,6 +40,13 @@ export const stores = pgTable("stores", {
   city: varchar("city", { length: 256 }).default(""),
   country: varchar("country", { length: 64 }).default(""),
   emailNotifications: boolean("email_notifications").default(true),
+  verificationStatus: varchar("verification_status", { length: 32 }).default("pending"),
+  verificationNotes: text("verification_notes").default(""),
+  verificationRequestedAt: timestamp("verification_requested_at", { withTimezone: true }).defaultNow(),
+  verificationReviewedAt: timestamp("verification_reviewed_at", { withTimezone: true }),
+  verificationReviewedBy: integer("verification_reviewed_by"),
+  businessDocuments: jsonb("business_documents").default([]),
+  flaggedReason: text("flagged_reason").default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -74,6 +81,25 @@ export const sellers = pgTable("sellers", {
   country: varchar("country", { length: 64 }).default(""),
   storeTemplate: varchar("store_template", { length: 32 }).default("classic"),
   headerTemplate: varchar("header_template", { length: 32 }).default("compact"),
+  verificationStatus: varchar("verification_status", { length: 32 }).default("pending"),
+  verificationNotes: text("verification_notes").default(""),
+  verificationRequestedAt: timestamp("verification_requested_at", { withTimezone: true }).defaultNow(),
+  verificationReviewedAt: timestamp("verification_reviewed_at", { withTimezone: true }),
+  verificationReviewedBy: integer("verification_reviewed_by"),
+  businessDocuments: jsonb("business_documents").default([]),
+  flaggedReason: text("flagged_reason").default(""),
+});
+
+export const adminActivities = pgTable("admin_activities", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id"),
+  action: varchar("action", { length: 128 }).notNull(),
+  targetType: varchar("target_type", { length: 64 }).notNull(),
+  targetId: integer("target_id").notNull(),
+  oldValues: jsonb("old_values").default({}),
+  newValues: jsonb("new_values").default({}),
+  notes: text("notes").default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const customers = pgTable("customers", {
@@ -110,6 +136,12 @@ export const catalogItems = pgTable("catalog_items", {
   lowStockThreshold: integer("low_stock_threshold").default(5),
   compareAtPrice: numeric("compare_at_price", { precision: 10, scale: 2 }).default("0"),
   hasVariants: boolean("has_variants").default(false),
+  moderationStatus: varchar("moderation_status", { length: 32 }).default("approved"),
+  flaggedReason: text("flagged_reason").default(""),
+  flaggedBy: integer("flagged_by"),
+  flaggedAt: timestamp("flagged_at", { withTimezone: true }),
+  reviewedBy: integer("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -137,6 +169,12 @@ export const comments = pgTable("comments", {
   authorEmail: varchar("author_email", { length: 255 }),
   content: text("content").notNull(),
   rating: integer("rating"),
+  moderationStatus: varchar("moderation_status", { length: 32 }).default("approved"),
+  flaggedReason: text("flagged_reason").default(""),
+  flaggedBy: integer("flagged_by"),
+  flaggedAt: timestamp("flagged_at", { withTimezone: true }),
+  reviewedBy: integer("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { getDb } from "@/lib/db";
 import { catalogItems, comments } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -45,18 +45,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
         // Log the admin activity
         try {
-          await db.execute(`
+          await db.execute(sql`
             INSERT INTO admin_activities (admin_id, action, target_type, target_id, new_values, notes, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-          `, [
-            session.sellerId,
-            `moderation_${action}`,
-            'product',
-            itemId,
-            JSON.stringify({ moderationStatus }),
-            notes || '',
-            now
-          ]);
+            VALUES (${session.sellerId}, ${`moderation_${action}`}, ${'product'}, ${itemId}, ${JSON.stringify({ moderationStatus })}, ${notes || ''}, ${now})
+          `);
         } catch {
           // Ignore if admin_activities table doesn't exist
         }
