@@ -19,6 +19,10 @@ import {
   Shield,
   FolderTree,
   MapPin,
+  BarChart3,
+  CheckCircle,
+  Flag,
+  Cog,
 } from "lucide-react";
 import { clearSession, fetchSession, type AuthSession } from "@/lib/auth";
 
@@ -26,13 +30,17 @@ const dict = {
   en: {
     brand: "MyShop Admin",
     dashboard: "Dashboard",
+    analytics: "Analytics",
     sellers: "Sellers",
+    verification: "Verification",
     orders: "Orders",
     products: "Products",
     categories: "Categories",
     locations: "Locations",
     reviews: "Reviews",
+    moderation: "Moderation",
     settings: "Settings",
+    platformSettings: "Platform Settings",
     logout: "Logout",
     backToSite: "Back to site",
     forbidden: "Access denied. Admin role required.",
@@ -41,13 +49,17 @@ const dict = {
   pt: {
     brand: "MyShop Admin",
     dashboard: "Painel",
+    analytics: "Análise",
     sellers: "Vendedores",
+    verification: "Verificação",
     orders: "Pedidos",
     products: "Produtos",
     categories: "Categorias",
     locations: "Localizações",
     reviews: "Avaliações",
+    moderation: "Moderação",
     settings: "Configurações",
+    platformSettings: "Config. Plataforma",
     logout: "Sair",
     backToSite: "Voltar ao site",
     forbidden: "Acesso negado. Função de administrador necessária.",
@@ -57,13 +69,17 @@ const dict = {
 
 const navItems = [
   { key: "dashboard", href: "/admin", icon: LayoutDashboard },
+  { key: "analytics", href: "/admin/analytics", icon: BarChart3 },
   { key: "sellers", href: "/admin/sellers", icon: Users },
+  { key: "verification", href: "/admin/verification", icon: CheckCircle },
   { key: "orders", href: "/admin/orders", icon: ShoppingCart },
   { key: "products", href: "/admin/products", icon: Package },
   { key: "categories", href: "/admin/categories", icon: FolderTree },
   { key: "locations", href: "/admin/locations", icon: MapPin },
   { key: "reviews", href: "/admin/reviews", icon: MessageSquare },
+  { key: "moderation", href: "/admin/moderation", icon: Flag },
   { key: "settings", href: "/admin/settings", icon: Settings },
+  { key: "platformSettings", href: "/admin/platform-settings", icon: Cog },
 ] as const;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

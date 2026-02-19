@@ -27,12 +27,7 @@ import PromotionBanner from "@/components/promotions/promotion-banner";
 import FlashSaleBanner from "@/components/promotions/flash-sale-banner";
 import FlashSaleAutoApply from "@/components/promotions/flash-sale-auto-apply";
 
-/* ── Safe image wrapper ── */
-function SafeImg({ src, alt = "", className, fallback }: { src?: string | null; alt?: string; className?: string; fallback?: React.ReactNode }) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed) return fallback ? <>{fallback}</> : null;
-  return <img src={src} alt={alt} className={className} loading="lazy" onError={() => setFailed(true)} />;
-}
+import { OptimizedImage, ProductImage, StoreLogoImage, StoreBannerImage } from "@/components/optimized-image";
 
 /* ── Types ── */
 type Seller = {

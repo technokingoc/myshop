@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { getDb } from "@/lib/db";
-import { sellers } from "@/lib/schema";
+import { sellers, catalogItems, stores, users } from "@/lib/schema";
+import { eq, and } from "drizzle-orm";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://myshop.co.mz";
@@ -15,17 +16,64 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const db = getDb();
-    const allSellers = await db.select({ slug: sellers.slug, updatedAt: sellers.updatedAt }).from(sellers);
+    
+    // Get all sellers (legacy support)
+    const allSellers = await db.select({ 
+      slug: sellers.slug, 
+      updatedAt: sellers.updatedAt 
+    }).from(sellers);
 
-    const storePages: MetadataRoute.Sitemap = allSellers.map((s) => ({
-      url: `${baseUrl}/s/${s.slug}`,
-      lastModified: s.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    }));
+    // Get all new stores
+    const allStores = await db.select({ 
+      slug: stores.slug, 
+      updatedAt: stores.updatedAt 
+    }).from(stores);
 
-    return [...staticPages, ...storePages];
-  } catch {
+    // Get all published products with store/seller info
+    const allProducts = await db.select({
+      id: catalogItems.id,
+      name: catalogItems.name,
+      createdAt: catalogItems.createdAt,
+      sellerId: catalogItems.sellerId,
+      sellerSlug: sellers.slug,
+      storeSlug: stores.slug,
+    })
+    .from(catalogItems)
+    .leftJoin(sellers, eq(catalogItems.sellerId, sellers.id))
+    .leftJoin(stores, eq(catalogItems.sellerId, stores.userId))
+    .where(eq(catalogItems.status, "Published"));
+
+    const storePages: MetadataRoute.Sitemap = [
+      // Legacy seller pages
+      ...allSellers.map((s) => ({
+        url: `${baseUrl}/s/${s.slug}`,
+        lastModified: s.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      })),
+      // New store pages
+      ...allStores.map((s) => ({
+        url: `${baseUrl}/s/${s.slug}`,
+        lastModified: s.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      }))
+    ];
+
+    // Individual product pages - use the store slug as base
+    const productPages: MetadataRoute.Sitemap = allProducts.map((p) => {
+      const storeSlug = p.storeSlug || p.sellerSlug;
+      return {
+        url: `${baseUrl}/s/${storeSlug}/product/${p.id}`,
+        lastModified: p.createdAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      };
+    });
+
+    return [...staticPages, ...storePages, ...productPages];
+  } catch (error) {
+    console.error("Error generating sitemap:", error);
     return staticPages;
   }
 }
