@@ -96,7 +96,7 @@ export const platformSettings = pgTable("platform_settings", {
 
 export const catalogItems = pgTable("catalog_items", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").notNull().references(() => stores.id, { onDelete: "cascade" }), // Now references stores
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 256 }).notNull(),
   type: varchar("type", { length: 32 }).notNull().default("Product"),
   price: numeric("price", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -132,7 +132,7 @@ export const productVariants = pgTable("product_variants", {
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
   catalogItemId: integer("catalog_item_id").references(() => catalogItems.id, { onDelete: "cascade" }),
-  sellerId: integer("seller_id").references(() => stores.id, { onDelete: "cascade" }), // Now references stores
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }),
   authorName: varchar("author_name", { length: 100 }).notNull(),
   authorEmail: varchar("author_email", { length: 255 }),
   content: text("content").notNull(),
@@ -142,7 +142,7 @@ export const comments = pgTable("comments", {
 
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").notNull().references(() => stores.id, { onDelete: "cascade" }), // Now references stores
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
   itemId: integer("item_id"),
   customerName: varchar("customer_name", { length: 256 }).notNull(),
   customerContact: varchar("customer_contact", { length: 512 }).notNull(),
@@ -162,7 +162,7 @@ export const orders = pgTable("orders", {
 
 export const coupons = pgTable("coupons", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").notNull().references(() => stores.id, { onDelete: "cascade" }), // Now references stores
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
   code: varchar("code", { length: 64 }).notNull(),
   type: varchar("type", { length: 16 }).notNull().default("percentage"),
   value: numeric("value", { precision: 10, scale: 2 }).notNull(),
@@ -208,7 +208,7 @@ export const wishlists = pgTable("wishlists", {
 
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").references(() => stores.id, { onDelete: "cascade" }), // Now references stores
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }),
   customerId: integer("customer_id").references(() => users.id, { onDelete: "cascade" }), // Now references users
   type: varchar("type", { length: 64 }).notNull().default("order_status"),
   title: varchar("title", { length: 256 }).notNull(),
