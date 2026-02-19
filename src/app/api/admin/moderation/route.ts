@@ -12,7 +12,7 @@ export async function GET() {
 
   try {
     // Get flagged products
-    let flaggedProducts = [];
+    let flaggedProducts: any[] = [];
     try {
       flaggedProducts = await db
         .select({
@@ -40,7 +40,7 @@ export async function GET() {
     }
 
     // Get flagged reviews
-    let flaggedReviews = [];
+    let flaggedReviews: any[] = [];
     try {
       flaggedReviews = await db
         .select({

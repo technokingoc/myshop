@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { getDb } from "@/lib/db";
-import { platformSettings } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { platformSettings, adminActivities } from "@/lib/schema";
+import { eq, sql } from "drizzle-orm";
 
 export async function GET() {
   const { error } = await requireAdmin();
@@ -92,18 +92,14 @@ export async function PUT(request: NextRequest) {
 
     // Log the admin activity
     try {
-      await db.execute(`
-        INSERT INTO admin_activities (admin_id, action, target_type, target_id, new_values, notes, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `, [
-        session.sellerId,
-        'platform_settings_update',
-        'platform',
-        0,
-        JSON.stringify(settings),
-        'Platform settings updated',
-        now
-      ]);
+      await db.insert(adminActivities).values({
+        adminId: session.sellerId,
+        action: 'platform_settings_update',
+        targetType: 'platform',
+        targetId: 0,
+        newValues: settings,
+        notes: 'Platform settings updated',
+      });
     } catch {
       // Ignore if admin_activities table doesn't exist
     }
