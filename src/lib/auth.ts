@@ -43,9 +43,6 @@ export const authOptions = {
   // Placeholder for compatibility
 };
 
-// Alias for getSellerFromSession for consistency
-export const auth = getSellerFromSession;
-
 // Server-side: get seller ID from session (cookie-based)
 export async function getSellerFromSession(request: Request): Promise<number | null> {
   try {
@@ -100,4 +97,5 @@ export async function checkAuth(): Promise<any | null> {
   }
 }
 
-export const auth = fetchSession;
+// Auth alias for compatibility
+export { fetchSession as auth };
