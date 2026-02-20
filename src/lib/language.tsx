@@ -142,7 +142,7 @@ export function LanguageProvider({
 
   // RTL support
   const isRtl = languageConfig.rtlLocales.includes(activeLang);
-  const textDirection = isRtl ? 'rtl' : 'ltr';
+  const textDirection: 'ltr' | 'rtl' = isRtl ? 'rtl' : 'ltr';
 
   // Update document attributes
   useEffect(() => {

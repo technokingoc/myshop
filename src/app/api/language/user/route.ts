@@ -8,7 +8,7 @@ import { isValidLocale } from '@/lib/i18n';
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.sellerId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const user = await db
       .select({ language: users.language })
       .from(users)
-      .where(eq(users.id, session.userId))
+      .where(eq(users.id, session.sellerId))
       .limit(1);
 
     if (!user.length) {
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
+    if (!session?.sellerId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest) {
         language: language || 'en',
         updatedAt: new Date()
       })
-      .where(eq(users.id, session.userId));
+      .where(eq(users.id, session.sellerId));
 
     return NextResponse.json({ 
       success: true,

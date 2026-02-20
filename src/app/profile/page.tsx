@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default async function ProfilePage({
   searchParams,
 }: {
-  searchParams: { lang?: string };
+  searchParams: Promise<{ lang?: string }>;
 }) {
   // Check authentication using the unified session
   let session;
@@ -25,7 +25,8 @@ export default async function ProfilePage({
     redirect("/login");
   }
 
-  const lang = (searchParams.lang as "en" | "pt") || "en";
+  const params = await searchParams;
+  const lang = (params.lang as "en" | "pt") || "en";
 
   return <ProfileContent session={session} lang={lang} />;
 }

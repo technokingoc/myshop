@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default async function NotificationsPage({
   searchParams,
 }: {
-  searchParams: { lang?: string };
+  searchParams: Promise<{ lang?: string }>;
 }) {
   const session = await getSessionFromCookie();
   
@@ -19,7 +19,8 @@ export default async function NotificationsPage({
     redirect("/login");
   }
 
-  const lang = (searchParams.lang as "en" | "pt") || "en";
+  const params = await searchParams;
+  const lang = (params.lang as "en" | "pt") || "en";
   const dict = getDict(lang);
   const t = dict.notifications;
 
