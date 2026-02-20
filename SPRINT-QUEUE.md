@@ -8,7 +8,7 @@
 
 ---
 
-## S56 — Seller Onboarding Wizard
+## [x] S56 — Seller Onboarding Wizard ✅
 
 **Goal:** Guided first-time store setup flow that converts new users into active sellers.
 

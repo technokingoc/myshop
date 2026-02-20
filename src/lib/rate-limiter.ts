@@ -25,8 +25,6 @@ export class RateLimiter {
 
   constructor(config: RateLimitConfig) {
     this.config = {
-      windowMs: 60000, // 1 minute default
-      maxRequests: 100, // 100 requests per minute default
       keyGenerator: (req) => this.getClientIP(req),
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
@@ -56,7 +54,7 @@ export class RateLimiter {
       const windowStart = new Date(now.getTime() - this.config.windowMs);
       
       // For API key requests, use more specific tracking
-      let identifier: string;
+      let identifier: string = `ip:${key}`;
       let rateLimitPerDay = this.config.maxRequests;
 
       if (apiKeyId) {
