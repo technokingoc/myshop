@@ -41,7 +41,7 @@ type DeliveryAnalyticsData = {
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.sellerId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
