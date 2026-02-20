@@ -9,25 +9,29 @@ const dict = {
   en: {
     title: "My Profile", subtitle: "Manage your account details",
     name: "Name", email: "Email", phone: "Phone", address: "Address", city: "City", country: "Country",
+    language: "Preferred Language", 
+    languageDesc: "Choose your preferred language for orders and notifications",
     save: "Save changes", saving: "Saving...", saved: "Saved!",
     loading: "Loading...",
   },
   pt: {
     title: "Meu Perfil", subtitle: "Gerencie os detalhes da sua conta",
     name: "Nome", email: "Email", phone: "Telefone", address: "Endereço", city: "Cidade", country: "País",
+    language: "Idioma Preferido",
+    languageDesc: "Escolha o seu idioma preferido para pedidos e notificações",
     save: "Guardar alterações", saving: "A guardar...", saved: "Guardado!",
     loading: "A carregar...",
   },
 };
 
-type Profile = { customerId: number; name: string; email: string; phone: string; address: string; city: string; country: string };
+type Profile = { customerId: number; name: string; email: string; phone: string; address: string; city: string; country: string; language?: string };
 
 export default function CustomerProfilePage() {
   const { lang } = useLanguage();
   const t = dict[lang];
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", city: "", country: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", city: "", country: "", language: "en" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -38,7 +42,7 @@ export default function CustomerProfilePage() {
       .then((data) => {
         if (!data.session) { router.push("/customer/login"); return; }
         setProfile(data.session);
-        setForm({ name: data.session.name || "", phone: data.session.phone || "", address: data.session.address || "", city: data.session.city || "", country: data.session.country || "" });
+        setForm({ name: data.session.name || "", phone: data.session.phone || "", address: data.session.address || "", city: data.session.city || "", country: data.session.country || "", language: data.session.language || "en" });
       })
       .finally(() => setLoading(false));
   }, [router]);
@@ -94,6 +98,39 @@ export default function CustomerProfilePage() {
             <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={inp} />
           </div>
         </div>
+        
+        {/* Language Preference */}
+        <div>
+          <label className="text-xs font-medium text-slate-600">{t.language}</label>
+          <p className="text-xs text-slate-500 mb-2">{t.languageDesc}</p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, language: "en" })}
+              className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm font-medium transition ${
+                form.language === "en"
+                  ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                  : "border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <span className="text-lg">🇬🇧</span>
+              <span>English</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, language: "pt" })}
+              className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm font-medium transition ${
+                form.language === "pt"
+                  ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                  : "border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <span className="text-lg">🇵🇹</span>
+              <span>Português</span>
+            </button>
+          </div>
+        </div>
+        
         <button type="submit" disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {saving ? t.saving : saved ? t.saved : t.save}

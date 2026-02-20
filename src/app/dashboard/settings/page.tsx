@@ -108,7 +108,10 @@ const settingsDict = {
       social: "Social Links",
       notifications: "Notifications",
       plan: "Plan & Usage",
+      language: "Language & Localization",
     },
+    storeLanguage: "Store Default Language",
+    storeLanguageDesc: "Default language for your storefront and customers",
   },
   pt: {
     themeColor: "Cor do Tema da Loja",
@@ -132,7 +135,10 @@ const settingsDict = {
       social: "Links Sociais",
       notifications: "Notificações",
       plan: "Plano & Uso",
+      language: "Idioma & Localização",
     },
+    storeLanguage: "Idioma Padrão da Loja",
+    storeLanguageDesc: "Idioma padrão para a sua loja e clientes",
   },
 };
 
@@ -155,10 +161,11 @@ export default function SettingsPage() {
   const [country, setCountry] = useState("");
   const [storeTemplate, setStoreTemplate] = useState("classic");
   const [headerTemplate, setHeaderTemplate] = useState("compact");
+  const [storeLanguage, setStoreLanguage] = useState("en");
 
   // Collapsible sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    identity: true, customization: true, social: false, notifications: false, plan: false,
+    identity: true, customization: true, social: false, notifications: false, plan: false, language: false,
   });
 
   const toggleSection = (key: string) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -199,6 +206,7 @@ export default function SettingsPage() {
             setCountry(s.country || "");
             setStoreTemplate(s.storeTemplate || "classic");
             setHeaderTemplate(s.headerTemplate || "compact");
+            setStoreLanguage(s.language || "en");
             try {
               const statsRes = await fetch("/api/dashboard/stats", { credentials: "include" });
               if (statsRes.ok) {
@@ -276,6 +284,7 @@ export default function SettingsPage() {
           country,
           storeTemplate,
           headerTemplate,
+          language: storeLanguage,
         }),
       }, 3, "settings:save");
     } catch {
@@ -595,6 +604,51 @@ export default function SettingsPage() {
             </div>
           </CollapsibleSection>
         )}
+
+        {/* Language & Localization */}
+        <CollapsibleSection
+          title={ts.sections.language}
+          icon={<svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0"/><path d="M8 12h8"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M16 8l-4 8-4-8"/></svg>}
+          open={openSections.language}
+          toggle={() => toggleSection("language")}
+        >
+          <div className="mb-4">
+            <label className="text-sm font-medium text-slate-700">{ts.storeLanguage}</label>
+            <p className="text-xs text-slate-500 mb-2">{ts.storeLanguageDesc}</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStoreLanguage("en")}
+                className={`flex items-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-medium transition ${
+                  storeLanguage === "en"
+                    ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                    : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <span className="text-lg">🇬🇧</span>
+                <div className="text-left">
+                  <p className="font-semibold">English</p>
+                  <p className="text-xs text-slate-500">International</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStoreLanguage("pt")}
+                className={`flex items-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-medium transition ${
+                  storeLanguage === "pt"
+                    ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                    : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <span className="text-lg">🇵🇹</span>
+                <div className="text-left">
+                  <p className="font-semibold">Português</p>
+                  <p className="text-xs text-slate-500">Portugal/Moçambique</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </CollapsibleSection>
 
         <div className="flex items-center gap-3 pt-2">
           <button onClick={handleSave} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">

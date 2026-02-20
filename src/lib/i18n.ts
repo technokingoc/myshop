@@ -1,687 +1,163 @@
+import { createTranslator } from 'next-intl';
+import enMessages from '../../messages/en.json';
+import ptMessages from '../../messages/pt.json';
+
+export type AppLang = 'en' | 'pt';
+
+// Messages type from the JSON structure
+type Messages = typeof enMessages;
+
+// Create the dictionary from the JSON files
 export const dictionary = {
-  en: {
-    common: {
-      goToDashboard: "Go to Dashboard",
-      dashboard: "Dashboard",
-      genericError: "Something went wrong. Please try again.",
-      dbSyncFallback: "Could not sync with database. Showing local data.",
-      exportFailed: "Unable to export CSV right now.",
-    },
-    toast: {
-      saved: "Saved successfully.",
-      updated: "Updated successfully.",
-      created: "Created successfully.",
-      deleted: "Deleted successfully.",
-      statusUpdated: "Order status updated.",
-      noteSaved: "Note saved.",
-      syncFailed: "Could not sync with server. Local mode is active.",
-      refundProcessed: "Refund processed successfully.",
-      refundFailed: "Failed to process refund.",
-      orderCancelled: "Order cancelled successfully.",
-      cancelFailed: "Failed to cancel order.",
-    },
-    orders: {
-      title: "Orders",
-      subtitle: "Manage customer order requests and booking intents.",
-      empty: "No orders yet. When customers submit order requests from your storefront, they'll appear here.",
-      item: "Item",
-      type: "Type",
-      price: "Price",
-      // New status flow
-      placed: "Order Placed",
-      confirmed: "Confirmed", 
-      processing: "Processing",
-      shipped: "Shipped",
-      delivered: "Delivered",
-      cancelled: "Cancelled",
-      // Legacy status support
-      new: "Order Placed",
-      contacted: "Confirmed",
-      completed: "Delivered",
-      markContacted: "Mark contacted",
-      markCompleted: "Mark completed",
-      changeStatus: "Change status",
-      filterAll: "All",
-      filterNew: "New",
-      filterContacted: "Contacted",
-      filterProcessing: "Processing",
-      filterShipped: "Shipped",
-      filterCompleted: "Completed",
-      filterCancelled: "Cancelled",
-      statusTimeline: "Status timeline",
-      contactCustomer: "Contact customer",
-      whatsappCustomer: "WhatsApp",
-      emailCustomer: "Email",
-      internalNotes: "Internal notes",
-      addNote: "Add note",
-      viewDetails: "View details",
-      detailsTitle: "Order details",
-      close: "Close",
-      statusNotes: "Status notes",
-      notePlaceholder: "Add a note (e.g. customer asked for delivery tomorrow)",
-      saveNote: "Save note",
-      noNotes: "No status notes yet.",
-      search: "Search customer",
-      from: "From",
-      to: "To",
-      exportCsv: "Export CSV",
-      dbBanner: "Could not sync with database. Showing local orders.",
-      listView: "List",
-      pipelineView: "Pipeline",
-      totalOrders: "Total",
-      needAttention: "Need attention",
-      revenueMonth: "Revenue (month)",
-      details: "Details",
-      timeline: "Timeline",
-      notes: "Notes",
-      printOrder: "Print",
-      refundCancel: "Refund/Cancel",
-      refundProcessed: "Refund processed successfully",
-      refundFailed: "Failed to process refund",
-      cancelFailed: "Failed to cancel order",
-      selectAll: "Select all",
-      bulkChangeStatus: "Change status",
-      selected: "selected",
-      noTimeline: "No status history yet.",
-      dateToday: "Today",
-      date7d: "7 days",
-      date30d: "30 days",
-      dateAll: "All time",
-      orderRef: "Ref",
-      items: "Items",
-      total: "Total",
-      paymentStatus: "Payment status",
-      orderInvoice: "Order Invoice",
-      packingSlip: "Packing Slip", 
-      printInvoice: "Print Invoice",
-      printPackingSlip: "Print Packing Slip",
-      printFullInvoice: "Print full order details with pricing",
-      printPackingOnly: "Print order details without pricing",
-      printTip: "Tip",
-      printTipText: "Use the invoice for customer records and the packing slip for warehouse/shipping.",
-      cancelOrder: "Cancel Order",
-      processRefund: "Process Refund",
-      refundOrder: "Refund Order",
-      cancelReason: "Cancellation Reason",
-      refundReason: "Refund Reason",
-      refundAmount: "Refund Amount",
-      reasonPlaceholder: "Please provide a reason...",
-      confirmCancel: "Confirm Cancellation",
-      confirmRefund: "Confirm Refund",
-      orderCancelledTitle: "Order Cancelled",
-      orderRefundedTitle: "Order Refunded",
-      statusHistory: "Status History",
-      noHistory: "No status history yet",
-      orderCancelled: "This order has been cancelled",
-      trackingUrl: "Tracking URL",
-      generateTrackingUrl: "Generate tracking URL",
-      copyTrackingUrl: "Copy tracking URL",
-      trackingUrlCopied: "Tracking URL copied to clipboard",
-    },
-    settings: {
-      title: "Settings",
-      subtitle: "Update your store identity and business details.",
-      storeName: "Store name",
-      description: "Store description",
-      descriptionPh: "Tell customers about your business...",
-      currency: "Currency",
-      logoUrl: "Logo URL",
-      logoUrlPh: "https://example.com/logo.png",
-      bannerUrl: "Banner URL",
-      bannerUrlPh: "https://example.com/banner.jpg",
-      ownerName: "Owner name",
-      city: "City",
-      whatsapp: "WhatsApp link",
-      instagram: "Instagram link",
-      facebook: "Facebook link",
-      paymentLink: "Payment link",
-      save: "Save changes",
-      saved: "Changes saved!",
-      notSetup: "Complete store setup first.",
-      goSetup: "Go to setup",
-      storeIdentity: "Store identity",
-      socialLinks: "Social links",
-      notifications: "Notifications",
-      emailNotifications: "Email notifications for new orders",
-      emailNotificationsDesc: "Receive an email when a customer places a new order.",
-    },
-    notifications: {
-      title: "Notifications",
-      description: "Manage your notifications and preferences",
-      customerDescription: "Stay updated on your orders and account activity",
-      all: "All",
-      unread: "Unread",
-      orders: "Orders",
-      inventory: "Inventory", 
-      reviews: "Reviews",
-      markAllRead: "Mark all read",
-      preferences: "Preferences",
-      noNotifications: "No notifications",
-      noUnreadNotifications: "No unread notifications",
-      notificationsWillAppear: "Your notifications will appear here",
-      orderUpdatesWillAppear: "Order updates and important information will appear here",
-      justNow: "Just now",
-      loading: "Loading...",
-      failedToLoadPreferences: "Failed to load preferences",
-      // Preferences
-      notificationPreferences: "Notification Preferences",
-      emailNotifications: "Email Notifications",
-      inAppNotifications: "In-App Notifications",
-      emailFrequency: "Email Frequency",
-      orderUpdates: "Order updates",
-      inventoryAlerts: "Inventory alerts",
-      reviewAlerts: "Review alerts",
-      promotionalEmails: "Promotional emails",
-      systemUpdates: "System updates",
-      instant: "Instant",
-      daily: "Daily digest",
-      weekly: "Weekly summary",
-      viewAllNotifications: "View all notifications",
-      noAccess: "No access to notifications",
-    },
-    cart: {
-      title: "Shopping Cart",
-      empty: "Your cart is empty",
-      emptyDescription: "Add some products to get started",
-      continueShopping: "Continue shopping",
-      addToCart: "Add to cart",
-      addedToCart: "Added to cart",
-      updateCart: "Update cart",
-      removeFromCart: "Remove from cart",
-      quantity: "Quantity",
-      subtotal: "Subtotal",
-      total: "Total",
-      discount: "Discount",
-      proceedToCheckout: "Proceed to checkout",
-      itemsInCart: "items in cart",
-      maxQuantityReached: "Maximum quantity reached",
-      outOfStock: "Out of stock",
-      lowStock: "Only {count} left in stock",
-    },
-    checkout: {
-      title: "Checkout",
-      reviewOrder: "Review Order",
-      shippingInfo: "Shipping Information",
-      billingInfo: "Billing Information", 
-      paymentMethod: "Payment Method",
-      orderConfirmation: "Order Confirmation",
-      continuousGuest: "Continue as guest",
-      orSignIn: "or sign in",
-      createAccount: "Create account for faster checkout",
-      
-      // Address form
-      fullName: "Full name",
-      emailAddress: "Email address",
-      phoneNumber: "Phone number",
-      streetAddress: "Street address",
-      city: "City",
-      country: "Country",
-      saveAddress: "Save address for next time",
-      useSameForBilling: "Use same address for billing",
-      
-      // Payment methods
-      bankTransfer: "Bank transfer",
-      cashOnDelivery: "Cash on delivery",
-      mobileMoney: "Mobile money (M-Pesa)",
-      paymentInstructions: "Payment instructions will be provided after order confirmation",
-      
-      // Order notes
-      orderNotes: "Order notes (optional)",
-      orderNotesPlaceholder: "Special instructions, delivery notes...",
-      
-      // Coupon
-      couponCode: "Coupon code",
-      applyCoupon: "Apply coupon",
-      removeCoupon: "Remove coupon",
-      couponApplied: "Coupon applied successfully",
-      invalidCoupon: "Invalid coupon code",
-      
-      // Order summary
-      orderSummary: "Order Summary",
-      shippingAddress: "Shipping Address",
-      billingAddress: "Billing Address",
-      paymentMethodSelected: "Payment Method",
-      
-      // Actions
-      backToCart: "Back to cart",
-      continuesToShipping: "Continue to shipping",
-      continuesToPayment: "Continue to payment",
-      continuesToReview: "Continue to review",
-      placeOrder: "Place order",
-      
-      // Confirmation
-      orderPlaced: "Order placed successfully!",
-      orderNumber: "Order number",
-      confirmationEmail: "A confirmation email has been sent to",
-      trackYourOrder: "Track your order",
-      continueShoppingLower: "Continue shopping",
-      orderTotal: "Order total",
-      
-      // Validation errors
-      nameRequired: "Full name is required",
-      emailRequired: "Email address is required",
-      emailInvalid: "Please enter a valid email address", 
-      phoneRequired: "Phone number is required",
-      addressRequired: "Street address is required",
-      cityRequired: "City is required",
-      paymentRequired: "Please select a payment method",
-      
-      // Loading states
-      placingOrder: "Placing your order...",
-      processingPayment: "Processing payment...",
-    },
-    payments: {
-      title: "Payments",
-      subtitle: "Manage payments and revenue",
-      paymentTracking: "Payment Tracking",
-      revenueSettlement: "Revenue Settlement",
-      paymentInstructions: "Payment Instructions",
-      paymentMethod: "Payment Method",
-      amount: "Amount",
-      status: "Status",
-      customerName: "Customer Name",
-      customerPhone: "Customer Phone",
-      transactionId: "Transaction ID",
-      confirmationCode: "Confirmation Code",
-      createdAt: "Created At",
-      completedAt: "Completed At",
-      pending: "Pending",
-      processing: "Processing",
-      completed: "Completed",
-      failed: "Failed",
-      cancelled: "Cancelled",
-      mpesa: "M-Pesa",
-      bankTransfer: "Bank Transfer",
-      cashOnDelivery: "Cash on Delivery",
-      totalPayments: "Total Payments",
-      totalRevenue: "Total Revenue",
-      netRevenue: "Net Revenue",
-      platformFees: "Platform Fees",
-      paymentFees: "Payment Fees",
-      pendingSettlements: "Pending Settlements",
-      completedSettlements: "Completed Settlements",
-      requestSettlement: "Request Settlement",
-      settlementHistory: "Settlement History",
-      grossAmount: "Gross Amount",
-      netAmount: "Net Amount",
-      settlementPeriod: "Settlement Period",
-      paymentConfirmation: "Payment Confirmation",
-      completePayment: "Complete Your Payment",
-      paymentCompleted: "Payment Completed Successfully",
-      paymentFailed: "Payment Failed",
-      paymentPending: "Payment Pending",
-      dialMpesa: "Dial *150*00# from your mobile phone",
-      followPrompts: "Follow the prompts to complete the payment",
-      pageWillUpdate: "This page will update automatically when payment is confirmed",
-      bankDetails: "Bank Details",
-      accountNumber: "Account Number",
-      accountName: "Account Name",
-      bankName: "Bank Name",
-      reference: "Reference",
-      instructions: "Instructions",
-      exportPayments: "Export Payments",
-      searchPayments: "Search payments...",
-      filterBy: "Filter by",
-      allStatus: "All Status",
-      viewDetails: "View Details",
-      markAsCompleted: "Mark as Completed",
-      paymentDetails: "Payment Details",
-      paymentId: "Payment ID",
-      orderId: "Order ID",
-      externalTransactionId: "External Transaction ID",
-      provider: "Provider",
-      noPaymentsFound: "No payments found",
-      loadingPayments: "Loading payments...",
-      refreshPayments: "Refresh payments",
-      settlementCreated: "Settlement created successfully",
-      settlementFailed: "Failed to create settlement",
-      noUnsetaledPayments: "No unsettled payments found for the selected period",
-    },
-  },
-  pt: {
-    common: {
-      goToDashboard: "Ir ao Painel",
-      dashboard: "Painel",
-      genericError: "Algo correu mal. Tente novamente.",
-      dbSyncFallback: "Não foi possível sincronizar com a base de dados. A mostrar dados locais.",
-      exportFailed: "Não foi possível exportar o CSV agora.",
-    },
-    toast: {
-      saved: "Guardado com sucesso.",
-      updated: "Atualizado com sucesso.",
-      created: "Criado com sucesso.",
-      deleted: "Apagado com sucesso.",
-      statusUpdated: "Estado do pedido atualizado.",
-      noteSaved: "Nota guardada.",
-      syncFailed: "Não foi possível sincronizar com o servidor. Modo local ativo.",
-      refundProcessed: "Reembolso processado com sucesso.",
-      refundFailed: "Falha ao processar reembolso.",
-      orderCancelled: "Pedido cancelado com sucesso.",
-      cancelFailed: "Falha ao cancelar pedido.",
-    },
-    orders: {
-      title: "Pedidos",
-      subtitle: "Gerir pedidos e intenções de reserva dos clientes.",
-      empty: "Ainda não há pedidos. Quando os clientes submeterem pedidos na sua loja, aparecerão aqui.",
-      item: "Item",
-      type: "Tipo",
-      price: "Preço",
-      // New status flow
-      placed: "Pedido Feito",
-      confirmed: "Confirmado",
-      processing: "Em processamento", 
-      shipped: "Enviado",
-      delivered: "Entregue",
-      cancelled: "Cancelado",
-      // Legacy status support
-      new: "Pedido Feito",
-      contacted: "Confirmado",
-      completed: "Entregue",
-      markContacted: "Marcar contactado",
-      markCompleted: "Marcar concluído",
-      changeStatus: "Alterar estado",
-      filterAll: "Todos",
-      filterNew: "Novos",
-      filterContacted: "Contactados",
-      filterProcessing: "Em processamento",
-      filterShipped: "Enviados",
-      filterCompleted: "Concluídos",
-      filterCancelled: "Cancelados",
-      statusTimeline: "Linha do tempo",
-      contactCustomer: "Contactar cliente",
-      whatsappCustomer: "WhatsApp",
-      emailCustomer: "Email",
-      internalNotes: "Notas internas",
-      addNote: "Adicionar nota",
-      viewDetails: "Ver detalhes",
-      detailsTitle: "Detalhes do pedido",
-      close: "Fechar",
-      statusNotes: "Notas de estado",
-      notePlaceholder: "Adicionar nota (ex.: cliente pediu entrega amanhã)",
-      saveNote: "Guardar nota",
-      noNotes: "Ainda não existem notas de estado.",
-      search: "Pesquisar cliente",
-      from: "De",
-      to: "Até",
-      exportCsv: "Exportar CSV",
-      dbBanner: "Não foi possível sincronizar com a base de dados. A mostrar pedidos locais.",
-      listView: "Lista",
-      pipelineView: "Pipeline",
-      totalOrders: "Total",
-      needAttention: "Atenção",
-      revenueMonth: "Receita (mês)",
-      details: "Detalhes",
-      timeline: "Linha do tempo",
-      notes: "Notas",
-      printOrder: "Imprimir",
-      refundCancel: "Reembolso/Cancelar",
-      refundProcessed: "Reembolso processado com sucesso",
-      refundFailed: "Falha ao processar reembolso",
-      cancelFailed: "Falha ao cancelar pedido",
-      selectAll: "Selecionar tudo",
-      bulkChangeStatus: "Alterar estado",
-      selected: "selecionados",
-      noTimeline: "Ainda não existe histórico de estado.",
-      dateToday: "Hoje",
-      date7d: "7 dias",
-      date30d: "30 dias",
-      dateAll: "Tudo",
-      orderRef: "Ref",
-      items: "Items",
-      total: "Total",
-      paymentStatus: "Estado de pagamento",
-      orderInvoice: "Factura do Pedido",
-      packingSlip: "Guia de Remessa",
-      printInvoice: "Imprimir Factura",
-      printPackingSlip: "Imprimir Guia de Remessa",
-      printFullInvoice: "Imprimir detalhes completos do pedido com preços",
-      printPackingOnly: "Imprimir detalhes do pedido sem preços",
-      printTip: "Dica",
-      printTipText: "Use a factura para registos do cliente e a guia de remessa para armazém/envio.",
-      cancelOrder: "Cancelar Pedido",
-      processRefund: "Processar Reembolso", 
-      refundOrder: "Reembolsar Pedido",
-      cancelReason: "Razão do Cancelamento",
-      refundReason: "Razão do Reembolso",
-      refundAmount: "Valor do Reembolso",
-      reasonPlaceholder: "Por favor, forneça uma razão...",
-      confirmCancel: "Confirmar Cancelamento",
-      confirmRefund: "Confirmar Reembolso",
-      orderCancelledTitle: "Pedido Cancelado",
-      orderRefundedTitle: "Pedido Reembolsado",
-      statusHistory: "Histórico de Estado",
-      noHistory: "Ainda não existe histórico de estado",
-      orderCancelled: "Este pedido foi cancelado",
-      trackingUrl: "URL de Rastreamento",
-      generateTrackingUrl: "Gerar URL de rastreamento",
-      copyTrackingUrl: "Copiar URL de rastreamento",
-      trackingUrlCopied: "URL de rastreamento copiado para a área de transferência",
-    },
-    settings: {
-      title: "Configurações",
-      subtitle: "Atualize a identidade da loja e dados do negócio.",
-      storeName: "Nome da loja",
-      description: "Descrição da loja",
-      descriptionPh: "Conte aos clientes sobre o seu negócio...",
-      currency: "Moeda",
-      logoUrl: "URL do logotipo",
-      logoUrlPh: "https://exemplo.com/logo.png",
-      bannerUrl: "URL do banner",
-      bannerUrlPh: "https://exemplo.com/banner.jpg",
-      ownerName: "Nome do proprietário",
-      city: "Cidade",
-      whatsapp: "Link WhatsApp",
-      instagram: "Link Instagram",
-      facebook: "Link Facebook",
-      paymentLink: "Link de pagamento",
-      save: "Guardar alterações",
-      saved: "Alterações guardadas!",
-      notSetup: "Conclua a configuração da loja primeiro.",
-      goSetup: "Ir para configuração",
-      storeIdentity: "Identidade da loja",
-      socialLinks: "Links sociais",
-      notifications: "Notificações",
-      emailNotifications: "Notificações por email para novos pedidos",
-      emailNotificationsDesc: "Receba um email quando um cliente fizer um novo pedido.",
-    },
-    notifications: {
-      title: "Notificações",
-      description: "Gerir as suas notificações e preferências",
-      customerDescription: "Mantenha-se atualizado sobre os seus pedidos e atividade da conta",
-      all: "Todas",
-      unread: "Não lidas",
-      orders: "Pedidos",
-      inventory: "Inventário",
-      reviews: "Avaliações",
-      markAllRead: "Marcar todas como lidas",
-      preferences: "Preferências",
-      noNotifications: "Sem notificações",
-      noUnreadNotifications: "Sem notificações não lidas",
-      notificationsWillAppear: "As suas notificações aparecerão aqui",
-      orderUpdatesWillAppear: "Atualizações de pedidos e informações importantes aparecerão aqui",
-      justNow: "Agora mesmo",
-      loading: "A carregar...",
-      failedToLoadPreferences: "Falha ao carregar preferências",
-      // Preferences
-      notificationPreferences: "Preferências de Notificação",
-      emailNotifications: "Notificações por Email",
-      inAppNotifications: "Notificações na App",
-      emailFrequency: "Frequência de Email",
-      orderUpdates: "Atualizações de pedidos",
-      inventoryAlerts: "Alertas de inventário",
-      reviewAlerts: "Alertas de avaliações",
-      promotionalEmails: "Emails promocionais",
-      systemUpdates: "Atualizações do sistema",
-      instant: "Instantâneo",
-      daily: "Resumo diário",
-      weekly: "Resumo semanal",
-      viewAllNotifications: "Ver todas as notificações",
-      noAccess: "Sem acesso a notificações",
-    },
-    cart: {
-      title: "Carrinho de Compras",
-      empty: "O seu carrinho está vazio",
-      emptyDescription: "Adicione alguns produtos para começar",
-      continueShopping: "Continuar compras",
-      addToCart: "Adicionar ao carrinho",
-      addedToCart: "Adicionado ao carrinho",
-      updateCart: "Atualizar carrinho",
-      removeFromCart: "Remover do carrinho",
-      quantity: "Quantidade",
-      subtotal: "Subtotal",
-      total: "Total",
-      discount: "Desconto",
-      proceedToCheckout: "Prosseguir para o checkout",
-      itemsInCart: "itens no carrinho",
-      maxQuantityReached: "Quantidade máxima atingida",
-      outOfStock: "Fora de stock",
-      lowStock: "Apenas {count} em stock",
-    },
-    checkout: {
-      title: "Checkout",
-      reviewOrder: "Rever Pedido",
-      shippingInfo: "Informações de Envio",
-      billingInfo: "Informações de Faturação",
-      paymentMethod: "Método de Pagamento",
-      orderConfirmation: "Confirmação do Pedido",
-      continuousGuest: "Continuar como convidado",
-      orSignIn: "ou iniciar sessão",
-      createAccount: "Criar conta para checkout mais rápido",
-      
-      // Address form
-      fullName: "Nome completo",
-      emailAddress: "Endereço de email",
-      phoneNumber: "Número de telefone",
-      streetAddress: "Morada",
-      city: "Cidade",
-      country: "País",
-      saveAddress: "Guardar morada para próxima vez",
-      useSameForBilling: "Usar a mesma morada para faturação",
-      
-      // Payment methods
-      bankTransfer: "Transferência bancária",
-      cashOnDelivery: "Pagamento na entrega",
-      mobileMoney: "Dinheiro móvel (M-Pesa)",
-      paymentInstructions: "As instruções de pagamento serão fornecidas após a confirmação do pedido",
-      
-      // Order notes
-      orderNotes: "Notas do pedido (opcional)",
-      orderNotesPlaceholder: "Instruções especiais, notas de entrega...",
-      
-      // Coupon
-      couponCode: "Código de cupão",
-      applyCoupon: "Aplicar cupão",
-      removeCoupon: "Remover cupão",
-      couponApplied: "Cupão aplicado com sucesso",
-      invalidCoupon: "Código de cupão inválido",
-      
-      // Order summary
-      orderSummary: "Resumo do Pedido",
-      shippingAddress: "Morada de Envio",
-      billingAddress: "Morada de Faturação",
-      paymentMethodSelected: "Método de Pagamento",
-      
-      // Actions
-      backToCart: "Voltar ao carrinho",
-      continuesToShipping: "Continuar para envio",
-      continuesToPayment: "Continuar para pagamento",
-      continuesToReview: "Continuar para revisão",
-      placeOrder: "Fazer pedido",
-      
-      // Confirmation
-      orderPlaced: "Pedido realizado com sucesso!",
-      orderNumber: "Número do pedido",
-      confirmationEmail: "Um email de confirmação foi enviado para",
-      trackYourOrder: "Rastrear o seu pedido",
-      continueShoppingLower: "Continuar compras",
-      orderTotal: "Total do pedido",
-      
-      // Validation errors
-      nameRequired: "Nome completo é obrigatório",
-      emailRequired: "Endereço de email é obrigatório",
-      emailInvalid: "Por favor insira um email válido",
-      phoneRequired: "Número de telefone é obrigatório",
-      addressRequired: "Morada é obrigatória",
-      cityRequired: "Cidade é obrigatória", 
-      paymentRequired: "Por favor selecione um método de pagamento",
-      
-      // Loading states
-      placingOrder: "A fazer o seu pedido...",
-      processingPayment: "A processar pagamento...",
-    },
-    payments: {
-      title: "Pagamentos",
-      subtitle: "Gerir pagamentos e receitas",
-      paymentTracking: "Rastreamento de Pagamentos",
-      revenueSettlement: "Liquidação de Receitas",
-      paymentInstructions: "Instruções de Pagamento",
-      paymentMethod: "Método de Pagamento",
-      amount: "Quantia",
-      status: "Estado",
-      customerName: "Nome do Cliente",
-      customerPhone: "Telefone do Cliente",
-      transactionId: "ID da Transação",
-      confirmationCode: "Código de Confirmação",
-      createdAt: "Criado em",
-      completedAt: "Concluído em",
-      pending: "Pendente",
-      processing: "Processando",
-      completed: "Concluído",
-      failed: "Falhado",
-      cancelled: "Cancelado",
-      mpesa: "M-Pesa",
-      bankTransfer: "Transferência Bancária",
-      cashOnDelivery: "Pagamento na Entrega",
-      totalPayments: "Pagamentos Totais",
-      totalRevenue: "Receita Total",
-      netRevenue: "Receita Líquida",
-      platformFees: "Taxas da Plataforma",
-      paymentFees: "Taxas de Pagamento",
-      pendingSettlements: "Liquidações Pendentes",
-      completedSettlements: "Liquidações Concluídas",
-      requestSettlement: "Solicitar Liquidação",
-      settlementHistory: "Histórico de Liquidações",
-      grossAmount: "Quantia Bruta",
-      netAmount: "Quantia Líquida",
-      settlementPeriod: "Período de Liquidação",
-      paymentConfirmation: "Confirmação de Pagamento",
-      completePayment: "Complete o Seu Pagamento",
-      paymentCompleted: "Pagamento Concluído com Sucesso",
-      paymentFailed: "Pagamento Falhado",
-      paymentPending: "Pagamento Pendente",
-      dialMpesa: "Marque *150*00# do seu telemóvel",
-      followPrompts: "Siga as instruções para completar o pagamento",
-      pageWillUpdate: "Esta página será atualizada automaticamente quando o pagamento for confirmado",
-      bankDetails: "Detalhes Bancários",
-      accountNumber: "Número da Conta",
-      accountName: "Nome da Conta",
-      bankName: "Nome do Banco",
-      reference: "Referência",
-      instructions: "Instruções",
-      exportPayments: "Exportar Pagamentos",
-      searchPayments: "Pesquisar pagamentos...",
-      filterBy: "Filtrar por",
-      allStatus: "Todos os Estados",
-      viewDetails: "Ver Detalhes",
-      markAsCompleted: "Marcar como Concluído",
-      paymentDetails: "Detalhes do Pagamento",
-      paymentId: "ID do Pagamento",
-      orderId: "ID do Pedido",
-      externalTransactionId: "ID da Transação Externa",
-      provider: "Operador",
-      noPaymentsFound: "Nenhum pagamento encontrado",
-      loadingPayments: "A carregar pagamentos...",
-      refreshPayments: "Atualizar pagamentos",
-      settlementCreated: "Liquidação criada com sucesso",
-      settlementFailed: "Falha ao criar liquidação",
-      noUnsetaledPayments: "Nenhum pagamento não liquidado encontrado para o período selecionado",
-    },
-  },
+  en: enMessages,
+  pt: ptMessages,
 } as const;
 
-export type AppLang = keyof typeof dictionary;
-export type AppDictionary = (typeof dictionary)[AppLang];
+// Legacy export for backward compatibility
+export type AppDictionary = Messages;
 
+/**
+ * Get dictionary for a specific language (legacy compatibility)
+ */
 export function getDict(lang: AppLang): AppDictionary {
   return dictionary[lang];
+}
+
+/**
+ * Create a translator function for a specific language
+ * This provides type-safe translations with next-intl patterns
+ */
+export function createDictionary(lang: AppLang) {
+  const messages = dictionary[lang];
+  
+  // Create next-intl compatible translator
+  const t = createTranslator({ 
+    locale: lang, 
+    messages,
+    // Handle missing translations gracefully
+    onError: (error) => {
+      console.warn('Translation error:', error);
+    }
+  });
+
+  return t;
+}
+
+/**
+ * Get nested translation key with fallback
+ */
+export function getNestedTranslation(
+  dict: AppDictionary, 
+  key: string, 
+  fallback?: string
+): string {
+  const keys = key.split('.');
+  let result: any = dict;
+  
+  for (const k of keys) {
+    result = result?.[k];
+    if (result === undefined) break;
+  }
+  
+  return typeof result === 'string' ? result : (fallback || key);
+}
+
+/**
+ * Simple interpolation for dynamic values
+ * Example: interpolate("Hello {name}", { name: "John" }) -> "Hello John"
+ */
+export function interpolate(text: string, values: Record<string, string | number>): string {
+  return text.replace(/\{(\w+)\}/g, (match, key) => {
+    return values[key]?.toString() || match;
+  });
+}
+
+/**
+ * Language configuration for the application
+ */
+export const languageConfig = {
+  locales: ['en', 'pt'] as const,
+  defaultLocale: 'en' as const,
+  labels: {
+    en: 'English',
+    pt: 'Português',
+  },
+  directions: {
+    en: 'ltr' as const,
+    pt: 'ltr' as const,
+  },
+  // Future RTL support preparation
+  rtlLocales: [] as readonly AppLang[],
+};
+
+/**
+ * Check if a locale is RTL
+ */
+export function isRtl(locale: AppLang): boolean {
+  return languageConfig.rtlLocales.includes(locale);
+}
+
+/**
+ * Get text direction for a locale
+ */
+export function getTextDirection(locale: AppLang): 'ltr' | 'rtl' {
+  return isRtl(locale) ? 'rtl' : 'ltr';
+}
+
+/**
+ * Format date according to locale
+ */
+export function formatDate(date: Date, locale: AppLang, options?: Intl.DateTimeFormatOptions): string {
+  const formatOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    ...options,
+  };
+  
+  return new Intl.DateTimeFormat(locale === 'pt' ? 'pt-PT' : 'en-US', formatOptions).format(date);
+}
+
+/**
+ * Format currency according to locale
+ */
+export function formatCurrency(
+  amount: number, 
+  locale: AppLang, 
+  currency: string = 'USD'
+): string {
+  return new Intl.NumberFormat(locale === 'pt' ? 'pt-PT' : 'en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount);
+}
+
+/**
+ * Validate if a locale is supported
+ */
+export function isValidLocale(locale: string): locale is AppLang {
+  return languageConfig.locales.includes(locale as AppLang);
+}
+
+/**
+ * Get the best matching locale from a list of preferred locales
+ */
+export function getBestMatchingLocale(
+  preferredLocales: readonly string[], 
+  fallback: AppLang = 'en'
+): AppLang {
+  for (const preferred of preferredLocales) {
+    // Direct match
+    if (isValidLocale(preferred)) {
+      return preferred;
+    }
+    
+    // Language code match (e.g., 'pt-BR' -> 'pt')
+    const languageCode = preferred.split('-')[0];
+    if (isValidLocale(languageCode)) {
+      return languageCode;
+    }
+  }
+  
+  return fallback;
 }

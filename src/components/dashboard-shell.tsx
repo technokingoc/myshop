@@ -23,6 +23,7 @@ import {
   Zap,
   Truck,
   Warehouse,
+  Crown,
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -57,6 +58,7 @@ const dict = {
     setup: "Setup",
     pricing: "Pricing",
     notifications: "Notifications",
+    subscription: "Subscription",
     noNotifications: "No notifications yet",
     logout: "Logout",
     storeGroup: "STORE",
@@ -84,6 +86,7 @@ const dict = {
     setup: "Configurar",
     pricing: "Preços",
     notifications: "Notificações",
+    subscription: "Subscrição",
     noNotifications: "Sem notificações",
     logout: "Sair",
     storeGroup: "LOJA",
@@ -220,6 +223,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/dashboard/reviews")) return "reviews";
     if (pathname.startsWith("/dashboard/shipping")) return "shipping";
     if (pathname.startsWith("/dashboard/notifications")) return "notifications";
+    if (pathname.startsWith("/dashboard/subscription")) return "subscription";
     return "dashboard";
   }, [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -275,6 +279,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const accountItems = [
     { label: t.notifications, icon: Bell, href: "/dashboard/notifications", key: "notifications" },
+    { label: t.subscription, icon: Crown, href: "/dashboard/subscription", key: "subscription" },
     { label: t.settings, icon: Settings, href: "/dashboard/settings", key: "settings" },
     { label: t.analytics, icon: BarChart3, href: "/dashboard/analytics", key: "analytics" },
   ];
@@ -295,6 +300,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const insightsDropdownItems = [
     { label: t.analytics, icon: BarChart3, href: "/dashboard/analytics", key: "analytics" },
     { label: t.notifications, icon: Bell, href: "/dashboard/notifications", key: "notifications" },
+    { label: t.subscription, icon: Crown, href: "/dashboard/subscription", key: "subscription" },
     { label: t.settings, icon: Settings, href: "/dashboard/settings", key: "settings" },
   ];
 

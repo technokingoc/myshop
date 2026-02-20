@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   city: varchar("city", { length: 256 }).default(""),
   country: varchar("country", { length: 64 }).default(""),
   role: varchar("role", { length: 32 }).default("user"),
+  language: varchar("language", { length: 8 }).default("en"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -47,6 +48,7 @@ export const stores = pgTable("stores", {
   verificationReviewedBy: integer("verification_reviewed_by"),
   businessDocuments: jsonb("business_documents").default([]),
   flaggedReason: text("flagged_reason").default(""),
+  language: varchar("language", { length: 8 }).default("en"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -88,6 +90,7 @@ export const sellers = pgTable("sellers", {
   verificationReviewedBy: integer("verification_reviewed_by"),
   businessDocuments: jsonb("business_documents").default([]),
   flaggedReason: text("flagged_reason").default(""),
+  language: varchar("language", { length: 8 }).default("en"),
 });
 
 export const adminActivities = pgTable("admin_activities", {
