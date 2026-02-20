@@ -29,7 +29,7 @@ Must be production-ready for real Mozambique merchants.
 - [x] **S48: Payment Integration** ✅ — Deployed 2026-02-20 — M-Pesa integration (Mozambique). Bank transfer instructions. Payment confirmation flow. Payment status tracking. Revenue settlement.
 - [x] **S49: SEO & Performance** ✅ — Deployed 2026-02-20 — Dynamic meta tags per product/store. Structured data (JSON-LD). Sitemap generation. Image optimization (WebP, lazy load). Core Web Vitals optimization. Target Lighthouse 90+.
 - [x] **S50: Admin Panel v2** ✅ — Deployed 2026-02-20 — Platform-wide analytics. Seller verification workflow. Content moderation queue. Category/location management UI. Platform fee configuration. User management.
-- [ ] **S51: Multi-language v2** — Complete EN/PT coverage. Seller store language setting. Customer language preference. RTL prep (future).
+- [x] **S51: Multi-language v2** ✅ — Deployed 2026-02-20 — Complete EN/PT coverage. Seller store language setting. Customer language preference. RTL prep (future).
 
 ### Phase 5: Growth & Monetization
 - [ ] **S52: Subscription Billing** — Stripe/payment integration for seller tiers. Free → Pro → Business upgrade flow. Usage metering. Invoice generation. Grace period handling.
