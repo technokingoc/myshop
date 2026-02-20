@@ -53,12 +53,37 @@ export default function SocialShare({
   
   const shareText = description || (url.includes('/product/') ? t.shareText : t.storeShareText);
 
+  // Track share analytics
+  const trackShare = async (platform: string) => {
+    try {
+      // Send share analytics to backend
+      await fetch('/api/analytics/social-share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          platform,
+          url: fullUrl,
+          title,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          referrer: document.referrer,
+        }),
+      });
+    } catch (error) {
+      // Fail silently for analytics
+      console.debug('Share tracking failed:', error);
+    }
+  };
+
   const shareOptions = [
     {
       name: t.whatsapp,
       icon: MessageCircle,
       color: "hover:bg-green-50 hover:text-green-600",
       action: () => {
+        trackShare('whatsapp');
         const text = encodeURIComponent(`${shareText} ${title}\n${fullUrl}`);
         window.open(`https://wa.me/?text=${text}`, '_blank');
       },
@@ -68,6 +93,7 @@ export default function SocialShare({
       icon: Facebook,
       color: "hover:bg-blue-50 hover:text-blue-600",
       action: () => {
+        trackShare('facebook');
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullUrl)}&quote=${encodeURIComponent(`${shareText} ${title}`)}`;
         window.open(fbUrl, '_blank', 'width=600,height=400');
       },
@@ -77,6 +103,7 @@ export default function SocialShare({
       icon: Twitter,
       color: "hover:bg-sky-50 hover:text-sky-600",
       action: () => {
+        trackShare('twitter');
         const tweetText = encodeURIComponent(`${shareText} ${title} ${fullUrl}`);
         window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank', 'width=600,height=400');
       },
@@ -86,6 +113,7 @@ export default function SocialShare({
       icon: linkCopied ? Check : Copy,
       color: linkCopied ? "text-green-600 bg-green-50" : "hover:bg-slate-50 hover:text-slate-700",
       action: async () => {
+        trackShare('copy_link');
         try {
           await navigator.clipboard.writeText(fullUrl);
           setLinkCopied(true);
