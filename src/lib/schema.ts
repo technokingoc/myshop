@@ -1199,3 +1199,99 @@ export const emailSubscribers = pgTable("email_subscribers", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// API Keys for S55 - REST API access
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  
+  // Key details
+  name: varchar("name", { length: 256 }).notNull(), // User-friendly name
+  keyHash: varchar("key_hash", { length: 512 }).notNull(), // Hashed API key
+  keyPrefix: varchar("key_prefix", { length: 16 }).notNull(), // First few chars for display (e.g., "mk_123456...")
+  
+  // Permissions
+  permissions: jsonb("permissions").$type<string[]>().default([]), // ['products:read', 'products:write', 'orders:read', etc.]
+  
+  // Usage tracking
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  usageCount: integer("usage_count").default(0),
+  rateLimitPerDay: integer("rate_limit_per_day").default(1000),
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  
+  // Metadata
+  notes: text("notes").default(""),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }), // Optional expiration
+});
+
+// Webhooks for S55 - Order status change notifications
+export const webhooks = pgTable("webhooks", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  
+  // Webhook details
+  name: varchar("name", { length: 256 }).notNull(), // User-friendly name
+  url: text("url").notNull(), // Webhook endpoint URL
+  
+  // Events
+  events: jsonb("events").$type<string[]>().default([]), // ['order.created', 'order.paid', 'order.shipped', etc.]
+  
+  // Security
+  secret: varchar("secret", { length: 128 }).notNull(), // Used for HMAC signature
+  
+  // Status and stats
+  isActive: boolean("is_active").default(true),
+  successCount: integer("success_count").default(0),
+  failureCount: integer("failure_count").default(0),
+  lastDeliveryAt: timestamp("last_delivery_at", { withTimezone: true }),
+  lastDeliveryStatus: varchar("last_delivery_status", { length: 32 }).default("pending"),
+  
+  // Settings
+  maxRetries: integer("max_retries").default(3),
+  timeoutSeconds: integer("timeout_seconds").default(30),
+  
+  // Metadata
+  notes: text("notes").default(""),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Webhook delivery log
+export const webhookDeliveries = pgTable("webhook_deliveries", {
+  id: serial("id").primaryKey(),
+  webhookId: integer("webhook_id").notNull().references(() => webhooks.id, { onDelete: "cascade" }),
+  
+  // Event details
+  eventType: varchar("event_type", { length: 64 }).notNull(),
+  eventData: jsonb("event_data").default({}),
+  
+  // Delivery details
+  url: text("url").notNull(),
+  httpMethod: varchar("http_method", { length: 10 }).default("POST"),
+  headers: jsonb("headers").default({}),
+  body: text("body").notNull(),
+  
+  // Response details
+  responseStatus: integer("response_status"),
+  responseBody: text("response_body").default(""),
+  responseHeaders: jsonb("response_headers").default({}),
+  
+  // Delivery status
+  status: varchar("status", { length: 32 }).notNull(), // 'pending', 'success', 'failure', 'retry'
+  retryCount: integer("retry_count").default(0),
+  nextRetryAt: timestamp("next_retry_at", { withTimezone: true }),
+  
+  // Timing
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
