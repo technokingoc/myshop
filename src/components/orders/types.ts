@@ -23,6 +23,26 @@ export type OrderItem = {
   refundStatus?: "none" | "requested" | "processing" | "completed";
   refundAmount?: string;
   refundReason?: string;
+  // S62: Enhanced tracking fields
+  trackingNumber?: string;
+  trackingProvider?: string;
+  trackingUrl?: string;
+  estimatedDelivery?: string;
+  shippingAddress?: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country: string;
+  };
+  // Delivery confirmation
+  deliveryConfirmed?: boolean;
+  deliveryConfirmedAt?: string;
+  deliveryPhotos?: string[];
+  deliveryRating?: number;
 };
 
 export type DateRange = "today" | "7d" | "30d" | "all";
