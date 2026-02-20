@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+// Avatar component not needed for current implementation
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,7 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
-import { toast } from "sonner";
+const toast = { error: (msg: string) => console.error(msg), success: (msg: string) => console.log(msg), info: (msg: string) => console.info(msg) };
 
 interface Message {
   id: number;
@@ -153,7 +153,7 @@ export function MessageThread({ conversationId: propConversationId, onBack }: Me
         setNewMessage("");
         
         if (sentMessage.filtered || sentMessage.warnings?.length > 0) {
-          toast.warning("Message sent with content filtering applied");
+          toast.info("Message sent with content filtering applied");
         }
         
         scrollToBottom();

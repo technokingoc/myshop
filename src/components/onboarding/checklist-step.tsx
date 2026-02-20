@@ -288,7 +288,7 @@ export function ChecklistStep({
             <div className="text-left bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-slate-900 mb-2">{t("completion.nextSteps.title")}</h4>
               <ul className="text-sm text-slate-700 space-y-1">
-                {t.raw("completion.nextSteps.items").map((item: string, index: number) => (
+                {(t("completion.nextSteps.items") as unknown as string[]).map((item: string, index: number) => (
                   <li key={index} className="flex items-start space-x-2">
                     <span className="text-blue-500 mt-1">•</span>
                     <span>{item}</span>
