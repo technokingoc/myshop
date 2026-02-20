@@ -38,8 +38,10 @@ const dict = {
     statusLabels: {
       placed: "Order Placed",
       confirmed: "Order Confirmed", 
+      preparing: "Preparing",
       processing: "Processing",
       shipped: "Shipped",
+      "in-transit": "In Transit",
       delivered: "Delivered",
       cancelled: "Cancelled",
       // Legacy status labels
@@ -63,8 +65,10 @@ const dict = {
     statusLabels: {
       placed: "Pedido Feito",
       confirmed: "Pedido Confirmado",
+      preparing: "Preparando",
       processing: "Em Processamento",
       shipped: "Enviado",
+      "in-transit": "Em Trânsito",
       delivered: "Entregue",
       cancelled: "Cancelado",
       // Legacy status labels  
@@ -75,7 +79,7 @@ const dict = {
   },
 };
 
-const STEPS = ["placed", "confirmed", "processing", "shipped", "delivered"];
+const STEPS = ["placed", "confirmed", "preparing", "shipped", "in-transit", "delivered"];
 const stepIcons = [Clock, CheckCircle, Package, Truck, CheckCircle];
 
 // Function to map status strings to OrderStatus type (handles legacy mappings)
@@ -99,8 +103,10 @@ const mapToOrderStatus = (status: string): OrderStatus => {
 const statusBg: Record<string, string> = {
   placed: "bg-slate-500",
   confirmed: "bg-green-500",
+  preparing: "bg-blue-500",
   processing: "bg-amber-500", 
   shipped: "bg-purple-500",
+  "in-transit": "bg-indigo-500",
   delivered: "bg-emerald-500",
   cancelled: "bg-red-500",
   // Legacy status mappings

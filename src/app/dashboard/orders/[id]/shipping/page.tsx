@@ -261,7 +261,7 @@ export default function OrderShippingPage() {
               currentStatus={order.status}
               statusHistory={order.statusHistory}
               t={statusLabelsForLang}
-              variant="detailed"
+              variant="timeline"
             />
           </div>
         </div>
