@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
 
     // Log import activity
     try {
-      await db.insert(sql`
+      await db.execute(sql`
         INSERT INTO import_history (seller_id, import_type, filename, record_count, created_count, updated_count, error_count, created_at)
         VALUES (${sellerId}, 'products', ${file.name}, ${rows.length}, ${created}, ${updated}, ${errors.length}, NOW())
       `);
