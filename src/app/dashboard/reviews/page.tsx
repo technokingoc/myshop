@@ -426,8 +426,8 @@ export default function SellerReviewsPage() {
 
       {/* Content based on active tab */}
       {activeTab === 'analytics' ? (
-        {/* <ReviewAnalyticsDashboard /> */}
         <div className="bg-white rounded-lg p-6">
+          {/* <ReviewAnalyticsDashboard /> */}
           <h3 className="text-lg font-semibold mb-4">Analytics Dashboard</h3>
           <p className="text-gray-500">Analytics dashboard will be available soon.</p>
         </div>
