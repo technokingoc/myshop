@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { catalogItems, productVariants, sellers, stores } from "@/lib/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getSellerFromSession } from "@/lib/auth";
 
 interface ImportRow {
   [key: string]: string;
@@ -28,8 +27,8 @@ interface ImportResult {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const sellerId = await getSellerFromSession(request);
+    if (!sellerId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -41,23 +40,6 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-
-    // Get user's seller/store ID
-    const userQuery = await db
-      .select({
-        sellerId: sellers.id,
-        storeId: stores.id,
-      })
-      .from(sellers)
-      .leftJoin(stores, eq(sellers.id, stores.userId))
-      .where(eq(sellers.email, session.user.email))
-      .limit(1);
-
-    if (!userQuery.length) {
-      return NextResponse.json({ error: "Seller not found" }, { status: 404 });
-    }
-
-    const sellerId = userQuery[0].sellerId;
 
     // Parse CSV
     const csvText = await file.text();

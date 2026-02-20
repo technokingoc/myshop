@@ -615,6 +615,21 @@ export async function updateNotificationPreferences(userId: number, preferences:
   }
 }
 
+// Legacy compatibility - alias for createNotification
+export async function sendNotification(params: {
+  sellerId?: number | null;
+  customerId?: number | null;
+  type: NotificationType;
+  title: string;
+  message: string;
+  orderId?: number | null;
+  metadata?: Record<string, any>;
+  actionUrl?: string;
+  priority?: number;
+}) {
+  return createNotification(params);
+}
+
 // Background task to check for low stock
 export async function checkLowStock() {
   const db = getDb();

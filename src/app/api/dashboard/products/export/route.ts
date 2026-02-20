@@ -2,36 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { catalogItems, productVariants, sellers, stores } from "@/lib/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getSellerFromSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const sellerId = await getSellerFromSession(request);
+    if (!sellerId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const format = searchParams.get("format") || "csv";
     const includeVariants = searchParams.get("includeVariants") === "true";
-
-    // Get user's seller/store ID
-    const userQuery = await db
-      .select({
-        sellerId: sellers.id,
-        storeId: stores.id,
-      })
-      .from(sellers)
-      .leftJoin(stores, eq(sellers.id, stores.userId))
-      .where(eq(sellers.email, session.user.email))
-      .limit(1);
-
-    if (!userQuery.length) {
-      return NextResponse.json({ error: "Seller not found" }, { status: 404 });
-    }
-
-    const sellerId = userQuery[0].sellerId;
 
     // Fetch products with variants
     const productsQuery = await db

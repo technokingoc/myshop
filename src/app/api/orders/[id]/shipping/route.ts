@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import { orders, deliveryStatusChanges, notifications } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { sendNotification } from "@/lib/notification-service";
+import { notifyOrderStatusChanged } from "@/lib/notification-service";
 
 type ShippingUpdateData = {
   trackingNumber?: string;
@@ -168,24 +168,9 @@ export async function PUT(
             priority: 2,
           });
 
-          // Send SMS/Email notification (if notification service is configured)
+          // Send notification using the notification service
           try {
-            if (order.customerContact.includes('@')) {
-              await sendNotification({
-                type: 'email',
-                recipient: order.customerContact,
-                subject: `Order ${orderId} Status Update`,
-                message: message.en,
-                orderId,
-              });
-            } else if (order.customerContact.match(/^\+?[0-9\s-()]+$/)) {
-              await sendNotification({
-                type: 'sms',
-                recipient: order.customerContact,
-                message: `MyShop: ${message.en}`,
-                orderId,
-              });
-            }
+            await notifyOrderStatusChanged(orderId, order.sellerId, order.customerId, data.status || 'shipped');
           } catch (notificationError) {
             console.warn('Failed to send notification:', notificationError);
             // Don't fail the main request if notification fails

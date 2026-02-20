@@ -38,6 +38,14 @@ export function getRememberedEmail() {
   return typeof window !== "undefined" ? localStorage.getItem("myshop_last_email") || "" : "";
 }
 
+// Legacy compatibility exports for older routes
+export const authOptions = {
+  // Placeholder for compatibility
+};
+
+// Alias for getSellerFromSession for consistency
+export const auth = getSellerFromSession;
+
 // Server-side: get seller ID from session (cookie-based)
 export async function getSellerFromSession(request: Request): Promise<number | null> {
   try {

@@ -2,196 +2,150 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useLanguage } from "@/lib/language";
-import { 
-  Calendar, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  Package, 
-  Truck, 
-  CheckCircle, 
-  AlertCircle,
-  MapPin,
-  Star,
-  BarChart3,
-  Download
-} from "lucide-react";
 import { fetchJsonWithRetry } from "@/lib/api-client";
 import { useToast } from "@/components/toast-provider";
 import { getDict } from "@/lib/i18n";
+import { 
+  Package, 
+  Clock, 
+  CheckCircle, 
+  Star, 
+  TrendingUp,
+  TrendingDown, 
+  Activity,
+  Calendar,
+  BarChart3,
+  PieChart,
+  Filter
+} from "lucide-react";
 
-interface DeliveryAnalytics {
-  // Overview metrics
-  totalOrders: number;
-  ordersShipped: number;
-  ordersDelivered: number;
-  ordersInTransit: number;
-  deliveryIssues: number;
-  
-  // Timing metrics (in hours)
-  avgProcessingTime: number;
-  avgShippingTime: number;
-  avgTotalDeliveryTime: number;
-  
-  // On-time delivery
-  onTimeDeliveries: number;
-  lateDeliveries: number;
-  onTimeDeliveryRate: number;
-  
-  // Customer satisfaction
-  deliveryRatingsCount: number;
-  avgDeliveryRating: number;
-  confirmationRate: number;
-  
-  // Geographic data
-  topDeliveryZones: Array<{
-    zoneName: string;
-    orderCount: number;
+type DeliveryAnalytics = {
+  overview: {
+    totalOrders: number;
+    deliveredOrders: number;
     avgDeliveryTime: number;
-  }>;
-  
-  // Trend data (last 30 days)
-  dailyMetrics: Array<{
-    date: string;
-    ordersShipped: number;
-    ordersDelivered: number;
-    avgDeliveryTime: number;
-    onTimeRate: number;
-  }>;
-}
-
-const MetricCard = ({ 
-  title, 
-  value, 
-  change, 
-  changeType = 'neutral',
-  icon: Icon,
-  format = 'number'
-}: {
-  title: string;
-  value: number;
-  change?: number;
-  changeType?: 'positive' | 'negative' | 'neutral';
-  icon: React.ElementType;
-  format?: 'number' | 'percentage' | 'hours' | 'decimal';
-}) => {
-  const formatValue = (val: number) => {
-    switch (format) {
-      case 'percentage':
-        return `${val.toFixed(1)}%`;
-      case 'hours':
-        return val < 24 ? `${val.toFixed(1)}h` : `${(val / 24).toFixed(1)}d`;
-      case 'decimal':
-        return val.toFixed(1);
-      default:
-        return val.toLocaleString();
-    }
+    deliveryRate: number;
+    confirmationRate: number;
+    avgDeliveryRating: number;
+    avgSellerRating: number;
   };
+  statusBreakdown: {
+    status: string;
+    count: number;
+    percentage: number;
+  }[];
+  deliveryTimes: {
+    date: string;
+    avgHours: number;
+    orderCount: number;
+  }[];
+  ratings: {
+    deliveryRating: number;
+    sellerRating: number;
+    count: number;
+  }[];
+  recentActivity: {
+    orderId: number;
+    status: string;
+    customerName: string;
+    updatedAt: string;
+    deliveryTime?: number;
+  }[];
+};
 
-  return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Icon className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-600">{title}</p>
-            <p className="text-2xl font-bold text-slate-900">{formatValue(value)}</p>
-          </div>
-        </div>
-        
-        {change !== undefined && (
-          <div className={`flex items-center gap-1 text-sm font-medium ${
-            changeType === 'positive' ? 'text-green-600' : 
-            changeType === 'negative' ? 'text-red-600' : 
-            'text-slate-600'
-          }`}>
-            {changeType === 'positive' && <TrendingUp className="h-4 w-4" />}
-            {changeType === 'negative' && <TrendingDown className="h-4 w-4" />}
-            {change > 0 ? '+' : ''}{change.toFixed(1)}%
-          </div>
-        )}
-      </div>
-    </div>
-  );
+const statusColorMap: Record<string, string> = {
+  placed: "bg-slate-100 text-slate-800",
+  confirmed: "bg-green-100 text-green-800", 
+  preparing: "bg-blue-100 text-blue-800",
+  shipped: "bg-purple-100 text-purple-800",
+  "in-transit": "bg-indigo-100 text-indigo-800",
+  delivered: "bg-emerald-100 text-emerald-800",
+  cancelled: "bg-red-100 text-red-800",
 };
 
 export default function DeliveryAnalyticsPage() {
   const { lang } = useLanguage();
-  const t = getDict(lang).orders as unknown as Record<string, string>;
-  const common = getDict(lang).common;
+  const t = getDict(lang).analytics as unknown as Record<string, string>;
   const toast = useToast();
 
   const [analytics, setAnalytics] = useState<DeliveryAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [sellerId, setSellerId] = useState<number | null>(null);
+  const [dateRange, setDateRange] = useState("30");
 
-  // Load seller ID from localStorage
   useEffect(() => {
-    const raw = localStorage.getItem("myshop_seller_id");
-    setSellerId(raw ? Number(raw) : null);
+    const rawSellerId = localStorage.getItem("myshop_seller_id");
+    const id = rawSellerId ? Number(rawSellerId) : null;
+    setSellerId(id);
   }, []);
 
-  // Fetch analytics data
-  useEffect(() => {
+  const fetchAnalytics = async () => {
     if (!sellerId) return;
-
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchJsonWithRetry<DeliveryAnalytics>(
-          `/api/analytics/delivery?sellerId=${sellerId}&range=${dateRange}`,
-          undefined,
-          3,
-          "analytics:delivery"
-        );
-        setAnalytics(data);
-      } catch (error) {
-        console.error('Failed to fetch delivery analytics:', error);
-        toast.error('Failed to load delivery analytics');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalytics();
-  }, [sellerId, dateRange, toast]);
-
-  const exportData = () => {
-    if (!sellerId) return;
-    const params = new URLSearchParams({ sellerId: String(sellerId), range: dateRange });
+    
+    setLoading(true);
     try {
-      window.open(`/api/analytics/delivery/export.csv?${params.toString()}`, "_blank");
-    } catch {
-      toast.error('Failed to export data');
+      const data = await fetchJsonWithRetry<DeliveryAnalytics>(
+        `/api/analytics/delivery?sellerId=${sellerId}&days=${dateRange}`,
+        undefined,
+        3,
+        "delivery-analytics"
+      );
+      setAnalytics(data);
+    } catch (error) {
+      console.error("Failed to fetch delivery analytics:", error);
+      toast.error("Failed to load delivery analytics");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  useEffect(() => {
+    if (sellerId) {
+      fetchAnalytics();
+    }
+  }, [sellerId, dateRange]);
+
+  const formatHours = (hours: number) => {
+    if (hours < 24) {
+      return `${Math.round(hours)}h`;
+    }
+    const days = Math.floor(hours / 24);
+    const remainingHours = Math.round(hours % 24);
+    return `${days}d ${remainingHours}h`;
+  };
+
+  const ratingStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`h-4 w-4 ${
+          i < Math.floor(rating) 
+            ? "fill-yellow-400 text-yellow-400" 
+            : "text-slate-300"
+        }`}
+      />
+    ));
+  };
+
+  if (!sellerId) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="h-8 bg-slate-200 rounded w-64 animate-pulse"></div>
-            <div className="h-4 bg-slate-200 rounded w-96 mt-2 animate-pulse"></div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-32 bg-slate-200 rounded-lg animate-pulse"></div>
-          ))}
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-slate-600">Please log in to view analytics</p>
       </div>
     );
   }
 
-  if (!analytics) {
+  if (loading) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-        <p className="text-slate-600">No delivery analytics data available</p>
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-slate-200 rounded mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-slate-200 rounded"></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -202,194 +156,245 @@ export default function DeliveryAnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            {t.deliveryAnalytics || 'Delivery Analytics'}
+            {t.deliveryAnalytics || "Delivery Analytics"}
           </h1>
-          <p className="text-slate-600 mt-1">
-            {t.deliveryAnalyticsDesc || 'Track delivery performance and customer satisfaction metrics'}
+          <p className="text-sm text-slate-600 mt-1">
+            {t.deliveryAnalyticsSubtitle || "Track delivery performance and customer satisfaction"}
           </p>
         </div>
         
         <div className="flex items-center gap-3">
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d')}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onChange={(e) => setDateRange(e.target.value)}
+            className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="7d">{t.last7Days || 'Last 7 Days'}</option>
-            <option value="30d">{t.last30Days || 'Last 30 Days'}</option>
-            <option value="90d">{t.last90Days || 'Last 90 Days'}</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last year</option>
           </select>
-          
-          <button
-            onClick={exportData}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <Download className="h-4 w-4" />
-            {t.export || 'Export'}
-          </button>
         </div>
       </div>
 
-      {/* Overview Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title={t.totalOrders || 'Total Orders'}
-          value={analytics.totalOrders}
-          icon={Package}
-        />
-        
-        <MetricCard
-          title={t.ordersShipped || 'Orders Shipped'}
-          value={analytics.ordersShipped}
-          icon={Truck}
-        />
-        
-        <MetricCard
-          title={t.ordersDelivered || 'Orders Delivered'}
-          value={analytics.ordersDelivered}
-          icon={CheckCircle}
-        />
-        
-        <MetricCard
-          title={t.onTimeDeliveryRate || 'On-Time Delivery Rate'}
-          value={analytics.onTimeDeliveryRate}
-          icon={Clock}
-          format="percentage"
-          changeType={analytics.onTimeDeliveryRate > 85 ? 'positive' : analytics.onTimeDeliveryRate < 70 ? 'negative' : 'neutral'}
-        />
-      </div>
-
-      {/* Performance Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title={t.avgProcessingTime || 'Avg Processing Time'}
-          value={analytics.avgProcessingTime}
-          icon={Clock}
-          format="hours"
-        />
-        
-        <MetricCard
-          title={t.avgShippingTime || 'Avg Shipping Time'}
-          value={analytics.avgShippingTime}
-          icon={Truck}
-          format="hours"
-        />
-        
-        <MetricCard
-          title={t.avgTotalDeliveryTime || 'Avg Total Delivery Time'}
-          value={analytics.avgTotalDeliveryTime}
-          icon={Package}
-          format="hours"
-        />
-        
-        <MetricCard
-          title={t.deliveryConfirmationRate || 'Confirmation Rate'}
-          value={analytics.confirmationRate}
-          icon={CheckCircle}
-          format="percentage"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Customer Satisfaction */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Star className="h-5 w-5" />
-            {t.customerSatisfaction || 'Customer Satisfaction'}
-          </h3>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">{t.avgDeliveryRating || 'Average Delivery Rating'}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-slate-900">
-                  {analytics.avgDeliveryRating.toFixed(1)}
-                </span>
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star 
-                      key={star} 
-                      className={`h-4 w-4 ${star <= analytics.avgDeliveryRating ? 'text-yellow-400 fill-current' : 'text-slate-300'}`} 
-                    />
-                  ))}
+      {analytics && (
+        <>
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <div className="flex items-center gap-3">
+                <Package className="h-10 w-10 text-blue-600 bg-blue-100 rounded-lg p-2" />
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Total Orders</p>
+                  <p className="text-2xl font-bold text-slate-900">{analytics.overview.totalOrders}</p>
                 </div>
               </div>
             </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">{t.totalRatings || 'Total Ratings'}</span>
-              <span className="text-sm font-medium text-slate-900">
-                {analytics.deliveryRatingsCount}
-              </span>
-            </div>
-            
-            {analytics.deliveryIssues > 0 && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">{t.deliveryIssues || 'Delivery Issues'}</span>
-                <span className="text-sm font-medium text-red-600">
-                  {analytics.deliveryIssues}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Top Delivery Zones */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            {t.topDeliveryZones || 'Top Delivery Zones'}
-          </h3>
-          
-          <div className="space-y-3">
-            {analytics.topDeliveryZones.slice(0, 5).map((zone, index) => (
-              <div key={zone.zoneName} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium">
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-medium text-slate-900">{zone.zoneName}</span>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-10 w-10 text-emerald-600 bg-emerald-100 rounded-lg p-2" />
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Delivered</p>
+                  <p className="text-2xl font-bold text-slate-900">{analytics.overview.deliveredOrders}</p>
+                  <p className="text-xs text-emerald-600">{analytics.overview.deliveryRate}% delivery rate</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900">{zone.orderCount}</p>
-                  <p className="text-xs text-slate-500">
-                    {zone.avgDeliveryTime < 24 
-                      ? `${zone.avgDeliveryTime.toFixed(1)}h avg` 
-                      : `${(zone.avgDeliveryTime / 24).toFixed(1)}d avg`
-                    }
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <div className="flex items-center gap-3">
+                <Clock className="h-10 w-10 text-purple-600 bg-purple-100 rounded-lg p-2" />
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Avg Delivery Time</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {formatHours(analytics.overview.avgDeliveryTime)}
                   </p>
                 </div>
               </div>
-            ))}
-            
-            {analytics.topDeliveryZones.length === 0 && (
-              <p className="text-sm text-slate-500 text-center py-4">
-                {t.noDataAvailable || 'No data available'}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+            </div>
 
-      {/* Delivery Trend Chart (placeholder for now) */}
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
-          {t.deliveryTrends || 'Delivery Trends'}
-        </h3>
-        
-        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 rounded-lg">
-          <div className="text-center">
-            <BarChart3 className="h-12 w-12 text-slate-400 mx-auto mb-2" />
-            <p className="text-slate-500">
-              {t.chartComingSoon || 'Interactive charts coming soon'}
-            </p>
-            <p className="text-sm text-slate-400 mt-1">
-              {t.chartDesc || 'Daily delivery performance visualization will be available here'}
-            </p>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <div className="flex items-center gap-3">
+                <Star className="h-10 w-10 text-yellow-600 bg-yellow-100 rounded-lg p-2" />
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Delivery Rating</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-bold text-slate-900">
+                      {analytics.overview.avgDeliveryRating.toFixed(1)}
+                    </p>
+                    <div className="flex">
+                      {ratingStars(analytics.overview.avgDeliveryRating)}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    {analytics.overview.confirmationRate}% confirmation rate
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+
+          {/* Status Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <PieChart className="h-5 w-5" />
+                Order Status Breakdown
+              </h3>
+              <div className="space-y-3">
+                {analytics.statusBreakdown.map((status) => (
+                  <div key={status.status} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+                        statusColorMap[status.status] || "bg-slate-100 text-slate-800"
+                      }`}>
+                        {status.status.replace('-', ' ')}
+                      </span>
+                      <span className="text-sm text-slate-600">{status.count} orders</span>
+                    </div>
+                    <span className="text-sm font-medium text-slate-900">
+                      {status.percentage.toFixed(1)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Activity
+              </h3>
+              <div className="space-y-3">
+                {analytics.recentActivity.slice(0, 5).map((activity) => (
+                  <div key={activity.orderId} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        Order #{activity.orderId}
+                      </p>
+                      <p className="text-xs text-slate-600">{activity.customerName}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-1 rounded text-xs font-medium capitalize ${
+                        statusColorMap[activity.status] || "bg-slate-100 text-slate-800"
+                      }`}>
+                        {activity.status.replace('-', ' ')}
+                      </span>
+                      {activity.deliveryTime && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          {formatHours(activity.deliveryTime)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Delivery Times Chart */}
+          {analytics.deliveryTimes.length > 0 && (
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Delivery Times Over Time
+              </h3>
+              <div className="space-y-2">
+                {analytics.deliveryTimes.slice(-10).map((item, index) => (
+                  <div key={index} className="flex items-center justify-between py-2">
+                    <span className="text-sm text-slate-600">
+                      {new Date(item.date).toLocaleDateString()}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium">
+                        {formatHours(item.avgHours)}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        ({item.orderCount} orders)
+                      </span>
+                      <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 rounded-full"
+                          style={{
+                            width: `${Math.min(100, (item.avgHours / 72) * 100)}%` // 72h = 3 days as max
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ratings Distribution */}
+          {analytics.ratings.length > 0 && (
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Star className="h-5 w-5" />
+                Customer Ratings Distribution
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">Delivery Experience</h4>
+                  <div className="space-y-2">
+                    {[5, 4, 3, 2, 1].map(rating => {
+                      const count = analytics.ratings.filter(r => r.deliveryRating === rating).reduce((sum, r) => sum + r.count, 0);
+                      const total = analytics.ratings.reduce((sum, r) => sum + r.count, 0);
+                      const percentage = total > 0 ? (count / total) * 100 : 0;
+                      
+                      return (
+                        <div key={rating} className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm w-3">{rating}</span>
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          </div>
+                          <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-yellow-400 rounded-full"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-slate-600 w-8">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">Seller Rating</h4>
+                  <div className="space-y-2">
+                    {[5, 4, 3, 2, 1].map(rating => {
+                      const count = analytics.ratings.filter(r => r.sellerRating === rating).reduce((sum, r) => sum + r.count, 0);
+                      const total = analytics.ratings.reduce((sum, r) => sum + r.count, 0);
+                      const percentage = total > 0 ? (count / total) * 100 : 0;
+                      
+                      return (
+                        <div key={rating} className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm w-3">{rating}</span>
+                            <Star className="h-4 w-4 fill-blue-400 text-blue-400" />
+                          </div>
+                          <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-400 rounded-full"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-slate-600 w-8">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
