@@ -1295,3 +1295,82 @@ export const webhookDeliveries = pgTable("webhook_deliveries", {
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Chat/messaging system tables (S57)
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Conversation metadata
+  subject: varchar("subject", { length: 256 }).default(""), // Optional subject/topic
+  status: varchar("status", { length: 32 }).default("active"), // 'active', 'archived', 'closed'
+  
+  // Last message info for quick access
+  lastMessageId: integer("last_message_id"),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  lastMessagePreview: varchar("last_message_preview", { length: 150 }).default(""),
+  
+  // Unread counts
+  unreadByCustomer: integer("unread_by_customer").default(0),
+  unreadBySeller: integer("unread_by_seller").default(0),
+  
+  // Related entities (optional)
+  productId: integer("product_id").references(() => catalogItems.id, { onDelete: "set null" }),
+  orderId: integer("order_id").references(() => orders.id, { onDelete: "set null" }),
+  
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Message content
+  content: text("content").notNull(),
+  messageType: varchar("message_type", { length: 32 }).default("text"), // 'text', 'image', 'file', 'system'
+  
+  // File attachments (JSON array)
+  attachments: jsonb("attachments").$type<Array<{
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>>().default([]),
+  
+  // Message metadata (JSON)
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  
+  // Read receipts (simplified approach)
+  readByCustomer: boolean("read_by_customer").default(false),
+  readByCustomerAt: timestamp("read_by_customer_at", { withTimezone: true }),
+  readBySeller: boolean("read_by_seller").default(false),
+  readBySellerAt: timestamp("read_by_seller_at", { withTimezone: true }),
+  
+  // Soft delete
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: integer("deleted_by").references(() => users.id),
+  
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Typing indicators for real-time typing status
+export const typingIndicators = pgTable("typing_indicators", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Typing state
+  isTyping: boolean("is_typing").default(true),
+  lastTypingAt: timestamp("last_typing_at", { withTimezone: true }).defaultNow().notNull(),
+  
+  // Auto-cleanup old indicators (handled by app logic)
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});

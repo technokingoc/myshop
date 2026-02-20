@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { sellers } from "@/lib/schema";
+import { users, stores } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
@@ -24,14 +24,14 @@ export async function POST(req: NextRequest) {
 
     const db = getDb();
 
-    // Check email uniqueness
-    const existingEmail = await db.select().from(sellers).where(eq(sellers.email, email)).limit(1);
+    // Check email uniqueness in users table
+    const existingEmail = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
     if (existingEmail.length > 0) {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
 
-    // Check slug uniqueness
-    const existingSlug = await db.select().from(sellers).where(eq(sellers.slug, slug)).limit(1);
+    // Check slug uniqueness in stores table
+    const existingSlug = await db.select({ id: stores.id }).from(stores).where(eq(stores.slug, slug)).limit(1);
     if (existingSlug.length > 0) {
       return NextResponse.json({ error: "Store slug already taken" }, { status: 409 });
     }
@@ -39,13 +39,22 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Insert seller
-    const result = await db.insert(sellers).values({
-      name: storeName,
-      slug,
-      ownerName,
+    // Create user
+    const userResult = await db.insert(users).values({
       email,
       passwordHash,
+      name: ownerName,
+      city: city || "",
+      role: "seller",
+    }).returning({ id: users.id });
+
+    const userId = userResult[0].id;
+
+    // Create store
+    await db.insert(stores).values({
+      userId,
+      slug,
+      name: storeName,
       businessType: businessType || "Retail",
       currency: currency || "USD",
       city: city || "",
@@ -54,9 +63,9 @@ export async function POST(req: NextRequest) {
         instagram: instagram || "",
         facebook: facebook || "",
       },
-    }).returning({ id: sellers.id });
+    });
 
-    return NextResponse.json({ success: true, sellerId: result[0].id });
+    return NextResponse.json({ success: true, sellerId: userId });
   } catch (err: unknown) {
     console.error("Register error:", err);
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });

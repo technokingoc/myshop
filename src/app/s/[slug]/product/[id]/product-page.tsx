@@ -16,6 +16,7 @@ import ProductReviews from "@/components/product-reviews";
 import ReviewForm from "@/components/review-form";
 import { ProductJsonLd, StoreJsonLd } from "@/components/json-ld";
 import SocialShare from "@/components/social-share";
+import MessageSellerButton from "@/components/messaging/message-seller-button";
 
 interface Props {
   product: any;
@@ -370,12 +371,23 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
                   {[currentStore?.city, currentStore?.country].filter(Boolean).join(', ')}
                 </div>
               )}
-              <Link
-                href={`/s/${slug}`}
-                className={`inline-flex items-center ${theme.text} text-sm font-medium mt-3 hover:underline`}
-              >
-                Visit Store
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <Link
+                  href={`/s/${slug}`}
+                  className={`inline-flex items-center ${theme.text} text-sm font-medium hover:underline`}
+                >
+                  Visit Store
+                </Link>
+                <MessageSellerButton
+                  storeId={currentStore?.id}
+                  sellerId={currentStore?.userId || seller?.id}
+                  storeName={currentStore?.name}
+                  productId={product.id}
+                  productName={product.name}
+                  variant="outline"
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { sellers } from "@/lib/schema";
+import { users, stores } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { createSessionCookie } from "@/lib/session";
@@ -15,38 +15,43 @@ export async function POST(req: NextRequest) {
     }
 
     const db = getDb();
-    const results = await db.select().from(sellers).where(eq(sellers.email, email)).limit(1);
 
-    if (results.length === 0) {
+    // Look up user
+    const userResults = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (userResults.length === 0) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    const seller = results[0];
+    const user = userResults[0];
 
-    if (!seller.passwordHash) {
+    if (!user.passwordHash) {
       return NextResponse.json({ error: "Account not set up for password login" }, { status: 401 });
     }
 
-    const valid = await bcrypt.compare(password, seller.passwordHash);
+    const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
+    // Look up store for this user
+    const storeResults = await db.select().from(stores).where(eq(stores.userId, user.id)).limit(1);
+    const store = storeResults[0];
+
     await createSessionCookie({
-      sellerId: seller.id,
-      email: seller.email!,
-      sellerSlug: seller.slug,
-      storeName: seller.name,
-      role: seller.role ?? "seller",
+      sellerId: user.id,
+      email: user.email,
+      sellerSlug: store?.slug ?? "",
+      storeName: store?.name ?? user.name,
+      role: user.role ?? "user",
     });
 
     return NextResponse.json({
       success: true,
       seller: {
-        id: seller.id,
-        slug: seller.slug,
-        name: seller.name,
-        email: seller.email,
+        id: user.id,
+        slug: store?.slug ?? "",
+        name: store?.name ?? user.name,
+        email: user.email,
       },
     });
   } catch (err: unknown) {

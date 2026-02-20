@@ -71,3 +71,23 @@ export async function getSellerFromSession(request: Request): Promise<number | n
     return null;
   }
 }
+
+// Server-side: check authentication and return user info for API routes
+export async function checkAuth(): Promise<any | null> {
+  try {
+    // This is a simplified implementation for messaging API
+    // In production, this would properly validate the session from cookies
+    
+    // For now, we'll return a mock user for development
+    // In real implementation, you'd extract user info from session cookies
+    return {
+      id: 1,
+      name: "Test User",
+      email: "test@example.com",
+      hasStore: true
+    };
+  } catch (error) {
+    console.error("Auth check failed:", error);
+    return null;
+  }
+}

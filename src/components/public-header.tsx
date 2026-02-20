@@ -3,9 +3,10 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, Home, Store, ShoppingBag, User, Plus } from "lucide-react";
+import { Menu, X, Home, Store, ShoppingBag, User, Plus, MessageCircle } from "lucide-react";
 import { LanguageSwitch } from "@/components/language-switch";
 import { useLanguage } from "@/lib/language";
+import MessageNotifications from "@/components/messaging/message-notifications";
 
 const dict = {
   en: {
@@ -23,6 +24,7 @@ const dict = {
     switchToSelling: "Switch to My Store",
     profile: "Profile",
     orders: "Orders",
+    messages: "Messages",
     logout: "Sign Out",
   },
   pt: {
@@ -40,6 +42,7 @@ const dict = {
     switchToSelling: "Mudar para Minha Loja",
     profile: "Perfil",
     orders: "Encomendas",
+    messages: "Mensagens",
     logout: "Sair",
   },
 };
@@ -232,6 +235,17 @@ export function PublicHeader() {
                   >
                     <ShoppingBag className="h-4 w-4" />
                     {t.orders}
+                  </Link>
+                  
+                  <Link
+                    href="/messages"
+                    className="flex items-center justify-between px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4" />
+                      {t.messages}
+                    </div>
+                    <MessageNotifications user={session} />
                   </Link>
 
                   {session.hasStore && (
