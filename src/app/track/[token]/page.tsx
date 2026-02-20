@@ -322,7 +322,16 @@ export default function TrackingPage() {
               orderId={String(data.orderId)}
               customerName={data.customerName}
               onConfirm={handleDeliveryConfirmation}
-              t={t}
+              t={{
+                confirmed: t.confirmed,
+                cancel: t.cancel,
+                submitting: t.submittingConfirmation,
+                completed: t.confirmationSubmitted,
+                skip: t.skipDetails,
+                ...Object.fromEntries(
+                  Object.entries(t).filter(([_, value]) => typeof value === 'string')
+                )
+              }}
             />
           )}
 

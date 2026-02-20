@@ -7,6 +7,7 @@ import { STATUS_FLOW, statusColorMap } from "./types";
 import { OrderTimeline } from "./order-timeline";
 import { CancelRefundModal } from "./cancel-refund-modal";
 import { OrderPrintView } from "./order-print-view";
+import { ShippingManagement } from "./shipping-management";
 
 const statusIcons: Record<string, typeof Clock> = {
   new: Clock, contacted: Phone, processing: Package, shipped: Truck, completed: CheckCircle, cancelled: Ban,
