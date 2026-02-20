@@ -40,7 +40,7 @@
 
 ---
 
-## S58 — Chat/Messaging: Order Context & Moderation
+## [x] S58 — Chat/Messaging: Order Context & Moderation ✅
 
 **Goal:** Link conversations to orders, add safety features.
 

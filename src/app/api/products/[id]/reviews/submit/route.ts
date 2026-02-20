@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { customerReviews, catalogItems } from "@/lib/schema";
+import { customerReviews, catalogItems, orders } from "@/lib/schema";
 import { getDb } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { getCustomerSession } from "@/lib/customer-session";
@@ -49,23 +49,63 @@ export async function POST(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Check if customer already reviewed this item
-    const existingReview = await db
-      .select()
-      .from(customerReviews)
-      .where(
-        and(
-          eq(customerReviews.customerId, session.customerId),
-          eq(customerReviews.catalogItemId, productId)
-        )
-      );
+    // Verify purchase if orderId is provided
+    let isVerifiedPurchase = false;
+    if (orderId) {
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(
+          and(
+            eq(orders.id, orderId),
+            eq(orders.customerId, session.customerId),
+            eq(orders.itemId, productId),
+            // Only allow reviews for paid/completed orders
+            eq(orders.status, "paid")
+          )
+        );
 
-    if (existingReview.length > 0) {
-      return NextResponse.json({ error: "You have already reviewed this product" }, { status: 400 });
+      if (order) {
+        isVerifiedPurchase = true;
+        
+        // Check if customer already reviewed this specific order item
+        const existingReviewForOrder = await db
+          .select()
+          .from(customerReviews)
+          .where(
+            and(
+              eq(customerReviews.customerId, session.customerId),
+              eq(customerReviews.orderId, orderId),
+              eq(customerReviews.catalogItemId, productId)
+            )
+          );
+
+        if (existingReviewForOrder.length > 0) {
+          return NextResponse.json({ error: "You have already reviewed this order item" }, { status: 400 });
+        }
+      } else {
+        return NextResponse.json({ error: "Invalid order or order not found" }, { status: 400 });
+      }
+    } else {
+      // Check if customer already reviewed this product (for non-order reviews)
+      const existingReview = await db
+        .select()
+        .from(customerReviews)
+        .where(
+          and(
+            eq(customerReviews.customerId, session.customerId),
+            eq(customerReviews.catalogItemId, productId),
+            eq(customerReviews.orderId, null) // Only check non-order reviews
+          )
+        );
+
+      if (existingReview.length > 0) {
+        return NextResponse.json({ error: "You have already reviewed this product" }, { status: 400 });
+      }
     }
 
-    // Reviews start as pending and require seller approval for moderation
-    const status = "pending";
+    // Verified purchases are published immediately, others are pending
+    const status = isVerifiedPurchase ? "published" : "pending";
 
     const [newReview] = await db
       .insert(customerReviews)
@@ -78,7 +118,7 @@ export async function POST(
         title: title?.trim() || "",
         content: content.trim(),
         imageUrls: imageUrls || "",
-        verified: false, // TODO: Check if this is from a verified purchase
+        verified: isVerifiedPurchase,
         status,
       })
       .returning();

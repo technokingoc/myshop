@@ -290,10 +290,20 @@ export const customerReviews = pgTable("customer_reviews", {
   content: text("content").default(""),
   imageUrls: text("image_urls").default(""), // comma-separated URLs for photo reviews
   helpful: integer("helpful").default(0), // helpful votes from other customers
+  unhelpful: integer("unhelpful").default(0), // unhelpful votes from other customers
   verified: boolean("verified").default(false), // verified purchase
   status: varchar("status", { length: 32 }).default("published"), // published, pending, hidden
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Review vote tracking to prevent duplicate votes
+export const reviewVotes = pgTable("review_votes", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").notNull().references(() => customerReviews.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  voteType: varchar("vote_type", { length: 16 }).notNull(), // 'helpful' or 'unhelpful'
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const notifications = pgTable("notifications", {

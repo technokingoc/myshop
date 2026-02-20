@@ -48,6 +48,7 @@ export async function GET(
         content: customerReviews.content,
         imageUrls: customerReviews.imageUrls,
         helpful: customerReviews.helpful,
+        unhelpful: customerReviews.unhelpful,
         verified: customerReviews.verified,
         status: customerReviews.status,
         createdAt: customerReviews.createdAt,

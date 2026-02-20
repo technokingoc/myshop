@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Star, ChevronDown, ThumbsUp, Camera, CheckCircle, Clock } from "lucide-react";
+import { Star, ChevronDown, ThumbsUp, ThumbsDown, Camera, CheckCircle, Clock } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 
 const dict = {
@@ -16,6 +16,7 @@ const dict = {
     noReviews: "No reviews yet",
     noReviewsHint: "Be the first to review this product",
     helpful: "Helpful",
+    unhelpful: "Unhelpful",
     verified: "Verified Purchase",
     stars: "stars",
     outOf: "out of",
@@ -26,6 +27,7 @@ const dict = {
     loadMore: "Load More",
     loading: "Loading...",
     markHelpful: "Mark as helpful",
+    markUnhelpful: "Mark as unhelpful",
     wasHelpful: "Was this helpful?",
     loginToReview: "Login to write a review",
     photoReviews: "Photo Reviews",
@@ -41,6 +43,7 @@ const dict = {
     noReviews: "Sem avaliações",
     noReviewsHint: "Seja o primeiro a avaliar este produto",
     helpful: "Útil",
+    unhelpful: "Não útil",
     verified: "Compra Verificada",
     stars: "estrelas",
     outOf: "de",
@@ -51,6 +54,7 @@ const dict = {
     loadMore: "Carregar Mais",
     loading: "A carregar...",
     markHelpful: "Marcar como útil",
+    markUnhelpful: "Marcar como não útil",
     wasHelpful: "Foi útil?",
     loginToReview: "Entre para escrever uma avaliação",
     photoReviews: "Avaliações com Fotos",
@@ -64,6 +68,7 @@ interface Review {
   content: string;
   imageUrls: string;
   helpful: number;
+  unhelpful: number;
   verified: boolean;
   createdAt: string;
   customerName: string;
@@ -92,6 +97,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
   const [hasMore, setHasMore] = useState(false);
   const [sort, setSort] = useState('recent');
   const [expandedReviews, setExpandedReviews] = useState<Set<number>>(new Set());
+  const [userVotes, setUserVotes] = useState<Record<number, string>>({});
 
   const loadReviews = useCallback(async (sortBy: string, offset = 0, append = false) => {
     try {
@@ -102,10 +108,12 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
       const data = await response.json();
       
       if (data.reviews) {
-        if (append) {
-          setReviews(prev => [...prev, ...data.reviews]);
-        } else {
-          setReviews(data.reviews);
+        const newReviews = append ? [...reviews, ...data.reviews] : data.reviews;
+        setReviews(newReviews);
+
+        // Load user votes for these reviews if customer is logged in
+        if (customer && newReviews.length > 0) {
+          loadUserVotes(newReviews.map((r: Review) => r.id));
         }
       }
       
@@ -120,7 +128,22 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [productId]);
+  }, [productId, customer, reviews]);
+
+  const loadUserVotes = useCallback(async (reviewIds: number[]) => {
+    if (!customer || reviewIds.length === 0) return;
+
+    try {
+      const response = await fetch(`/api/products/${productId}/reviews/votes?reviewIds=${reviewIds.join(',')}`);
+      const data = await response.json();
+      
+      if (data.votes) {
+        setUserVotes(prev => ({ ...prev, ...data.votes }));
+      }
+    } catch (error) {
+      console.error('Error loading user votes:', error);
+    }
+  }, [productId, customer]);
 
   useEffect(() => {
     loadReviews(sort);
@@ -135,25 +158,42 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
     loadReviews(sort, reviews.length, true);
   };
 
-  const markHelpful = async (reviewId: number) => {
+  const voteOnReview = async (reviewId: number, voteType: 'helpful' | 'unhelpful') => {
     if (!customer) return;
     
     try {
       const response = await fetch(`/api/products/reviews/${reviewId}/helpful`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
+        body: JSON.stringify({ voteType }),
       });
       
       if (response.ok) {
         const data = await response.json();
+        
+        // Update review counts
         setReviews(prev => prev.map(review => 
           review.id === reviewId 
-            ? { ...review, helpful: data.helpful }
+            ? { ...review, helpful: data.helpful, unhelpful: data.unhelpful }
             : review
         ));
+
+        // Update user votes
+        if (data.action === 'removed') {
+          setUserVotes(prev => {
+            const newVotes = { ...prev };
+            delete newVotes[reviewId];
+            return newVotes;
+          });
+        } else {
+          setUserVotes(prev => ({ ...prev, [reviewId]: voteType }));
+        }
       }
     } catch (error) {
-      console.error('Error marking review as helpful:', error);
+      console.error('Error voting on review:', error);
     }
   };
 
@@ -382,17 +422,35 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
                   </div>
                 )}
 
-                {/* Helpful Button */}
+                {/* Voting Buttons */}
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
                   <span className="text-xs text-slate-500">{t.wasHelpful}</span>
-                  <button
-                    onClick={() => markHelpful(review.id)}
-                    disabled={!customer}
-                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ThumbsUp className="h-3 w-3" />
-                    {t.helpful} ({review.helpful || 0})
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => voteOnReview(review.id, 'helpful')}
+                      disabled={!customer}
+                      className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        userVotes[review.id] === 'helpful'
+                          ? 'text-green-600 font-medium'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <ThumbsUp className="h-3 w-3" />
+                      {t.helpful} ({review.helpful || 0})
+                    </button>
+                    <button
+                      onClick={() => voteOnReview(review.id, 'unhelpful')}
+                      disabled={!customer}
+                      className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        userVotes[review.id] === 'unhelpful'
+                          ? 'text-red-600 font-medium'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <ThumbsDown className="h-3 w-3" />
+                      {t.unhelpful} ({review.unhelpful || 0})
+                    </button>
+                  </div>
                 </div>
               </div>
             );

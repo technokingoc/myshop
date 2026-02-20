@@ -48,7 +48,8 @@ export async function GET(
       products,
     });
   } catch (error) {
-    console.error("Storefront API error:", error);
-    return NextResponse.json({ error: "Failed to load store" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Storefront API error:", msg);
+    return NextResponse.json({ error: "Failed to load store", detail: msg }, { status: 500 });
   }
 }

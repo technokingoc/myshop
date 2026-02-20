@@ -71,6 +71,7 @@ interface ReviewFormProps {
   productId: number;
   productName: string;
   customer?: any;
+  orderId?: number; // For verified purchase reviews
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -79,6 +80,7 @@ export default function ReviewForm({
   productId, 
   productName, 
   customer, 
+  orderId,
   onSuccess, 
   onCancel 
 }: ReviewFormProps) {
@@ -183,6 +185,7 @@ export default function ReviewForm({
           title: title.trim(),
           content: content.trim(),
           imageUrls: images.join(','),
+          orderId,
         }),
       });
 
