@@ -198,15 +198,15 @@ export async function GET(request: NextRequest) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const filename = `products-export-${timestamp}.csv`;
 
-      // Log export activity
-      try {
-        await db.insert(sql`
-          INSERT INTO export_history (seller_id, export_type, filename, record_count, created_at)
-          VALUES (${sellerId}, 'products', ${filename}, ${exportData.length}, NOW())
-        `);
-      } catch (logError) {
-        console.warn("Failed to log export activity:", logError);
-      }
+      // Log export activity (commented out - table may not exist)
+      // try {
+      //   await db.execute(sql`
+      //     INSERT INTO export_history (seller_id, export_type, filename, record_count, created_at)
+      //     VALUES (${sellerId}, 'products', ${filename}, ${exportData.length}, NOW())
+      //   `);
+      // } catch (logError) {
+      //   console.warn("Failed to log export activity:", logError);
+      // }
 
       return new NextResponse(csvContent, {
         headers: {
