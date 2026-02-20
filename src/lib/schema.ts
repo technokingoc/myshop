@@ -213,6 +213,17 @@ export const orders = pgTable("orders", {
   }>(),
   estimatedDelivery: timestamp("estimated_delivery"),
   trackingNumber: varchar("tracking_number", { length: 128 }).default(""),
+  
+  // S62: Delivery confirmation fields
+  deliveryConfirmed: boolean("delivery_confirmed").default(false),
+  deliveryConfirmedAt: timestamp("delivery_confirmed_at", { withTimezone: true }),
+  deliveryPhotos: text("delivery_photos").default(""), // JSON array of photo URLs
+  deliveryRating: integer("delivery_rating"), // 1-5 rating of delivery experience
+  sellerRating: integer("seller_rating"), // 1-5 rating of seller
+  deliveredBy: varchar("delivered_by", { length: 256 }).default(""), // courier name/company
+  deliveryLocation: varchar("delivery_location", { length: 256 }).default(""), // delivery location description
+  deliveryNotes: text("delivery_notes").default(""), // customer delivery notes
+  
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -1641,6 +1652,94 @@ export const reviewRequests = pgTable("review_requests", {
   // Tracking
   emailOpened: boolean("email_opened").default(false),
   emailClicked: boolean("email_clicked").default(false),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// S62: Delivery analytics table for admin dashboard
+export const deliveryAnalytics = pgTable("delivery_analytics", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  analyticsDate: timestamp("analytics_date", { withTimezone: true }).notNull(),
+  
+  // Order counts by status
+  totalOrders: integer("total_orders").default(0),
+  confirmedOrders: integer("confirmed_orders").default(0),
+  preparingOrders: integer("preparing_orders").default(0),
+  shippedOrders: integer("shipped_orders").default(0),
+  inTransitOrders: integer("in_transit_orders").default(0),
+  deliveredOrders: integer("delivered_orders").default(0),
+  cancelledOrders: integer("cancelled_orders").default(0),
+  
+  // Delivery metrics
+  avgDeliveryTimeHours: integer("avg_delivery_time_hours").default(0), // Average from confirmed to delivered
+  avgPreparationTimeHours: integer("avg_preparation_time_hours").default(0), // Average from confirmed to shipped
+  avgShippingTimeHours: integer("avg_shipping_time_hours").default(0), // Average from shipped to delivered
+  
+  // Delivery confirmation metrics
+  deliveryConfirmations: integer("delivery_confirmations").default(0),
+  deliveryConfirmationRate: numeric("delivery_confirmation_rate", { precision: 5, scale: 2 }).default("0.00"),
+  avgDeliveryRating: numeric("avg_delivery_rating", { precision: 3, scale: 2 }).default("0.00"),
+  avgSellerRating: numeric("avg_seller_rating", { precision: 3, scale: 2 }).default("0.00"),
+  
+  // Issue tracking
+  deliveryIssues: integer("delivery_issues").default(0),
+  cancellationRate: numeric("cancellation_rate", { precision: 5, scale: 2 }).default("0.00"),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// S62: Delivery status change log table for SMS/notifications
+export const deliveryStatusChanges = pgTable("delivery_status_changes", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").references(() => users.id, { onDelete: "set null" }),
+  
+  // Status change details
+  oldStatus: varchar("old_status", { length: 32 }),
+  newStatus: varchar("new_status", { length: 32 }).notNull(),
+  changedBy: integer("changed_by").references(() => users.id, { onDelete: "set null" }),
+  changeReason: text("change_reason").default(""),
+  
+  // Notification tracking
+  smsSent: boolean("sms_sent").default(false),
+  smsSentAt: timestamp("sms_sent_at", { withTimezone: true }),
+  emailSent: boolean("email_sent").default(false),
+  emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+  pushSent: boolean("push_sent").default(false),
+  pushSentAt: timestamp("push_sent_at", { withTimezone: true }),
+  
+  // Customer contact info at time of change
+  customerPhone: varchar("customer_phone", { length: 64 }).default(""),
+  customerEmail: varchar("customer_email", { length: 256 }).default(""),
+  customerName: varchar("customer_name", { length: 256 }).default(""),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// S62: Delivery issue reports table
+export const deliveryIssues = pgTable("delivery_issues", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").references(() => users.id, { onDelete: "cascade" }),
+  
+  // Issue details
+  issueType: varchar("issue_type", { length: 64 }).notNull(), // 'damaged', 'wrong_item', 'not_delivered', 'late_delivery', 'other'
+  description: text("description").notNull(),
+  severity: varchar("severity", { length: 16 }).default("medium"), // 'low', 'medium', 'high', 'critical'
+  
+  // Resolution tracking
+  status: varchar("status", { length: 32 }).default("open"), // 'open', 'investigating', 'resolved', 'closed'
+  resolution: text("resolution").default(""),
+  resolvedBy: integer("resolved_by").references(() => users.id, { onDelete: "set null" }),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  
+  // Photo evidence
+  photoUrls: text("photo_urls").default(""), // JSON array of photo URLs
   
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

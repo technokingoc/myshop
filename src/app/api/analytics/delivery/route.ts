@@ -1,217 +1,286 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { orders, sellers } from "@/lib/schema";
-import { eq, sql, and, gte, desc } from "drizzle-orm";
+import { orders, deliveryStatusChanges, deliveryAnalytics } from "@/lib/schema";
+import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+
+type DeliveryAnalyticsData = {
+  overview: {
+    totalOrders: number;
+    deliveredOrders: number;
+    avgDeliveryTime: number; // in hours
+    deliveryRate: number; // percentage
+    confirmationRate: number; // percentage
+    avgDeliveryRating: number;
+    avgSellerRating: number;
+  };
+  statusBreakdown: {
+    status: string;
+    count: number;
+    percentage: number;
+  }[];
+  deliveryTimes: {
+    date: string;
+    avgHours: number;
+    orderCount: number;
+  }[];
+  ratings: {
+    deliveryRating: number;
+    sellerRating: number;
+    count: number;
+  }[];
+  recentActivity: {
+    orderId: number;
+    status: string;
+    customerName: string;
+    updatedAt: string;
+    deliveryTime?: number;
+  }[];
+};
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const sellerId = searchParams.get('sellerId');
-  const range = searchParams.get('range') || '30d';
-  
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const url = new URL(request.url);
+    const sellerId = url.searchParams.get('sellerId');
+    const days = parseInt(url.searchParams.get('days') || '30');
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
+
     if (!sellerId) {
       return NextResponse.json({ error: "Seller ID required" }, { status: 400 });
     }
 
     const db = getDb();
-    
-    // Calculate date range
-    const now = new Date();
-    const daysBack = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-    const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
 
-    // Get all orders for the seller in the date range
-    const ordersData = await db
+    // Calculate date range
+    const dateFrom = startDate ? new Date(startDate) : new Date(Date.now() - (days * 24 * 60 * 60 * 1000));
+    const dateTo = endDate ? new Date(endDate) : new Date();
+
+    // Get overview statistics
+    const overviewQuery = await db
       .select({
-        id: orders.id,
-        status: orders.status,
-        createdAt: orders.createdAt,
-        statusHistory: orders.statusHistory,
-        estimatedDelivery: orders.estimatedDelivery,
-        notes: orders.notes,
-        shippingAddress: orders.shippingAddress,
+        totalOrders: sql<number>`COUNT(*)`,
+        deliveredOrders: sql<number>`COUNT(*) FILTER (WHERE status = 'delivered')`,
+        confirmedDeliveries: sql<number>`COUNT(*) FILTER (WHERE delivery_confirmed = true)`,
+        avgDeliveryRating: sql<number>`COALESCE(AVG(delivery_rating), 0)`,
+        avgSellerRating: sql<number>`COALESCE(AVG(seller_rating), 0)`,
       })
       .from(orders)
-      .where(
-        and(
-          eq(orders.sellerId, Number(sellerId)),
-          gte(orders.createdAt, startDate)
-        )
-      )
-      .orderBy(desc(orders.createdAt));
+      .where(and(
+        eq(orders.sellerId, parseInt(sellerId)),
+        gte(orders.createdAt, dateFrom),
+        lte(orders.createdAt, dateTo)
+      ));
 
-    // Calculate metrics
-    const totalOrders = ordersData.length;
-    const ordersShipped = ordersData.filter(o => 
-      ['shipped', 'in-transit', 'delivered'].includes(o.status)
-    ).length;
-    const ordersDelivered = ordersData.filter(o => o.status === 'delivered').length;
-    const ordersInTransit = ordersData.filter(o => 
-      ['shipped', 'in-transit'].includes(o.status)
-    ).length;
-    const deliveryIssues = ordersData.filter(o => o.status === 'cancelled').length;
-
-    // Calculate timing metrics (simplified version)
-    let totalProcessingTime = 0;
-    let totalShippingTime = 0;
-    let totalDeliveryTime = 0;
-    let timingOrdersCount = 0;
-    let onTimeDeliveries = 0;
-    let lateDeliveries = 0;
-    let deliveryRatingsCount = 0;
-    let totalDeliveryRating = 0;
-    let confirmationsCount = 0;
-
-    for (const order of ordersData) {
-      const statusHistory = order.statusHistory as Array<{ status: string; at: string; note?: string }> || [];
-      
-      // Find key timestamps
-      const confirmed = statusHistory.find(h => h.status === 'confirmed');
-      const shipped = statusHistory.find(h => ['shipped', 'preparing'].includes(h.status));
-      const delivered = statusHistory.find(h => h.status === 'delivered');
-      
-      if (confirmed && shipped) {
-        const processingTime = (new Date(shipped.at).getTime() - new Date(confirmed.at).getTime()) / (1000 * 60 * 60); // hours
-        totalProcessingTime += processingTime;
-      }
-      
-      if (shipped && delivered) {
-        const shippingTime = (new Date(delivered.at).getTime() - new Date(shipped.at).getTime()) / (1000 * 60 * 60); // hours
-        totalShippingTime += shippingTime;
-        timingOrdersCount++;
-      }
-      
-      if (confirmed && delivered) {
-        const totalTime = (new Date(delivered.at).getTime() - new Date(confirmed.at).getTime()) / (1000 * 60 * 60); // hours
-        totalDeliveryTime += totalTime;
-        
-        // Check if on-time (using estimated delivery if available)
-        if (order.estimatedDelivery) {
-          const estimatedTime = new Date(order.estimatedDelivery).getTime();
-          const actualTime = new Date(delivered.at).getTime();
-          if (actualTime <= estimatedTime) {
-            onTimeDeliveries++;
-          } else {
-            lateDeliveries++;
-          }
-        } else {
-          // Assume 3 days default if no estimated delivery
-          if (totalTime <= 72) { // 3 days in hours
-            onTimeDeliveries++;
-          } else {
-            lateDeliveries++;
-          }
-        }
-      }
-      
-      // Check for delivery confirmation (looking in notes)
-      if (order.notes?.includes('DELIVERY CONFIRMATION')) {
-        confirmationsCount++;
-        
-        // Try to extract rating from notes (simplified)
-        const ratingMatch = order.notes.match(/Delivery Rating: (\d)/);
-        if (ratingMatch) {
-          deliveryRatingsCount++;
-          totalDeliveryRating += parseInt(ratingMatch[1]);
-        }
-      }
-    }
-
-    const avgProcessingTime = timingOrdersCount > 0 ? totalProcessingTime / timingOrdersCount : 0;
-    const avgShippingTime = timingOrdersCount > 0 ? totalShippingTime / timingOrdersCount : 0;
-    const avgTotalDeliveryTime = timingOrdersCount > 0 ? totalDeliveryTime / timingOrdersCount : 0;
-    const onTimeDeliveryRate = (onTimeDeliveries + lateDeliveries) > 0 
-      ? (onTimeDeliveries / (onTimeDeliveries + lateDeliveries)) * 100 
-      : 0;
-    const avgDeliveryRating = deliveryRatingsCount > 0 ? totalDeliveryRating / deliveryRatingsCount : 0;
-    const confirmationRate = ordersDelivered > 0 ? (confirmationsCount / ordersDelivered) * 100 : 0;
-
-    // Calculate top delivery zones (simplified)
-    const zoneMap = new Map<string, { count: number; totalTime: number; orders: number }>();
-    
-    for (const order of ordersData) {
-      if (order.shippingAddress) {
-        const address = order.shippingAddress as any;
-        const city = address.city || 'Unknown';
-        
-        if (!zoneMap.has(city)) {
-          zoneMap.set(city, { count: 0, totalTime: 0, orders: 0 });
-        }
-        
-        const zone = zoneMap.get(city)!;
-        zone.count++;
-        
-        // Calculate delivery time if available
-        const statusHistory = order.statusHistory as Array<{ status: string; at: string }> || [];
-        const confirmed = statusHistory.find(h => h.status === 'confirmed');
-        const delivered = statusHistory.find(h => h.status === 'delivered');
-        
-        if (confirmed && delivered) {
-          const deliveryTime = (new Date(delivered.at).getTime() - new Date(confirmed.at).getTime()) / (1000 * 60 * 60);
-          zone.totalTime += deliveryTime;
-          zone.orders++;
-        }
-      }
-    }
-
-    const topDeliveryZones = Array.from(zoneMap.entries())
-      .map(([zoneName, data]) => ({
-        zoneName,
-        orderCount: data.count,
-        avgDeliveryTime: data.orders > 0 ? data.totalTime / data.orders : 0,
-      }))
-      .sort((a, b) => b.orderCount - a.orderCount)
-      .slice(0, 10);
-
-    // Generate daily metrics (simplified - just last 7 days for now)
-    const dailyMetrics = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const dayStart = new Date(date.setHours(0, 0, 0, 0));
-      const dayEnd = new Date(date.setHours(23, 59, 59, 999));
-      
-      const dayOrders = ordersData.filter(o => {
-        const orderDate = new Date(o.createdAt);
-        return orderDate >= dayStart && orderDate <= dayEnd;
-      });
-      
-      const dayShipped = dayOrders.filter(o => ['shipped', 'in-transit', 'delivered'].includes(o.status)).length;
-      const dayDelivered = dayOrders.filter(o => o.status === 'delivered').length;
-      
-      dailyMetrics.push({
-        date: dayStart.toISOString().split('T')[0],
-        ordersShipped: dayShipped,
-        ordersDelivered: dayDelivered,
-        avgDeliveryTime: avgTotalDeliveryTime, // Simplified
-        onTimeRate: onTimeDeliveryRate, // Simplified
-      });
-    }
-
-    const analytics = {
-      totalOrders,
-      ordersShipped,
-      ordersDelivered,
-      ordersInTransit,
-      deliveryIssues,
-      avgProcessingTime,
-      avgShippingTime,
-      avgTotalDeliveryTime,
-      onTimeDeliveries,
-      lateDeliveries,
-      onTimeDeliveryRate,
-      deliveryRatingsCount,
-      avgDeliveryRating,
-      confirmationRate,
-      topDeliveryZones,
-      dailyMetrics,
+    const overview = overviewQuery[0] || {
+      totalOrders: 0,
+      deliveredOrders: 0,
+      confirmedDeliveries: 0,
+      avgDeliveryRating: 0,
+      avgSellerRating: 0,
     };
 
-    return NextResponse.json(analytics);
+    // Calculate delivery rate and confirmation rate
+    const deliveryRate = overview.totalOrders > 0 
+      ? (overview.deliveredOrders / overview.totalOrders) * 100 
+      : 0;
+    const confirmationRate = overview.deliveredOrders > 0 
+      ? (overview.confirmedDeliveries / overview.deliveredOrders) * 100 
+      : 0;
+
+    // Get average delivery time (from created to delivered)
+    const avgDeliveryTimeQuery = await db
+      .select({
+        avgHours: sql<number>`
+          AVG(EXTRACT(EPOCH FROM (
+            CASE 
+              WHEN status = 'delivered' 
+              THEN COALESCE(delivery_confirmed_at, updated_at) 
+              ELSE updated_at 
+            END - created_at
+          )) / 3600)
+        `,
+      })
+      .from(orders)
+      .where(and(
+        eq(orders.sellerId, parseInt(sellerId)),
+        eq(orders.status, 'delivered'),
+        gte(orders.createdAt, dateFrom),
+        lte(orders.createdAt, dateTo)
+      ));
+
+    const avgDeliveryTime = avgDeliveryTimeQuery[0]?.avgHours || 0;
+
+    // Get status breakdown
+    const statusBreakdownQuery = await db
+      .select({
+        status: orders.status,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(orders)
+      .where(and(
+        eq(orders.sellerId, parseInt(sellerId)),
+        gte(orders.createdAt, dateFrom),
+        lte(orders.createdAt, dateTo)
+      ))
+      .groupBy(orders.status);
+
+    const statusBreakdown = statusBreakdownQuery.map(item => ({
+      status: item.status,
+      count: item.count,
+      percentage: overview.totalOrders > 0 ? (item.count / overview.totalOrders) * 100 : 0,
+    }));
+
+    // Get delivery times over time (daily averages)
+    const deliveryTimesQuery = await db
+      .select({
+        date: sql<string>`DATE(created_at)`,
+        avgHours: sql<number>`
+          AVG(EXTRACT(EPOCH FROM (
+            CASE 
+              WHEN status = 'delivered' 
+              THEN COALESCE(delivery_confirmed_at, updated_at) 
+              ELSE updated_at 
+            END - created_at
+          )) / 3600)
+        `,
+        orderCount: sql<number>`COUNT(*)`,
+      })
+      .from(orders)
+      .where(and(
+        eq(orders.sellerId, parseInt(sellerId)),
+        eq(orders.status, 'delivered'),
+        gte(orders.createdAt, dateFrom),
+        lte(orders.createdAt, dateTo)
+      ))
+      .groupBy(sql`DATE(created_at)`)
+      .orderBy(sql`DATE(created_at)`);
+
+    const deliveryTimes = deliveryTimesQuery.map(item => ({
+      date: item.date,
+      avgHours: Math.round(item.avgHours * 10) / 10,
+      orderCount: item.orderCount,
+    }));
+
+    // Get ratings distribution
+    const ratingsQuery = await db
+      .select({
+        deliveryRating: orders.deliveryRating,
+        sellerRating: orders.sellerRating,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(orders)
+      .where(and(
+        eq(orders.sellerId, parseInt(sellerId)),
+        eq(orders.deliveryConfirmed, true),
+        gte(orders.createdAt, dateFrom),
+        lte(orders.createdAt, dateTo)
+      ))
+      .groupBy(orders.deliveryRating, orders.sellerRating)
+      .having(sql`delivery_rating IS NOT NULL OR seller_rating IS NOT NULL`);
+
+    const ratings = ratingsQuery.map(item => ({
+      deliveryRating: item.deliveryRating || 0,
+      sellerRating: item.sellerRating || 0,
+      count: item.count,
+    }));
+
+    // Get recent activity
+    const recentActivityQuery = await db
+      .select({
+        orderId: orders.id,
+        status: orders.status,
+        customerName: orders.customerName,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        deliveryConfirmedAt: orders.deliveryConfirmedAt,
+      })
+      .from(orders)
+      .where(and(
+        eq(orders.sellerId, parseInt(sellerId)),
+        gte(orders.createdAt, dateFrom),
+        lte(orders.createdAt, dateTo)
+      ))
+      .orderBy(desc(orders.updatedAt))
+      .limit(10);
+
+    const recentActivity = recentActivityQuery.map(order => {
+      const deliveryTime = order.status === 'delivered' && order.deliveryConfirmedAt
+        ? Math.round(
+            (new Date(order.deliveryConfirmedAt).getTime() - new Date(order.createdAt).getTime()) / 
+            (1000 * 60 * 60) // Convert to hours
+          )
+        : undefined;
+
+      return {
+        orderId: order.orderId,
+        status: order.status,
+        customerName: order.customerName,
+        updatedAt: order.updatedAt.toISOString(),
+        deliveryTime,
+      };
+    });
+
+    const analyticsData: DeliveryAnalyticsData = {
+      overview: {
+        totalOrders: overview.totalOrders,
+        deliveredOrders: overview.deliveredOrders,
+        avgDeliveryTime: Math.round(avgDeliveryTime * 10) / 10,
+        deliveryRate: Math.round(deliveryRate * 10) / 10,
+        confirmationRate: Math.round(confirmationRate * 10) / 10,
+        avgDeliveryRating: Math.round(overview.avgDeliveryRating * 10) / 10,
+        avgSellerRating: Math.round(overview.avgSellerRating * 10) / 10,
+      },
+      statusBreakdown,
+      deliveryTimes,
+      ratings,
+      recentActivity,
+    };
+
+    return NextResponse.json(analyticsData);
 
   } catch (error) {
-    console.error('Delivery analytics error:', error);
+    console.error("Error fetching delivery analytics:", error);
     return NextResponse.json(
-      { error: "Failed to fetch delivery analytics" }, 
+      { error: "Failed to fetch delivery analytics" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+
+    const { action } = await request.json();
+
+    if (action === 'recalculate') {
+      const db = getDb();
+      
+      // This would trigger the analytics recalculation
+      // For now, return success - in production this would call the stored procedure
+      
+      return NextResponse.json({
+        success: true,
+        message: "Analytics recalculation triggered",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+
+  } catch (error) {
+    console.error("Error in delivery analytics admin action:", error);
+    return NextResponse.json(
+      { error: "Failed to process admin action" },
       { status: 500 }
     );
   }

@@ -488,6 +488,99 @@ export async function snoozeRestockReminder(
 }
 
 /**
+ * Check if auto-hide out of stock is enabled for a seller
+ */
+export async function isAutoHideOutOfStockEnabled(sellerId: number): Promise<boolean> {
+  const db = getDb();
+  
+  try {
+    // For now, return false since we haven't implemented the setting in the database
+    // In a full implementation, you would:
+    // 1. Add an 'autoHideOutOfStock' column to the stores table
+    // 2. Query the setting here
+    // 3. Return the actual value
+    
+    return false; // Default to false for backward compatibility
+  } catch (error) {
+    console.error('Failed to check auto-hide setting:', error);
+    return false;
+  }
+}
+
+/**
+ * Get products with visibility filtering based on stock and settings
+ */
+export async function getVisibleProducts(sellerId: number, includeOutOfStock: boolean = true) {
+  const db = getDb();
+  
+  try {
+    const baseConditions = [
+      eq(catalogItems.sellerId, sellerId),
+      eq(catalogItems.status, 'Published'),
+    ];
+    
+    // Add stock filter if auto-hide is enabled or explicitly requested
+    if (!includeOutOfStock) {
+      const autoHideEnabled = await isAutoHideOutOfStockEnabled(sellerId);
+      if (autoHideEnabled) {
+        baseConditions.push(sql`${catalogItems.stockQuantity} > 0`);
+      }
+    }
+    
+    const products = await db
+      .select()
+      .from(catalogItems)
+      .where(and(...baseConditions));
+    
+    return products;
+  } catch (error) {
+    console.error('Failed to get visible products:', error);
+    return [];
+  }
+}
+
+/**
+ * Get variants with visibility filtering based on stock and settings
+ */
+export async function getVisibleProductVariants(sellerId: number, productId?: number, includeOutOfStock: boolean = true) {
+  const db = getDb();
+  
+  try {
+    const baseConditions = [
+      eq(catalogItems.sellerId, sellerId),
+      eq(catalogItems.status, 'Published'),
+      eq(productVariants.active, true),
+    ];
+    
+    if (productId) {
+      baseConditions.push(eq(productVariants.productId, productId));
+    }
+    
+    // Add stock filter if auto-hide is enabled or explicitly requested
+    if (!includeOutOfStock) {
+      const autoHideEnabled = await isAutoHideOutOfStockEnabled(sellerId);
+      if (autoHideEnabled) {
+        baseConditions.push(sql`${productVariants.stockQuantity} > 0`);
+      }
+    }
+    
+    const variants = await db
+      .select({
+        variant: productVariants,
+        product: catalogItems,
+      })
+      .from(productVariants)
+      .leftJoin(catalogItems, eq(productVariants.productId, catalogItems.id))
+      .where(and(...baseConditions));
+    
+    return variants;
+  } catch (error) {
+    console.error('Failed to get visible variants:', error);
+    return [];
+  }
+}
+
+/**
  * Get low stock products requiring attention
  */
 export async function getLowStockProducts(sellerId: number): Promise<Array<{
