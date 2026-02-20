@@ -151,7 +151,7 @@ export default function IntegrationsPage() {
                 </div>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-mono text-sm text-gray-700 mb-2">PUT /api/v1/orders/{id}</h4>
+                <h4 className="font-mono text-sm text-gray-700 mb-2">PUT /api/v1/orders/{"{"}"id{"}"}</h4>
                 <p className="text-sm text-gray-600">Update order status and trigger webhooks</p>
                 <div className="flex gap-2 mt-2">
                   <Badge variant="outline" className="text-xs">Status Updates</Badge>

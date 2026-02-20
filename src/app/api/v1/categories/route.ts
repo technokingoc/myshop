@@ -104,17 +104,17 @@ export async function GET(request: NextRequest) {
     let responseData = categoriesWithCount;
     if (!parentId && !topLevelOnly) {
       // Build tree structure
-      const categoryMap = new Map(categoriesWithCount.map(cat => [cat.id, { ...cat, children: [] }]));
+      const categoryMap = new Map(categoriesWithCount.map(cat => [cat.id, { ...cat, children: [] as any[] }]));
       const rootCategories: any[] = [];
 
       categoriesWithCount.forEach(category => {
         if (category.parentId) {
           const parent = categoryMap.get(category.parentId);
           if (parent) {
-            parent.children.push(categoryMap.get(category.id));
+            parent.children.push(categoryMap.get(category.id)!);
           }
         } else {
-          rootCategories.push(categoryMap.get(category.id));
+          rootCategories.push(categoryMap.get(category.id)!);
         }
       });
 

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     storeId = 1;
 
     // Generate a simple visitor ID based on IP and user agent
-    const visitorId = `${request.ip || 'unknown'}_${Date.now()}`;
+    const visitorId = `${request.headers.get('x-forwarded-for') || 'unknown'}_${Date.now()}`;
 
     await db.insert(socialShares).values({
       storeId,
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       sharedUrl: url,
       shareTitle: title,
       visitorId,
-      ipAddress: request.ip || null,
+      ipAddress: request.headers.get('x-forwarded-for') || null,
       userAgent,
       referrer,
       createdAt: new Date(),

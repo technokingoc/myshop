@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language";
 import { fetchSession, type AuthSession } from "@/lib/auth";
-import { OnboardingChecklist } from "@/components/onboarding-checklist";
+import { SetupChecklistCard } from "@/components/onboarding/setup-checklist-card";
 import { FAB } from "@/components/fab";
 import {
   ShoppingCart,
@@ -132,6 +132,7 @@ export default function DashboardPage() {
   const t = useMemo(() => dict[lang], [lang]);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [onboardingStatus, setOnboardingStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -139,8 +140,13 @@ export default function DashboardPage() {
       setSession(s);
       if (s) {
         try {
-          const res = await fetch("/api/dashboard/stats", { credentials: "include" });
-          if (res.ok) setStats(await res.json());
+          const [statsRes, onboardingRes] = await Promise.all([
+            fetch("/api/dashboard/stats", { credentials: "include" }),
+            fetch("/api/stores/onboarding-status", { credentials: "include" })
+          ]);
+          
+          if (statsRes.ok) setStats(await statsRes.json());
+          if (onboardingRes.ok) setOnboardingStatus(await onboardingRes.json());
         } catch {}
       }
       setLoading(false);
@@ -198,21 +204,18 @@ export default function DashboardPage() {
     return s;
   };
 
-  const showOnboarding = !data.hasLogo || !data.hasBanner || data.publishedCount === 0 || data.orderCount === 0;
+  const showOnboarding = onboardingStatus && onboardingStatus.progress.percentage < 100;
 
   return (
     <>
-      {/* Onboarding Checklist */}
+      {/* Setup Checklist Card */}
       {showOnboarding && (
-        <OnboardingChecklist
-          data={{
-            hasLogo: Boolean(data.hasLogo),
-            hasBanner: Boolean(data.hasBanner),
-            productCount: data.productCount,
-            publishedCount: data.publishedCount,
-            orderCount: data.orderCount,
-          }}
-        />
+        <div className="mb-6">
+          <SetupChecklistCard 
+            onboardingStatus={onboardingStatus}
+            className="animate-fade-in"
+          />
+        </div>
       )}
 
       {/* Header */}

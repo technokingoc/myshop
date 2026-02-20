@@ -60,7 +60,7 @@ const DialogTrigger = ({ children, asChild = false }: DialogTriggerProps) => {
   if (asChild && React.isValidElement(children)) {
     return React.cloneElement(children, {
       onClick: handleClick,
-    });
+    } as any);
   }
 
   return (

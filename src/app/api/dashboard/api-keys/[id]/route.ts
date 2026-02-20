@@ -8,10 +8,10 @@ const sql = neon(DATABASE_URL);
 // GET /api/dashboard/api-keys/[id] - Get specific API key details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -20,7 +20,8 @@ export async function GET(
       );
     }
 
-    const keyId = parseInt(params.id);
+    const { id } = await params;
+    const keyId = parseInt(id);
     
     if (isNaN(keyId)) {
       return NextResponse.json(
@@ -97,10 +98,10 @@ export async function GET(
 // PUT /api/dashboard/api-keys/[id] - Update API key
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -109,7 +110,8 @@ export async function PUT(
       );
     }
 
-    const keyId = parseInt(params.id);
+    const { id } = await params;
+    const keyId = parseInt(id);
     
     if (isNaN(keyId)) {
       return NextResponse.json(
@@ -213,10 +215,10 @@ export async function PUT(
 // DELETE /api/dashboard/api-keys/[id] - Revoke/delete API key
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -225,7 +227,8 @@ export async function DELETE(
       );
     }
 
-    const keyId = parseInt(params.id);
+    const { id } = await params;
+    const keyId = parseInt(id);
     
     if (isNaN(keyId)) {
       return NextResponse.json(

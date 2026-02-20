@@ -41,6 +41,203 @@
     "login": "Login",
     "register": "Register"
   },
+  "onboarding": {
+    "wizard": {
+      "title": "Welcome to MyShop",
+      "subtitle": "Let's get your store ready in just a few steps",
+      "step": "Step",
+      "of": "of",
+      "save": "Save & Continue",
+      "saveAndExit": "Save & Exit",
+      "previous": "Previous",
+      "complete": "Complete Setup",
+      "completing": "Setting up your store...",
+      "skipForNow": "Skip for now",
+      "stepTitles": {
+        "business": "Business Information",
+        "templates": "Choose Template", 
+        "products": "Add Products",
+        "checklist": "Launch Checklist"
+      }
+    },
+    "businessInfo": {
+      "title": "Tell us about your business",
+      "subtitle": "This information helps customers find and trust your store",
+      "storeName": "Store name",
+      "storeNamePlaceholder": "Ex: Maria's Beauty Corner",
+      "storeNameHint": "Choose a memorable name that represents your business",
+      "slug": "Store URL",
+      "slugPlaceholder": "Ex: maria-beauty",
+      "slugHint": "This will be your store's web address: /s/{slug}",
+      "category": "Business category",
+      "categories": {
+        "retail": "Retail",
+        "services": "Services",
+        "food": "Food & Beverages", 
+        "fashion": "Fashion & Clothing",
+        "electronics": "Electronics",
+        "home": "Home & Garden",
+        "beauty": "Beauty & Personal Care",
+        "health": "Health & Wellness",
+        "automotive": "Automotive",
+        "other": "Other"
+      },
+      "location": "Location",
+      "locationPlaceholder": "City, Province",
+      "locationHint": "Where is your business located?",
+      "description": "Store description",
+      "descriptionPlaceholder": "Tell customers what makes your business special...",
+      "descriptionHint": "A good description helps customers understand what you offer",
+      "logo": "Store logo",
+      "logoHint": "Upload your business logo (optional but recommended)",
+      "errors": {
+        "nameRequired": "Store name is required",
+        "nameMinLength": "Store name must be at least 2 characters",
+        "slugRequired": "Store URL is required",
+        "slugFormat": "URL can only contain letters, numbers, and hyphens",
+        "slugTaken": "This store URL is already taken",
+        "categoryRequired": "Please select a business category",
+        "locationRequired": "Location is required"
+      }
+    },
+    "templates": {
+      "title": "Choose your store template",
+      "subtitle": "Pick a design that best fits your business style",
+      "preview": "Preview",
+      "select": "Select Template",
+      "selected": "Selected",
+      "customizeHint": "You can customize colors and styling later in your dashboard",
+      "templates": {
+        "classic": {
+          "name": "Classic",
+          "description": "Clean and professional layout perfect for any business type"
+        },
+        "boutique": {
+          "name": "Boutique", 
+          "description": "Elegant design with larger images, ideal for fashion and beauty"
+        },
+        "catalog": {
+          "name": "Catalog",
+          "description": "Compact layout perfect for showcasing many products"
+        },
+        "minimal": {
+          "name": "Minimal",
+          "description": "Simple and modern design that puts your products first"
+        }
+      },
+      "previewDevice": {
+        "mobile": "Mobile",
+        "desktop": "Desktop"
+      }
+    },
+    "products": {
+      "title": "Add your first product",
+      "subtitle": "Start with just one product to get your store running",
+      "tip": "💡 Tip: You can add more products anytime from your dashboard",
+      "productName": "Product name",
+      "productNamePlaceholder": "Ex: Women's Summer Dress",
+      "productNameHint": "Choose a clear, descriptive name that customers will search for",
+      "price": "Price",
+      "pricePlaceholder": "0.00",
+      "priceHint": "Set a competitive price for your market",
+      "description": "Product description", 
+      "descriptionPlaceholder": "Describe your product, its features, and why customers will love it...",
+      "descriptionHint": "Include key details like size, material, color options, etc.",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "images": "Product images",
+      "imagesHint": "Add photos that show your product clearly. Good photos increase sales!",
+      "uploadImage": "Upload Image",
+      "stock": "Stock quantity",
+      "stockPlaceholder": "How many do you have?",
+      "stockHint": "Leave empty if you don't track inventory",
+      "addProductButton": "Add Product",
+      "addingProduct": "Adding product...",
+      "productAdded": "Product added successfully!",
+      "skipProducts": "I'll add products later",
+      "errors": {
+        "nameRequired": "Product name is required",
+        "nameMinLength": "Product name must be at least 3 characters",
+        "priceRequired": "Price is required", 
+        "priceMinValue": "Price must be greater than 0",
+        "priceInvalid": "Please enter a valid price",
+        "categoryRequired": "Please select a category"
+      }
+    },
+    "checklist": {
+      "title": "Complete your store",
+      "subtitle": "Complete these items to make your store ready for customers",
+      "progress": "Progress",
+      "progressText": "{completed} of {total} completed",
+      "tasks": {
+        "businessInfo": {
+          "title": "Business information added",
+          "description": "Store name, category, location, and description"
+        },
+        "templateSelected": {
+          "title": "Store template selected", 
+          "description": "Choose how your store looks to customers"
+        },
+        "firstProduct": {
+          "title": "First product added",
+          "description": "Add at least one product to start selling"
+        },
+        "logoUploaded": {
+          "title": "Logo uploaded",
+          "description": "Professional logo builds trust with customers"
+        },
+        "storePublished": {
+          "title": "Store published",
+          "description": "Make your store visible to customers"
+        }
+      },
+      "actions": {
+        "addProduct": "Add Product",
+        "uploadLogo": "Upload Logo", 
+        "publishStore": "Publish Store",
+        "viewStore": "View Store",
+        "goToDashboard": "Go to Dashboard"
+      },
+      "completion": {
+        "title": "🎉 Congratulations!",
+        "subtitle": "Your store is ready to start selling",
+        "message": "You've completed all the essential setup steps. Your store is now live and ready for customers!",
+        "storeUrl": "Your store is live at:",
+        "nextSteps": {
+          "title": "Next steps:",
+          "items": [
+            "Add more products to your catalog",
+            "Set up shipping and payment methods",
+            "Customize your store design", 
+            "Share your store link with customers"
+          ]
+        }
+      },
+      "autoPublish": {
+        "title": "Ready to publish?",
+        "message": "Your store setup is 100% complete! Would you like to make it live for customers?",
+        "publishNow": "Publish Now",
+        "publishLater": "I'll publish later"
+      }
+    },
+    "saveAndResume": {
+      "saved": "Progress saved",
+      "saveError": "Failed to save progress",
+      "resumeTitle": "Continue setup",
+      "resumeMessage": "You have an incomplete store setup. Would you like to continue where you left off?",
+      "continueSetup": "Continue Setup",
+      "startOver": "Start Over"
+    }
+  },
+  "setupChecklist": {
+    "title": "Setup Checklist",
+    "subtitle": "Complete your store setup to start selling",
+    "card": {
+      "title": "Complete your store",
+      "subtitle": "{percentage}% completed",
+      "viewAll": "View all tasks"
+    }
+  },
   "auth": {
     "login": "Login",
     "register": "Register",

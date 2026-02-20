@@ -130,10 +130,10 @@ export async function GET(request: NextRequest) {
           : item.stockQuantity,
         lowStock: item.hasVariants
           ? itemVariants.some(v => v.stockQuantity <= v.lowStockThreshold)
-          : item.stockQuantity <= item.lowStockThreshold && item.stockQuantity > 0,
+          : (item.stockQuantity ?? 0) <= (item.lowStockThreshold ?? 0) && (item.stockQuantity ?? 0) > 0,
         outOfStock: item.hasVariants
           ? itemVariants.every(v => v.stockQuantity === 0)
-          : item.stockQuantity === 0,
+          : (item.stockQuantity ?? 0) === 0,
       };
     });
 
@@ -246,15 +246,15 @@ export async function POST(request: NextRequest) {
           // Record stock history for variant
           if (stockQuantity !== undefined) {
             await db.insert(stockHistory).values({
-              sellerId: auth.sellerId,
+              sellerId: auth.sellerId!,
               productId,
               variantId,
               changeType: 'adjustment',
-              quantityBefore: variant[0].stockQuantity,
-              quantityChange: stockQuantity - variant[0].stockQuantity,
+              quantityBefore: variant[0].stockQuantity ?? 0,
+              quantityChange: stockQuantity - (variant[0].stockQuantity ?? 0),
               quantityAfter: stockQuantity,
               reason,
-              createdBy: auth.userId,
+              createdBy: auth.userId ?? undefined,
             });
           }
 
@@ -273,14 +273,14 @@ export async function POST(request: NextRequest) {
           // Record stock history for product
           if (stockQuantity !== undefined) {
             await db.insert(stockHistory).values({
-              sellerId: auth.sellerId,
+              sellerId: auth.sellerId!,
               productId,
               changeType: 'adjustment',
-              quantityBefore: product[0].currentStock,
-              quantityChange: stockQuantity - product[0].currentStock,
+              quantityBefore: product[0].currentStock ?? 0,
+              quantityChange: stockQuantity - (product[0].currentStock ?? 0),
               quantityAfter: stockQuantity,
               reason,
-              createdBy: auth.userId,
+              createdBy: auth.userId ?? undefined,
             });
           }
 

@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
 
     // Send webhook notification
     try {
-      await sendOrderWebhook(auth.userId, WEBHOOK_EVENTS.ORDER_CREATED, {
+      await sendOrderWebhook(auth.userId!, WEBHOOK_EVENTS.ORDER_CREATED, {
         order_id: order.id,
         status: order.status,
         customer_name: order.customerName,

@@ -14,7 +14,7 @@ function generateWebhookSecret(): string {
 // GET /api/dashboard/webhooks - List webhooks for current store
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 // POST /api/dashboard/webhooks - Create new webhook
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(

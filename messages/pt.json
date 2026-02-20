@@ -41,6 +41,203 @@
     "login": "Entrar",
     "register": "Registar"
   },
+  "onboarding": {
+    "wizard": {
+      "title": "Bem-vindo ao MyShop",
+      "subtitle": "Vamos preparar a sua loja em apenas alguns passos",
+      "step": "Passo",
+      "of": "de",
+      "save": "Guardar e Continuar",
+      "saveAndExit": "Guardar e Sair",
+      "previous": "Anterior",
+      "complete": "Concluir Configuração",
+      "completing": "A configurar a sua loja...",
+      "skipForNow": "Pular por enquanto",
+      "stepTitles": {
+        "business": "Informações da Empresa",
+        "templates": "Escolher Modelo",
+        "products": "Adicionar Produtos",
+        "checklist": "Lista de Lançamento"
+      }
+    },
+    "businessInfo": {
+      "title": "Conte-nos sobre o seu negócio",
+      "subtitle": "Esta informação ajuda os clientes a encontrar e confiar na sua loja",
+      "storeName": "Nome da loja",
+      "storeNamePlaceholder": "Ex: Canto de Beleza da Maria",
+      "storeNameHint": "Escolha um nome memorável que represente o seu negócio",
+      "slug": "URL da loja",
+      "slugPlaceholder": "Ex: maria-beleza",
+      "slugHint": "Este será o endereço web da sua loja: /s/{slug}",
+      "category": "Categoria do negócio",
+      "categories": {
+        "retail": "Comércio",
+        "services": "Serviços",
+        "food": "Comida e Bebidas",
+        "fashion": "Moda e Vestuário",
+        "electronics": "Eletrónicos",
+        "home": "Casa e Jardim",
+        "beauty": "Beleza e Cuidados Pessoais",
+        "health": "Saúde e Bem-estar",
+        "automotive": "Automóvel",
+        "other": "Outro"
+      },
+      "location": "Localização",
+      "locationPlaceholder": "Cidade, Província",
+      "locationHint": "Onde está localizado o seu negócio?",
+      "description": "Descrição da loja",
+      "descriptionPlaceholder": "Conte aos clientes o que torna o seu negócio especial...",
+      "descriptionHint": "Uma boa descrição ajuda os clientes a entender o que oferece",
+      "logo": "Logo da loja",
+      "logoHint": "Carregue o logo do seu negócio (opcional mas recomendado)",
+      "errors": {
+        "nameRequired": "Nome da loja é obrigatório",
+        "nameMinLength": "Nome da loja deve ter pelo menos 2 caracteres",
+        "slugRequired": "URL da loja é obrigatório",
+        "slugFormat": "URL pode conter apenas letras, números e hífens",
+        "slugTaken": "Este URL de loja já está em uso",
+        "categoryRequired": "Por favor selecione uma categoria de negócio",
+        "locationRequired": "Localização é obrigatória"
+      }
+    },
+    "templates": {
+      "title": "Escolha o modelo da sua loja",
+      "subtitle": "Escolha um design que melhor se adequa ao estilo do seu negócio",
+      "preview": "Pré-visualizar",
+      "select": "Selecionar Modelo",
+      "selected": "Selecionado",
+      "customizeHint": "Pode personalizar cores e estilos mais tarde no seu painel",
+      "templates": {
+        "classic": {
+          "name": "Clássico",
+          "description": "Layout limpo e profissional perfeito para qualquer tipo de negócio"
+        },
+        "boutique": {
+          "name": "Boutique",
+          "description": "Design elegante com imagens maiores, ideal para moda e beleza"
+        },
+        "catalog": {
+          "name": "Catálogo",
+          "description": "Layout compacto perfeito para mostrar muitos produtos"
+        },
+        "minimal": {
+          "name": "Minimal",
+          "description": "Design simples e moderno que coloca os produtos em primeiro lugar"
+        }
+      },
+      "previewDevice": {
+        "mobile": "Móvel",
+        "desktop": "Desktop"
+      }
+    },
+    "products": {
+      "title": "Adicione o seu primeiro produto",
+      "subtitle": "Comece com apenas um produto para começar a sua loja",
+      "tip": "💡 Dica: Pode adicionar mais produtos a qualquer momento no seu painel",
+      "productName": "Nome do produto",
+      "productNamePlaceholder": "Ex: Vestido de Verão Feminino",
+      "productNameHint": "Escolha um nome claro e descritivo que os clientes irão procurar",
+      "price": "Preço",
+      "pricePlaceholder": "0,00",
+      "priceHint": "Defina um preço competitivo para o seu mercado",
+      "description": "Descrição do produto",
+      "descriptionPlaceholder": "Descreva o seu produto, suas características e por que os clientes vão adorá-lo...",
+      "descriptionHint": "Inclua detalhes importantes como tamanho, material, opções de cor, etc.",
+      "category": "Categoria",
+      "categoryPlaceholder": "Selecione uma categoria",
+      "images": "Imagens do produto",
+      "imagesHint": "Adicione fotos que mostram o seu produto claramente. Boas fotos aumentam as vendas!",
+      "uploadImage": "Carregar Imagem",
+      "stock": "Quantidade em stock",
+      "stockPlaceholder": "Quantos tem?",
+      "stockHint": "Deixe vazio se não acompanha o inventário",
+      "addProductButton": "Adicionar Produto",
+      "addingProduct": "A adicionar produto...",
+      "productAdded": "Produto adicionado com sucesso!",
+      "skipProducts": "Vou adicionar produtos mais tarde",
+      "errors": {
+        "nameRequired": "Nome do produto é obrigatório",
+        "nameMinLength": "Nome do produto deve ter pelo menos 3 caracteres",
+        "priceRequired": "Preço é obrigatório",
+        "priceMinValue": "Preço deve ser maior que 0",
+        "priceInvalid": "Por favor insira um preço válido",
+        "categoryRequired": "Por favor selecione uma categoria"
+      }
+    },
+    "checklist": {
+      "title": "Complete a sua loja",
+      "subtitle": "Complete estes itens para tornar a sua loja pronta para clientes",
+      "progress": "Progresso",
+      "progressText": "{completed} de {total} completados",
+      "tasks": {
+        "businessInfo": {
+          "title": "Informações da empresa adicionadas",
+          "description": "Nome da loja, categoria, localização e descrição"
+        },
+        "templateSelected": {
+          "title": "Modelo da loja selecionado",
+          "description": "Escolha como a sua loja aparece aos clientes"
+        },
+        "firstProduct": {
+          "title": "Primeiro produto adicionado",
+          "description": "Adicione pelo menos um produto para começar a vender"
+        },
+        "logoUploaded": {
+          "title": "Logo carregado",
+          "description": "Logo profissional constrói confiança com os clientes"
+        },
+        "storePublished": {
+          "title": "Loja publicada",
+          "description": "Torne a sua loja visível aos clientes"
+        }
+      },
+      "actions": {
+        "addProduct": "Adicionar Produto",
+        "uploadLogo": "Carregar Logo",
+        "publishStore": "Publicar Loja",
+        "viewStore": "Ver Loja",
+        "goToDashboard": "Ir ao Painel"
+      },
+      "completion": {
+        "title": "🎉 Parabéns!",
+        "subtitle": "A sua loja está pronta para começar a vender",
+        "message": "Completou todos os passos essenciais de configuração. A sua loja está agora ao vivo e pronta para clientes!",
+        "storeUrl": "A sua loja está ao vivo em:",
+        "nextSteps": {
+          "title": "Próximos passos:",
+          "items": [
+            "Adicionar mais produtos ao seu catálogo",
+            "Configurar métodos de envio e pagamento",
+            "Personalizar o design da sua loja",
+            "Partilhar o link da sua loja com clientes"
+          ]
+        }
+      },
+      "autoPublish": {
+        "title": "Pronto para publicar?",
+        "message": "A configuração da sua loja está 100% completa! Gostaria de torná-la ao vivo para clientes?",
+        "publishNow": "Publicar Agora",
+        "publishLater": "Vou publicar mais tarde"
+      }
+    },
+    "saveAndResume": {
+      "saved": "Progresso guardado",
+      "saveError": "Falhou ao guardar progresso",
+      "resumeTitle": "Continuar configuração",
+      "resumeMessage": "Tem uma configuração de loja incompleta. Gostaria de continuar de onde parou?",
+      "continueSetup": "Continuar Configuração",
+      "startOver": "Começar de Novo"
+    }
+  },
+  "setupChecklist": {
+    "title": "Lista de Configuração",
+    "subtitle": "Complete a configuração da sua loja para começar a vender",
+    "card": {
+      "title": "Complete a sua loja",
+      "subtitle": "{percentage}% completado",
+      "viewAll": "Ver todas as tarefas"
+    }
+  },
   "auth": {
     "login": "Entrar",
     "register": "Registar",

@@ -18,7 +18,7 @@ function generateApiKey(): { key: string; hash: string; prefix: string } {
 // GET /api/dashboard/api-keys - List API keys for current store
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 // POST /api/dashboard/api-keys - Create new API key
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
 // DELETE /api/dashboard/api-keys - Revoke all API keys (bulk action)
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(

@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       .orderBy(catalogItems.createdAt);
 
     // Build Facebook Catalog-compatible JSON feed
-    const catalogItems = products.map(product => {
+    const feedItems = products.map(product => {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://myshop-amber.vercel.app`;
       const productUrl = `${baseUrl}/s/${store.slug}/products/${product.id}`;
       const imageUrl = product.imageUrl ? 
@@ -127,8 +127,8 @@ export async function GET(request: NextRequest) {
         location: [store.city, store.country].filter(Boolean).join(", ")
       },
       generated_at: new Date().toISOString(),
-      product_count: catalogItems.length,
-      data: catalogItems
+      product_count: feedItems.length,
+      data: feedItems
     }, {
       headers: {
         'Content-Type': 'application/json',

@@ -7,7 +7,7 @@ import { authenticateApiRequest, API_PERMISSIONS } from "@/lib/api-keys";
 // GET /api/v1/products/[id] - Get single product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authenticateApiRequest(request, API_PERMISSIONS.PRODUCTS_READ);
   if (!auth.success) {
@@ -15,7 +15,8 @@ export async function GET(
   }
 
   try {
-    const productId = parseInt(params.id, 10);
+    const { id } = await params;
+    const productId = parseInt(id, 10);
     if (isNaN(productId)) {
       return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
     }
@@ -64,7 +65,7 @@ export async function GET(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    let product = productResult[0];
+    let product: any = productResult[0];
 
     // Get variants if requested
     if (includeVariants && product.hasVariants) {
@@ -91,7 +92,7 @@ export async function GET(
 // PUT /api/v1/products/[id] - Update product
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authenticateApiRequest(request, API_PERMISSIONS.PRODUCTS_WRITE);
   if (!auth.success) {
@@ -103,7 +104,8 @@ export async function PUT(
   }
 
   try {
-    const productId = parseInt(params.id, 10);
+    const { id } = await params;
+    const productId = parseInt(id, 10);
     if (isNaN(productId)) {
       return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
     }
@@ -204,7 +206,7 @@ export async function PUT(
 // DELETE /api/v1/products/[id] - Delete product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authenticateApiRequest(request, API_PERMISSIONS.PRODUCTS_WRITE);
   if (!auth.success) {
@@ -216,7 +218,8 @@ export async function DELETE(
   }
 
   try {
-    const productId = parseInt(params.id, 10);
+    const { id } = await params;
+    const productId = parseInt(id, 10);
     if (isNaN(productId)) {
       return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
     }

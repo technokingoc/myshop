@@ -8,7 +8,7 @@ import { sendOrderWebhook, WEBHOOK_EVENTS } from "@/lib/webhook-service";
 // GET /api/v1/orders/[id] - Get single order
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authenticateApiRequest(request, API_PERMISSIONS.ORDERS_READ);
   if (!auth.success) {
@@ -16,7 +16,8 @@ export async function GET(
   }
 
   try {
-    const orderId = parseInt(params.id, 10);
+    const { id } = await params;
+    const orderId = parseInt(id, 10);
     if (isNaN(orderId)) {
       return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
     }
@@ -91,7 +92,7 @@ export async function GET(
 // PUT /api/v1/orders/[id] - Update order (mainly status)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authenticateApiRequest(request, API_PERMISSIONS.ORDERS_WRITE);
   if (!auth.success) {
@@ -103,7 +104,8 @@ export async function PUT(
   }
 
   try {
-    const orderId = parseInt(params.id, 10);
+    const { id } = await params;
+    const orderId = parseInt(id, 10);
     if (isNaN(orderId)) {
       return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
     }
@@ -204,7 +206,7 @@ export async function PUT(
     // Send webhook notification if status changed
     if (webhookEventType) {
       try {
-        await sendOrderWebhook(auth.userId, webhookEventType, {
+        await sendOrderWebhook(auth.userId!, webhookEventType, {
           order_id: updatedOrder[0].id,
           status: updatedOrder[0].status,
           previous_status: currentOrder.status,

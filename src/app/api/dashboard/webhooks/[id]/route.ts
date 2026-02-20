@@ -7,9 +7,9 @@ const DATABASE_URL = process.env.DATABASE_URL || process.env.MYSHOP_DATABASE_URL
 const sql = neon(DATABASE_URL);
 
 // GET /api/dashboard/webhooks/[id] - Get webhook details
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -18,7 +18,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    const webhookId = parseInt(params.id);
+    const { id } = await params;
+    const webhookId = parseInt(id);
     
     if (isNaN(webhookId)) {
       return NextResponse.json(
@@ -100,9 +101,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/dashboard/webhooks/[id] - Update webhook
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -111,7 +112,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    const webhookId = parseInt(params.id);
+    const { id } = await params;
+    const webhookId = parseInt(id);
     
     if (isNaN(webhookId)) {
       return NextResponse.json(
@@ -241,9 +243,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/dashboard/webhooks/[id] - Delete webhook
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -252,7 +254,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       );
     }
 
-    const webhookId = parseInt(params.id);
+    const { id } = await params;
+    const webhookId = parseInt(id);
     
     if (isNaN(webhookId)) {
       return NextResponse.json(
@@ -294,9 +297,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 }
 
 // POST /api/dashboard/webhooks/[id] - Test webhook
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getSessionFromCookie(request);
+    const session = await getSessionFromCookie();
     
     if (!session?.sellerId) {
       return NextResponse.json(
@@ -305,7 +308,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       );
     }
 
-    const webhookId = parseInt(params.id);
+    const { id } = await params;
+    const webhookId = parseInt(id);
     
     if (isNaN(webhookId)) {
       return NextResponse.json(

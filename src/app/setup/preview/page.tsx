@@ -1,228 +1,226 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useLanguage } from "@/lib/language";
-import { useMemo, Suspense } from "react";
+import { getTemplate } from "@/lib/store-templates";
+import { Suspense } from "react";
 
-const dict = {
-  en: {
-    storePreview: "Store Preview",
-    sampleProducts: "Sample Products",
-    categories: "Categories",
-    about: "About",
-    contact: "Contact",
-    searchPlaceholder: "Search products...",
-    addToCart: "Add to Cart",
-    viewProduct: "View Product",
-    sampleCategories: ["Electronics", "Fashion", "Home & Garden", "Books", "Sports"],
-    sampleProductNames: [
-      "Premium Wireless Headphones",
-      "Cotton Summer T-Shirt",
-      "Ceramic Coffee Mug",
-      "Bluetooth Speaker",
-      "Leather Wallet"
-    ],
-  },
-  pt: {
-    storePreview: "Pré-visualização da Loja",
-    sampleProducts: "Produtos de Exemplo",
-    categories: "Categorias",
-    about: "Sobre",
-    contact: "Contacto",
-    searchPlaceholder: "Procurar produtos...",
-    addToCart: "Adicionar ao Carrinho",
-    viewProduct: "Ver Produto",
-    sampleCategories: ["Eletrónicos", "Moda", "Casa e Jardim", "Livros", "Desporto"],
-    sampleProductNames: [
-      "Auriculares Sem Fios Premium",
-      "T-Shirt de Algodão de Verão",
-      "Caneca de Café de Cerâmica",
-      "Altifalante Bluetooth",
-      "Carteira de Cabedal"
-    ],
-  },
-};
-
-function StorePreviewContent() {
-  const { lang } = useLanguage();
-  const t = useMemo(() => dict[lang], [lang]);
+function PreviewContent() {
   const searchParams = useSearchParams();
   
-  // Get preview parameters from URL
-  const storeName = searchParams?.get("name") || "Your Store Name";
-  const themeColor = searchParams?.get("color") || "green";
-  const storeTemplate = searchParams?.get("template") || "classic";
-  const headerStyle = searchParams?.get("header") || "compact";
-  const logoUrl = searchParams?.get("logo") || "";
+  const templateId = searchParams.get("template") || "classic";
+  const storeName = searchParams.get("storeName") || "Your Store Name";
+  const logoUrl = searchParams.get("logo") || "";
+  const isPreview = searchParams.get("preview") === "true";
   
-  const getThemeClasses = (color: string) => {
-    const colors: Record<string, string> = {
-      green: "bg-green-600 border-green-600 text-green-600",
-      blue: "bg-blue-600 border-blue-600 text-blue-600", 
-      purple: "bg-purple-600 border-purple-600 text-purple-600",
-      pink: "bg-pink-600 border-pink-600 text-pink-600",
-      red: "bg-red-600 border-red-600 text-red-600",
-      indigo: "bg-indigo-600 border-indigo-600 text-indigo-600",
-    };
-    return colors[color] || colors.green;
-  };
-  
-  const themeClasses = getThemeClasses(themeColor);
-  
+  const template = getTemplate(templateId);
+
+  // Mock product data
+  const mockProducts = [
+    {
+      id: 1,
+      name: "Premium T-Shirt",
+      price: 29.99,
+      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop&auto=format",
+      category: "Fashion"
+    },
+    {
+      id: 2,
+      name: "Wireless Headphones",
+      price: 79.99,
+      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&auto=format",
+      category: "Electronics"
+    },
+    {
+      id: 3,
+      name: "Coffee Mug",
+      price: 15.50,
+      image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=400&fit=crop&auto=format",
+      category: "Home"
+    },
+    {
+      id: 4,
+      name: "Running Shoes",
+      price: 89.99,
+      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop&auto=format",
+      category: "Sports"
+    },
+    {
+      id: 5,
+      name: "Smartphone Case",
+      price: 24.99,
+      image: "https://images.unsplash.com/photo-1601593346740-925612772716?w=400&h=400&fit=crop&auto=format",
+      category: "Electronics"
+    },
+    {
+      id: 6,
+      name: "Sunglasses",
+      price: 45.00,
+      image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop&auto=format",
+      category: "Fashion"
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Preview Notice */}
-      <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-center">
-        <p className="text-sm text-yellow-800">
-          🔍 {t.storePreview} - This is how your store will look
-        </p>
-      </div>
-      
-      {/* Header */}
-      <header className={`
-        ${headerStyle === "full" ? "py-6 px-4" : 
-          headerStyle === "minimal" ? "py-4 px-4" : "py-3 px-4"}
-        border-b border-slate-200
-      `}>
-        <div className="max-w-6xl mx-auto">
-          {/* Compact Header */}
-          {headerStyle === "compact" && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {logoUrl && (
-                  <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded object-cover" />
-                )}
-                <h1 className="text-xl font-bold text-slate-900">{storeName}</h1>
-              </div>
-              <div className="hidden md:flex items-center space-x-6 text-sm">
-                <a href="#" className="text-slate-600 hover:text-slate-900">{t.categories}</a>
-                <a href="#" className="text-slate-600 hover:text-slate-900">{t.about}</a>
-                <a href="#" className="text-slate-600 hover:text-slate-900">{t.contact}</a>
-              </div>
-            </div>
-          )}
-          
-          {/* Full Header */}
-          {headerStyle === "full" && (
-            <div>
-              <div className="flex items-center justify-center mb-4">
-                {logoUrl && (
-                  <img src={logoUrl} alt="Logo" className="w-16 h-16 rounded object-cover mr-4" />
-                )}
-                <h1 className="text-3xl font-bold text-slate-900">{storeName}</h1>
-              </div>
-              <nav className="flex justify-center space-x-8 text-sm">
-                <a href="#" className="text-slate-600 hover:text-slate-900">{t.categories}</a>
-                <a href="#" className="text-slate-600 hover:text-slate-900">{t.about}</a>
-                <a href="#" className="text-slate-600 hover:text-slate-900">{t.contact}</a>
-              </nav>
-            </div>
-          )}
-          
-          {/* Minimal Header */}
-          {headerStyle === "minimal" && (
-            <div className="flex items-center justify-center">
-              {logoUrl && (
-                <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded object-cover mr-3" />
-              )}
-              <h1 className="text-2xl font-bold text-slate-900">{storeName}</h1>
-            </div>
-          )}
+    <div className="min-h-screen bg-slate-50">
+      {/* Preview Banner */}
+      {isPreview && (
+        <div className="bg-blue-600 text-white text-center py-2 text-sm">
+          ⚡ Store Preview - This is how your store will look to customers
         </div>
-      </header>
-      
-      {/* Search Bar */}
-      <div className="bg-slate-50 py-4 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="max-w-md mx-auto relative">
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg pl-10 focus:outline-none focus:ring-2 focus:ring-green-500"
-              readOnly
-            />
-            <svg className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+      )}
+
+      {/* Store Header */}
+      <div className={`bg-green-500 text-white ${template.bannerHeight} flex items-center justify-between px-4 md:px-8`}>
+        <div className="flex items-center space-x-4">
+          {logoUrl && (
+            <div className={`bg-white rounded-full p-2 ${template.avatarSize}`}>
+              <img 
+                src={logoUrl} 
+                alt="Store logo" 
+                className="w-full h-full object-cover rounded-full" 
+              />
+            </div>
+          )}
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">{storeName}</h1>
+            <p className="text-green-100 text-sm">Quality products, great service</p>
           </div>
         </div>
-      </div>
-      
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Categories */}
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">{t.categories}</h2>
-          <div className="flex flex-wrap gap-2">
-            {t.sampleCategories.map((category, index) => (
-              <button
-                key={index}
-                className={`px-3 py-1 text-sm rounded-full border hover:opacity-80 ${
-                  index === 0 ? 
-                    themeClasses.split(' ').map(c => c.includes('bg-') ? c + ' text-white' : '').join(' ') :
-                    'border-slate-300 text-slate-600 hover:border-slate-400'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </section>
         
-        {/* Sample Products */}
-        <section>
-          <h2 className="text-lg font-semibold text-slate-900 mb-6">{t.sampleProducts}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {t.sampleProductNames.map((productName, index) => (
-              <div key={index} className="group">
-                <div className="bg-slate-100 aspect-square rounded-lg mb-3 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                    <svg className="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+        <div className="hidden md:flex space-x-6 text-sm">
+          <a href="#" className="hover:text-green-100">Products</a>
+          <a href="#" className="hover:text-green-100">About</a>
+          <a href="#" className="hover:text-green-100">Contact</a>
+        </div>
+      </div>
+
+      {/* Store Content */}
+      <div className={`container mx-auto px-4 py-8 ${template.padding}`}>
+        {/* Store Description */}
+        <div className="mb-8 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome to {storeName}</h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            Discover our curated collection of high-quality products. 
+            We're committed to providing excellent service and the best shopping experience.
+          </p>
+        </div>
+
+        {/* Products Grid */}
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Featured Products</h3>
+          
+          {template.layout === "list" ? (
+            // List Layout
+            <div className="space-y-4">
+              {mockProducts.slice(0, 4).map((product) => (
+                <div key={product.id} className="flex space-x-4 bg-white border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-slate-900">{product.name}</h4>
+                    <p className="text-sm text-slate-600 mt-1">{product.category}</p>
+                    <p className="text-lg font-semibold text-green-600 mt-2">${product.price}</p>
+                  </div>
+                  <button className="px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
+                    Order
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : template.layout === "single" ? (
+            // Single Column Layout
+            <div className="space-y-8">
+              {mockProducts.slice(0, 3).map((product) => (
+                <div key={product.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full aspect-[16/10] object-cover"
+                  />
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xl font-semibold text-slate-900">{product.name}</h4>
+                      <span className="text-sm text-slate-500">{product.category}</span>
+                    </div>
+                    <p className="text-slate-600 mb-4">
+                      High-quality {product.name.toLowerCase()} with excellent craftsmanship and attention to detail.
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-2xl font-bold text-green-600">${product.price}</p>
+                      <button className="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
+                        Order Now
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <h3 className="font-medium text-slate-900 mb-1 group-hover:text-green-600">
-                  {productName}
-                </h3>
-                <p className="text-lg font-semibold text-slate-900 mb-2">
-                  ${(Math.random() * 50 + 10).toFixed(2)}
-                </p>
-                <button className={`
-                  w-full py-2 text-sm font-medium rounded-lg transition-colors
-                  ${themeClasses.includes('bg-green') ? 'bg-green-600 hover:bg-green-700 text-white' :
-                    themeClasses.includes('bg-blue') ? 'bg-green-600 hover:bg-green-700 text-white' :
-                    themeClasses.includes('bg-green') ? 'bg-green-600 hover:bg-green-700 text-white' :
-                    themeClasses.includes('bg-purple') ? 'bg-purple-600 hover:bg-purple-700 text-white' :
-                    themeClasses.includes('bg-pink') ? 'bg-pink-600 hover:bg-pink-700 text-white' :
-                    'bg-red-600 hover:bg-red-700 text-white'}
-                `}>
-                  {t.addToCart}
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
-      
-      {/* Footer */}
-      <footer className="bg-slate-50 border-t border-slate-200 py-8 px-4 mt-12">
-        <div className="max-w-6xl mx-auto text-center text-slate-600">
-          <p>&copy; 2024 {storeName}. Powered by MyShop</p>
+              ))}
+            </div>
+          ) : (
+            // Grid Layout (Classic/Boutique)
+            <div className={`grid ${
+              template.gridCols.mobile === 1 ? 'grid-cols-1' :
+              template.gridCols.mobile === 2 ? 'grid-cols-2' : 'grid-cols-2'
+            } sm:grid-cols-${template.gridCols.sm} lg:grid-cols-${template.gridCols.lg} ${template.gap}`}>
+              {mockProducts.map((product) => (
+                <div key={product.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className={`w-full object-cover ${template.aspectRatio}`}
+                  />
+                  <div className={template.padding}>
+                    <h4 className={`font-semibold text-slate-900 ${template.titleSize}`}>
+                      {product.name}
+                    </h4>
+                    <p className="text-slate-600 text-xs mt-1">{product.category}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className={`font-bold text-green-600 ${template.priceSize}`}>
+                        ${product.price}
+                      </p>
+                      <button className="px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded hover:bg-green-100">
+                        Order
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </footer>
+
+        {/* Store Footer */}
+        <div className="mt-12 pt-8 border-t border-slate-200 text-center">
+          <div className="flex items-center justify-center space-x-4 text-sm text-slate-600">
+            <span>📱 WhatsApp</span>
+            <span>📧 Email</span>
+            <span>📍 Location</span>
+          </div>
+          <p className="text-xs text-slate-500 mt-2">
+            © 2024 {storeName}. Powered by MyShop.
+          </p>
+        </div>
+      </div>
+
+      {/* Preview Controls */}
+      {isPreview && (
+        <div className="fixed bottom-4 right-4 bg-white border border-slate-200 rounded-lg shadow-lg p-3">
+          <div className="flex items-center space-x-2 text-sm">
+            <div className={`w-3 h-3 rounded-full bg-${template.id === 'classic' ? 'blue' : template.id === 'boutique' ? 'purple' : template.id === 'catalog' ? 'orange' : 'green'}-500`}></div>
+            <span className="font-medium">{template.nameEn} Template</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function StorePreviewPage() {
+export default function PreviewPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-slate-600">Loading preview...</div>
-      </div>
-    }>
-      <StorePreviewContent />
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading preview...</div>}>
+      <PreviewContent />
     </Suspense>
   );
 }

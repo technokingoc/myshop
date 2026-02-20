@@ -7,12 +7,12 @@ import { NextRequest } from 'next/server';
 export interface ApiKeyData {
   id: number;
   sellerId: number | null;
-  userId: number;
+  userId: number | null;
   name: string;
   keyHash: string;
   keyPrefix: string;
-  permissions: string[];
-  isActive: boolean;
+  permissions: string[] | null;
+  isActive: boolean | null;
   lastUsedAt: Date | null;
   createdAt: Date;
   expiresAt: Date | null;
@@ -102,7 +102,7 @@ export function getApiKeyFromRequest(request: NextRequest): string | null {
 
 // Check if API key has specific permission
 export function hasPermission(apiKey: ApiKeyData, permission: string): boolean {
-  return apiKey.permissions.includes('*') || apiKey.permissions.includes(permission);
+  return apiKey.permissions?.includes('*') || apiKey.permissions?.includes(permission) || false;
 }
 
 // Available API permissions
@@ -124,7 +124,7 @@ export const API_PERMISSIONS = {
 export async function authenticateApiRequest(
   request: NextRequest, 
   requiredPermission: string
-): Promise<{ success: true; sellerId: number | null; userId: number } | { success: false; error: string }> {
+): Promise<{ success: true; sellerId: number | null; userId: number | null } | { success: false; error: string }> {
   const apiKeyValue = getApiKeyFromRequest(request);
   
   if (!apiKeyValue) {

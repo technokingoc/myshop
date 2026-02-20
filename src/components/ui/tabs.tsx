@@ -19,15 +19,20 @@ const useTabs = () => {
 };
 
 interface TabsProps {
-  value: string;
-  onValueChange: (value: string) => void;
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
   children: React.ReactNode;
   className?: string;
 }
 
-export function Tabs({ value, onValueChange, children, className }: TabsProps) {
+export function Tabs({ value: controlledValue, defaultValue, onValueChange, children, className }: TabsProps) {
+  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue ?? '');
+  const value = controlledValue ?? uncontrolledValue;
+  const handleChange = onValueChange ?? setUncontrolledValue;
+
   return (
-    <TabsContext.Provider value={{ value, onValueChange }}>
+    <TabsContext.Provider value={{ value, onValueChange: handleChange }}>
       <div className={cn("w-full", className)}>
         {children}
       </div>
@@ -80,6 +85,7 @@ interface TabsContentProps {
   value: string;
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }
 
 export function TabsContent({ value, children, className }: TabsContentProps) {
