@@ -124,7 +124,7 @@ export async function PUT(
           sellerId,
           oldStatus,
           newStatus: status,
-          changedBy: session.user.id,
+          changedBy: (session as any).user.id,
           changeReason: notes || 'Tracking update',
           customerPhone: order.customerContact.includes('@') ? '' : order.customerContact,
           customerEmail: order.customerContact.includes('@') ? order.customerContact : '',
@@ -170,7 +170,7 @@ export async function PUT(
 
           // Send notification using the notification service
           try {
-            await notifyOrderStatusChanged(orderId, order.sellerId, order.customerId, data.status || 'shipped');
+            await notifyOrderStatusChanged(orderId as any, order.sellerId, order.customerId, data.status || 'shipped');
           } catch (notificationError) {
             console.warn('Failed to send notification:', notificationError);
             // Don't fail the main request if notification fails

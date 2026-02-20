@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { sellers, catalogItems } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { neon } from "@neondatabase/serverless";
 
 export async function GET(
   _req: NextRequest,
@@ -9,20 +7,15 @@ export async function GET(
 ) {
   const { slug } = await params;
   try {
-    const db = getDb();
-    const [seller] = await db
-      .select()
-      .from(sellers)
-      .where(eq(sellers.slug, slug));
+    const sql = neon(process.env.DATABASE_URL!);
+    const sellerRows = await sql`SELECT * FROM sellers WHERE slug = ${slug} LIMIT 1`;
 
-    if (!seller) {
+    if (!sellerRows.length) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
-    const products = await db
-      .select()
-      .from(catalogItems)
-      .where(eq(catalogItems.sellerId, seller.id));
+    const seller = sellerRows[0];
+    const products = await sql`SELECT * FROM catalog_items WHERE seller_id = ${seller.id}`;
 
     return NextResponse.json({
       seller: {
@@ -30,20 +23,20 @@ export async function GET(
         slug: seller.slug,
         name: seller.name,
         description: seller.description,
-        ownerName: seller.ownerName,
-        businessType: seller.businessType,
+        ownerName: seller.owner_name,
+        businessType: seller.business_type,
         currency: seller.currency,
         city: seller.city,
-        logoUrl: seller.logoUrl,
-        bannerUrl: seller.bannerUrl,
-        socialLinks: seller.socialLinks,
+        logoUrl: seller.logo_url,
+        bannerUrl: seller.banner_url,
+        socialLinks: seller.social_links,
         plan: seller.plan || "free",
-        themeColor: seller.themeColor || "green",
-        businessHours: seller.businessHours || {},
+        themeColor: seller.theme_color || "green",
+        businessHours: seller.business_hours || {},
         address: seller.address || "",
         country: seller.country || "",
-        storeTemplate: seller.storeTemplate || "classic",
-        headerTemplate: seller.headerTemplate || "compact",
+        storeTemplate: seller.store_template || "classic",
+        headerTemplate: seller.header_template || "compact",
       },
       products,
     });

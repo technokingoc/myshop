@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         const countResult = await db.execute(sql`
           SELECT COUNT(*) as total FROM import_history WHERE seller_id = ${sellerId}
         `);
-        totalCount = parseInt(countResult.rows[0]?.total || '0');
+        totalCount = parseInt(((countResult.rows[0] as any)?.total) || '0');
       }
     }
 
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         const countResult = await db.execute(sql`
           SELECT COUNT(*) as total FROM export_history WHERE seller_id = ${sellerId}
         `);
-        totalCount = parseInt(countResult.rows[0]?.total || '0');
+        totalCount = parseInt(((countResult.rows[0] as any)?.total) || '0');
       }
     }
 
@@ -122,11 +122,11 @@ export async function GET(request: NextRequest) {
       const exportCountResult = await db.execute(sql`
         SELECT COUNT(*) as total FROM export_history WHERE seller_id = ${sellerId}
       `);
-      totalCount = parseInt(importCountResult.rows[0]?.total || '0') + parseInt(exportCountResult.rows[0]?.total || '0');
+      totalCount = parseInt((importCountResult.rows[0] as any)?.total || '0') + parseInt((exportCountResult.rows[0] as any)?.total || '0');
     }
 
     // Sort combined results by created_at
-    historyData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    historyData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     // Format the results
     const formattedHistory = historyData.slice(0, limit).map((item: any) => ({

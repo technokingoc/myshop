@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
               type: rowData.type,
               trackInventory: rowData.trackInventory,
               hasVariants: rowData.hasVariants,
-              updatedAt: new Date(),
+              // updatedAt: new Date(),
             })
             .where(and(
               eq(catalogItems.id, parseInt(rowData.productId)),
