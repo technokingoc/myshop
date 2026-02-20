@@ -13,6 +13,7 @@ import { CartManager } from "@/lib/cart";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { getTheme } from "@/lib/theme-colors";
 import ProductReviews from "@/components/product-reviews";
+import ProductReviewSummary from "@/components/product-review-summary";
 import ReviewForm from "@/components/review-form";
 import { ProductJsonLd, StoreJsonLd } from "@/components/json-ld";
 import SocialShare from "@/components/social-share";
@@ -253,23 +254,14 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>
 
-            {ratingData.count > 0 && (
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`h-4 w-4 ${
-                        star <= ratingData.average ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm text-gray-600">
-                  {ratingData.average} ({ratingData.count} {ratingData.count === 1 ? 'review' : 'reviews'})
-                </span>
-              </div>
-            )}
+            <div className="mb-3">
+              <ProductReviewSummary
+                productId={product.id}
+                size="md"
+                showVerified={true}
+                className=""
+              />
+            </div>
 
             <div className="flex items-center space-x-3">
               <span className={`text-3xl font-bold ${theme.text}`}>
@@ -432,6 +424,8 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
 
           <ProductReviews
             productId={product.id}
+            showViewAll={true}
+            maxReviews={5}
           />
         </div>
       </div>

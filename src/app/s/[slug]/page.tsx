@@ -23,6 +23,7 @@ import { FAB } from "@/components/fab";
 import { useCategories, flattenCategories } from "@/components/category-select";
 import { StorefrontSearch } from "@/components/storefront-search";
 import ProductReviews from "@/components/product-reviews";
+import ProductReviewSummary from "@/components/product-review-summary";
 import ReviewForm from "@/components/review-form";
 import PromotionBanner from "@/components/promotions/promotion-banner";
 import FlashSaleBanner from "@/components/promotions/flash-sale-banner";
@@ -783,7 +784,7 @@ function ProductsTab({
                       </button>
                     </div>
                     {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
-                    <ProductRatingDisplay productId={product.id} productRatings={productRatings} size="sm" />
+                    <ProductReviewSummary productId={product.id} size="sm" variant="compact" />
                   </div>
                   <div className="flex items-center justify-between mt-1.5">
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
@@ -826,7 +827,7 @@ function ProductsTab({
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} size="lg" />
                   </div>
                   {product.shortDescription && <p className="mt-1 text-sm text-slate-500 line-clamp-2">{product.shortDescription}</p>}
-                  <ProductRatingDisplay productId={product.id} productRatings={productRatings} size="lg" />
+                  <ProductReviewSummary productId={product.id} size="md" showVerified={true} />
                   <div className="mt-3 flex gap-2">
                     <button 
                       onClick={(e) => { 
@@ -865,7 +866,7 @@ function ProductsTab({
                 <div className={template.padding}>
                   <p className={`truncate ${template.titleSize} font-semibold text-slate-900`}>{product.name}</p>
                   {product.shortDescription && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.shortDescription}</p>}
-                  <ProductRatingDisplay productId={product.id} productRatings={productRatings} size="sm" />
+                  <ProductReviewSummary productId={product.id} size="sm" variant="compact" />
                   <div className="mt-1.5">
                     <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} currency={currency} theme={theme} />
                   </div>
@@ -1397,40 +1398,4 @@ function getProductImages(product: Product): string[] {
 }
 
 /* ── Product Rating Display ── */
-function ProductRatingDisplay({ productId, productRatings, size = 'sm' }: {
-  productId: number;
-  productRatings: Record<number, { average: number; count: number }>;
-  size?: 'sm' | 'lg';
-}) {
-  const rating = productRatings[productId];
-  
-  if (!rating || rating.count === 0) {
-    return null;
-  }
-
-  const starSize = size === 'lg' ? 'h-4 w-4' : 'h-3 w-3';
-  const textSize = size === 'lg' ? 'text-sm' : 'text-xs';
-
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`${starSize} ${
-              star <= Math.round(rating.average) 
-                ? "fill-yellow-400 text-yellow-400" 
-                : "text-slate-300"
-            }`}
-          />
-        ))}
-      </div>
-      <span className={`${textSize} font-medium text-slate-600`}>
-        {rating.average}
-      </span>
-      <span className={`${textSize} text-slate-400`}>
-        ({rating.count})
-      </span>
-    </div>
-  );
-}
+// Removed ProductRatingDisplay - now using ProductReviewSummary component

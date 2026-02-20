@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Star, ChevronDown, ThumbsUp, ThumbsDown, Camera, CheckCircle, Clock } from "lucide-react";
+import Link from "next/link";
+import { Star, ChevronDown, ThumbsUp, ThumbsDown, Camera, CheckCircle, Clock, MessageSquare } from "lucide-react";
 import { useLanguage } from "@/lib/language";
+import SellerResponse from "./seller-response";
+import SellerResponseForm from "./seller-response-form";
 
 const dict = {
   en: {
@@ -31,6 +34,8 @@ const dict = {
     wasHelpful: "Was this helpful?",
     loginToReview: "Login to write a review",
     photoReviews: "Photo Reviews",
+    respond: "Respond",
+    cancelResponse: "Cancel",
   },
   pt: {
     reviews: "Avaliações",
@@ -58,6 +63,8 @@ const dict = {
     wasHelpful: "Foi útil?",
     loginToReview: "Entre para escrever uma avaliação",
     photoReviews: "Avaliações com Fotos",
+    respond: "Responder",
+    cancelResponse: "Cancelar",
   },
 };
 
@@ -72,6 +79,13 @@ interface Review {
   verified: boolean;
   createdAt: string;
   customerName: string;
+  sellerResponse?: {
+    id: number;
+    content: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 interface ReviewSummary {
@@ -84,9 +98,25 @@ interface ProductReviewsProps {
   productId: number;
   onWriteReview?: () => void;
   customer?: any;
+  showViewAll?: boolean;
+  maxReviews?: number;
+  seller?: {
+    id: number;
+    name: string;
+    verified?: boolean;
+  };
+  showSellerResponses?: boolean;
 }
 
-export default function ProductReviews({ productId, onWriteReview, customer }: ProductReviewsProps) {
+export default function ProductReviews({ 
+  productId, 
+  onWriteReview, 
+  customer, 
+  showViewAll = false, 
+  maxReviews,
+  seller,
+  showSellerResponses = true 
+}: ProductReviewsProps) {
   const { lang } = useLanguage();
   const t = dict[lang];
 
@@ -98,6 +128,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
   const [sort, setSort] = useState('recent');
   const [expandedReviews, setExpandedReviews] = useState<Set<number>>(new Set());
   const [userVotes, setUserVotes] = useState<Record<number, string>>({});
+  const [showingResponseForm, setShowingResponseForm] = useState<number | null>(null);
 
   const loadReviews = useCallback(async (sortBy: string, offset = 0, append = false) => {
     try {
@@ -288,14 +319,24 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
           )}
         </div>
         
-        {onWriteReview && (
-          <button
-            onClick={onWriteReview}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-          >
-            {t.writeReview}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {showViewAll && summary.total > (maxReviews || 10) && (
+            <Link
+              href={`/products/${productId}/reviews`}
+              className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+            >
+              View All ({summary.total})
+            </Link>
+          )}
+          {onWriteReview && (
+            <button
+              onClick={onWriteReview}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+            >
+              {t.writeReview}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Rating Distribution */}
@@ -422,7 +463,7 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
                   </div>
                 )}
 
-                {/* Voting Buttons */}
+                {/* Voting Buttons and Seller Actions */}
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
                   <span className="text-xs text-slate-500">{t.wasHelpful}</span>
                   <div className="flex items-center gap-4">
@@ -450,8 +491,49 @@ export default function ProductReviews({ productId, onWriteReview, customer }: P
                       <ThumbsDown className="h-3 w-3" />
                       {t.unhelpful} ({review.unhelpful || 0})
                     </button>
+                    
+                    {/* Seller Response Button */}
+                    {seller && !review.sellerResponse && (
+                      <button
+                        onClick={() => setShowingResponseForm(
+                          showingResponseForm === review.id ? null : review.id
+                        )}
+                        className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium transition-colors"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        {showingResponseForm === review.id ? t.cancelResponse : t.respond}
+                      </button>
+                    )}
                   </div>
                 </div>
+
+                {/* Seller Response */}
+                {showSellerResponses && review.sellerResponse && (
+                  <SellerResponse
+                    response={review.sellerResponse}
+                    storeName={seller?.name}
+                    storeVerified={seller?.verified}
+                  />
+                )}
+
+                {/* Seller Response Form */}
+                {seller && showingResponseForm === review.id && !review.sellerResponse && (
+                  <div className="mt-4">
+                    <SellerResponseForm
+                      reviewId={review.id}
+                      hasExistingResponse={!!review.sellerResponse}
+                      onResponsePosted={(newResponse) => {
+                        setReviews(prev => prev.map(r => 
+                          r.id === review.id 
+                            ? { ...r, sellerResponse: newResponse }
+                            : r
+                        ));
+                        setShowingResponseForm(null);
+                      }}
+                      onCancel={() => setShowingResponseForm(null)}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}

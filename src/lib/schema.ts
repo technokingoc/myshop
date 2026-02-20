@@ -1519,3 +1519,129 @@ export const conversationFlags = pgTable("conversation_flags", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// S60: Seller responses to reviews
+export const sellerResponses = pgTable("seller_responses", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").notNull().references(() => customerReviews.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Response content
+  content: text("content").notNull(),
+  
+  // Moderation status
+  status: varchar("status", { length: 32 }).default("published"), // 'published', 'pending', 'hidden'
+  moderatedBy: integer("moderated_by").references(() => users.id),
+  moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+  moderatorNotes: text("moderator_notes").default(""),
+  
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// S60: Review analytics and sentiment tracking
+export const reviewAnalytics = pgTable("review_analytics", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Time period for analytics (daily aggregation)
+  analyticsDate: timestamp("analytics_date", { withTimezone: true }).notNull(),
+  
+  // Review counts
+  totalReviews: integer("total_reviews").default(0),
+  newReviews: integer("new_reviews").default(0), // Reviews added on this date
+  publishedReviews: integer("published_reviews").default(0),
+  pendingReviews: integer("pending_reviews").default(0),
+  
+  // Rating distribution
+  rating5Count: integer("rating_5_count").default(0),
+  rating4Count: integer("rating_4_count").default(0),
+  rating3Count: integer("rating_3_count").default(0),
+  rating2Count: integer("rating_2_count").default(0),
+  rating1Count: integer("rating_1_count").default(0),
+  
+  // Average ratings
+  averageRating: numeric("average_rating", { precision: 3, scale: 2 }).default("0.00"),
+  previousAverageRating: numeric("previous_average_rating", { precision: 3, scale: 2 }).default("0.00"),
+  
+  // Sentiment analysis (basic keywords)
+  positiveReviews: integer("positive_reviews").default(0), // Contains positive keywords
+  negativeReviews: integer("negative_reviews").default(0), // Contains negative keywords
+  neutralReviews: integer("neutral_reviews").default(0),
+  
+  // Response metrics
+  responseRate: numeric("response_rate", { precision: 5, scale: 2 }).default("0.00"), // % of reviews responded to
+  avgResponseTime: integer("avg_response_time_hours").default(0), // Average hours to respond
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// S60: Store rating aggregates
+export const storeRatings = pgTable("store_ratings", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  
+  // Overall metrics
+  totalReviews: integer("total_reviews").default(0),
+  averageRating: numeric("average_rating", { precision: 3, scale: 2 }).default("0.00"),
+  
+  // Rating distribution
+  rating5Count: integer("rating_5_count").default(0),
+  rating4Count: integer("rating_4_count").default(0),
+  rating3Count: integer("rating_3_count").default(0),
+  rating2Count: integer("rating_2_count").default(0),
+  rating1Count: integer("rating_1_count").default(0),
+  
+  // Quality metrics
+  verifiedReviewsCount: integer("verified_reviews_count").default(0),
+  withPhotosCount: integer("with_photos_count").default(0),
+  responseRate: numeric("response_rate", { precision: 5, scale: 2 }).default("0.00"),
+  
+  // Trend indicators (vs previous period)
+  ratingTrend: varchar("rating_trend", { length: 16 }).default("stable"), // 'improving', 'declining', 'stable'
+  trendPercentage: numeric("trend_percentage", { precision: 5, scale: 2 }).default("0.00"),
+  
+  // Last calculation
+  lastCalculated: timestamp("last_calculated", { withTimezone: true }).defaultNow().notNull(),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// S60: Review request tracking for automated emails
+export const reviewRequests = pgTable("review_requests", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  customerId: integer("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Request details
+  status: varchar("status", { length: 32 }).default("pending"), // 'pending', 'sent', 'responded', 'expired'
+  delayDays: integer("delay_days").default(3), // Days to wait after delivery
+  
+  // Scheduling
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  respondedAt: timestamp("responded_at", { withTimezone: true }),
+  
+  // Email details
+  customerEmail: varchar("customer_email", { length: 256 }).notNull(),
+  customerName: varchar("customer_name", { length: 256 }).notNull(),
+  
+  // Order context for email
+  orderItems: jsonb("order_items").$type<Array<{
+    productId: number;
+    productName: string;
+    productImage?: string;
+  }>>().default([]),
+  
+  // Tracking
+  emailOpened: boolean("email_opened").default(false),
+  emailClicked: boolean("email_clicked").default(false),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

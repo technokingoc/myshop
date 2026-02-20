@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { customerReviews, catalogItems, users } from "@/lib/schema";
+import { customerReviews, catalogItems, users, sellerResponses, stores } from "@/lib/schema";
 import { getDb } from "@/lib/db";
 import { eq, desc, asc, and } from "drizzle-orm";
 
@@ -39,7 +39,7 @@ export async function GET(
         break;
     }
 
-    // Get reviews with customer info
+    // Get reviews with customer info and seller responses
     const reviews = await db
       .select({
         id: customerReviews.id,
@@ -53,9 +53,19 @@ export async function GET(
         status: customerReviews.status,
         createdAt: customerReviews.createdAt,
         customerName: users.name,
+        // Seller response fields
+        sellerResponseId: sellerResponses.id,
+        sellerResponseContent: sellerResponses.content,
+        sellerResponseStatus: sellerResponses.status,
+        sellerResponseCreatedAt: sellerResponses.createdAt,
+        sellerResponseUpdatedAt: sellerResponses.updatedAt,
+        sellerName: stores.name,
+        storeVerified: stores.verificationStatus,
       })
       .from(customerReviews)
       .leftJoin(users, eq(customerReviews.customerId, users.id))
+      .leftJoin(sellerResponses, eq(customerReviews.id, sellerResponses.reviewId))
+      .leftJoin(stores, eq(sellerResponses.sellerId, stores.userId))
       .where(
         and(
           eq(customerReviews.catalogItemId, productId),
@@ -104,8 +114,32 @@ export async function GET(
 
     const avgRating = allReviews.length > 0 ? totalRating / allReviews.length : 0;
 
+    // Transform reviews to include seller responses
+    const transformedReviews = reviews.map(review => ({
+      id: review.id,
+      rating: review.rating,
+      title: review.title,
+      content: review.content,
+      imageUrls: review.imageUrls,
+      helpful: review.helpful,
+      unhelpful: review.unhelpful,
+      verified: review.verified,
+      status: review.status,
+      createdAt: review.createdAt,
+      customerName: review.customerName,
+      sellerResponse: review.sellerResponseId && review.sellerResponseStatus === 'published' ? {
+        id: review.sellerResponseId,
+        content: review.sellerResponseContent,
+        status: review.sellerResponseStatus,
+        createdAt: review.sellerResponseCreatedAt,
+        updatedAt: review.sellerResponseUpdatedAt,
+        sellerName: review.sellerName,
+        storeVerified: review.storeVerified === 'verified',
+      } : null,
+    }));
+
     return NextResponse.json({
-      reviews,
+      reviews: transformedReviews,
       product,
       summary: {
         total: allReviews.length,
