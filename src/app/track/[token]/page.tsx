@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/language";
-import { Clock, Phone, Package, Truck, CheckCircle, Ban, MessageCircle } from "lucide-react";
+import { Clock, Phone, Package, Truck, CheckCircle, Ban, MessageCircle, ExternalLink } from "lucide-react";
 import { OrderTimeline } from "@/components/orders/order-timeline";
+import { DeliveryConfirmation } from "@/components/orders/delivery-confirmation";
+import { useToast } from "@/components/toast-provider";
 import type { OrderStatus } from "@/components/orders/types";
 
 type Tracking = {
@@ -20,6 +22,12 @@ type Tracking = {
   sellerEmail?: string;
   customerName: string;
   statusHistory?: Array<{ status: string; at: string; note?: string }>;
+  trackingNumber?: string;
+  trackingProvider?: string;
+  trackingUrl?: string;
+  estimatedDelivery?: string;
+  deliveryConfirmed?: boolean;
+  deliveryConfirmedAt?: string;
 };
 
 const dict = {
@@ -119,15 +127,58 @@ export default function TrackingPage() {
   const { token } = useParams<{ token: string }>();
   const { lang } = useLanguage();
   const t = useMemo(() => dict[lang], [lang]);
+  const toast = useToast();
   const [data, setData] = useState<Tracking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDeliveryConfirmation, setShowDeliveryConfirmation] = useState(false);
 
   useEffect(() => {
     fetch(`/api/orders/track/${token}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((row) => setData(row))
+      .then((row) => {
+        setData(row);
+        // Show delivery confirmation for delivered orders that haven't been confirmed yet
+        if (row && row.orderStatus === 'delivered' && !row.deliveryConfirmed) {
+          setShowDeliveryConfirmation(true);
+        }
+      })
       .finally(() => setLoading(false));
   }, [token]);
+
+  const handleDeliveryConfirmation = async (confirmationData: {
+    confirmed: boolean;
+    photos?: string[];
+    notes?: string;
+    deliveryRating?: number;
+    sellerRating?: number;
+    deliveredBy?: string;
+    deliveryLocation?: string;
+  }) => {
+    try {
+      const response = await fetch(`/api/orders/track/${token}/confirm-delivery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(confirmationData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit confirmation');
+      }
+
+      // Update local state
+      setData(prev => prev ? {
+        ...prev,
+        deliveryConfirmed: true,
+        deliveryConfirmedAt: new Date().toISOString(),
+      } : null);
+      
+      setShowDeliveryConfirmation(false);
+      
+    } catch (error) {
+      console.error('Delivery confirmation error:', error);
+      throw error; // Let the component handle the error
+    }
+  };
 
   const currentStepIdx = data ? STEPS.indexOf(data.orderStatus) : -1;
   const isCancelled = data?.orderStatus === "cancelled";
@@ -151,6 +202,82 @@ export default function TrackingPage() {
               variant="stepper"
             />
           </div>
+
+          {/* Tracking Information */}
+          {data.trackingNumber && (
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                {t.trackingInfo || "Tracking Information"}
+              </h3>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">{t.trackingNumber || "Tracking Number"}</span>
+                  <span className="text-sm font-mono font-medium text-slate-900">{data.trackingNumber}</span>
+                </div>
+                
+                {data.trackingProvider && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">{t.carrier || "Carrier"}</span>
+                    <span className="text-sm font-medium text-slate-900">{data.trackingProvider}</span>
+                  </div>
+                )}
+                
+                {data.estimatedDelivery && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">{t.estimatedDelivery || "Estimated Delivery"}</span>
+                    <span className="text-sm font-medium text-slate-900">
+                      {new Date(data.estimatedDelivery).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                
+                {data.trackingUrl && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <a 
+                      href={data.trackingUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      {t.trackPackage || "Track Package"}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Delivery Confirmation */}
+          {showDeliveryConfirmation && data && (
+            <DeliveryConfirmation
+              orderId={String(data.orderId)}
+              customerName={data.customerName}
+              onConfirm={handleDeliveryConfirmation}
+              t={t}
+            />
+          )}
+
+          {/* Delivery Confirmed Status */}
+          {data.deliveryConfirmed && (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-5">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-900">
+                    {t.deliveryConfirmed || "Delivery Confirmed"}
+                  </p>
+                  {data.deliveryConfirmedAt && (
+                    <p className="text-sm text-green-700">
+                      {t.confirmedOn || "Confirmed on"} {new Date(data.deliveryConfirmedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Order details */}
           <div className="rounded-xl border border-slate-200 bg-white p-5">
