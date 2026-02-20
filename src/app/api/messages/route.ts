@@ -37,12 +37,15 @@ export async function GET(request: NextRequest) {
 
     // Add blocked user filter if there are any blocked users
     if (blockedUserIds.length > 0) {
-      baseConditions.push(
-        not(or(
-          and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
-          and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
-        ))
+      const blockedSellerCondition = and(
+        eq(conversations.customerId, userId), 
+        inArray(conversations.sellerId, blockedUserIds)
       );
+      const blockedCustomerCondition = and(
+        eq(conversations.sellerId, userId), 
+        inArray(conversations.customerId, blockedUserIds)
+      );
+      baseConditions.push(not(or(blockedSellerCondition, blockedCustomerCondition)));
     }
 
     // Build conversations query
