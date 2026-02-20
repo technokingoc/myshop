@@ -27,7 +27,7 @@ export async function PUT(
     }
 
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.sellerId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
