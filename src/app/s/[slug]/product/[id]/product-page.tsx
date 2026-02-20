@@ -4,10 +4,10 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/lib/language";
-import { 
-  ArrowLeft, Heart, Share2, ShoppingCart, Star, Store, MapPin, 
+import {
+  ArrowLeft, Heart, Share2, ShoppingCart, Star, Store, MapPin,
   MessageCircle, CheckCircle, AlertCircle, Plus, Minus, Truck,
-  Shield, RotateCcw 
+  Shield, RotateCcw
 } from "lucide-react";
 import { CartManager } from "@/lib/cart";
 import { PlaceholderImage } from "@/components/placeholder-image";
@@ -30,15 +30,15 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
-  
+
   const currentStore = store || seller;
   const theme = getTheme(currentStore?.themeColor || "green");
-  
+
   // Parse product images
   const images = useMemo(() => {
     const imageList = [];
     if (product.imageUrl) imageList.push(product.imageUrl);
-    
+
     if (product.imageUrls) {
       try {
         const additionalImages = JSON.parse(product.imageUrls);
@@ -49,27 +49,27 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
         // Ignore parsing errors
       }
     }
-    
+
     return imageList.length > 0 ? imageList : [null];
   }, [product.imageUrl, product.imageUrls]);
-  
+
   // Calculate average rating
   const ratingData = useMemo(() => {
     const validReviews = reviews.filter(r => r.rating && r.rating > 0);
     if (validReviews.length === 0) return { average: 0, count: 0 };
-    
+
     const sum = validReviews.reduce((acc, r) => acc + r.rating, 0);
     return {
       average: Math.round((sum / validReviews.length) * 10) / 10,
       count: validReviews.length
     };
   }, [reviews]);
-  
+
   const price = parseFloat(product.price) || 0;
   const compareAtPrice = parseFloat(product.compareAtPrice) || 0;
   const hasDiscount = compareAtPrice > price;
   const discountPercent = hasDiscount ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
-  
+
   const addToCart = () => {
     const cartItem = {
       id: product.id,
@@ -80,19 +80,19 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
       imageUrl: images[0] || undefined,
       quantity,
     };
-    
+
     CartManager.addItem(cartItem);
-    
+
     // Show success message
     const event = new CustomEvent('show-toast', {
       detail: { message: lang === 'pt' ? 'Adicionado ao carrinho' : 'Added to cart', type: 'success' }
     });
     window.dispatchEvent(event);
   };
-  
+
   const shareProduct = async () => {
     const url = window.location.href;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -108,7 +108,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
       copyToClipboard(url);
     }
   };
-  
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
       const event = new CustomEvent('show-toast', {
@@ -144,7 +144,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
           reviewRating: r.rating
         }))}
       />
-      
+
       <StoreJsonLd
         name={currentStore?.name}
         description={currentStore?.description}
@@ -175,12 +175,12 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
               </Link>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button onClick={shareProduct} className="p-2 rounded-lg hover:bg-gray-100">
               <Share2 className="h-5 w-5" />
             </button>
-            <button 
+            <button
               onClick={() => setIsWishlisted(!isWishlisted)}
               className={`p-2 rounded-lg hover:bg-gray-100 ${isWishlisted ? 'text-red-500' : ''}`}
             >
@@ -207,14 +207,14 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
             ) : (
               <PlaceholderImage className="w-full h-full" />
             )}
-            
+
             {hasDiscount && (
               <div className="absolute top-4 left-4 bg-red-500 text-white px-2 py-1 rounded-md text-sm font-medium">
                 -{discountPercent}%
               </div>
             )}
           </div>
-          
+
           {images.length > 1 && (
             <div className="flex space-x-2 p-3 overflow-x-auto">
               {images.map((img, idx) => (
@@ -246,7 +246,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
         <div className="bg-white rounded-lg p-6 space-y-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>
-            
+
             {ratingData.count > 0 && (
               <div className="flex items-center space-x-2 mb-3">
                 <div className="flex">
@@ -264,7 +264,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
                 </span>
               </div>
             )}
-            
+
             <div className="flex items-center space-x-3">
               <span className={`text-3xl font-bold ${theme.text}`}>
                 {currentStore?.currency || 'USD'} {price.toFixed(2)}
@@ -275,7 +275,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
                 </span>
               )}
             </div>
-            
+
             {product.category && (
               <div className="mt-3">
                 <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
@@ -295,7 +295,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
           {/* Quantity & Add to Cart */}
           <div className="flex items-center space-x-4 pt-4 border-t">
             <div className="flex items-center border rounded-lg">
-              <button 
+              <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="p-3 hover:bg-gray-50"
                 disabled={quantity <= 1}
@@ -303,14 +303,14 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
                 <Minus className="h-4 w-4" />
               </button>
               <span className="px-4 py-3 min-w-12 text-center">{quantity}</span>
-              <button 
+              <button
                 onClick={() => setQuantity(quantity + 1)}
                 className="p-3 hover:bg-gray-50"
               >
                 <Plus className="h-4 w-4" />
               </button>
             </div>
-            
+
             <button
               onClick={addToCart}
               className={`flex-1 ${theme.bg} hover:opacity-90 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2`}
@@ -319,7 +319,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
               <span>Add to Cart</span>
             </button>
           </div>
-          
+
           {/* Features */}
           <div className="grid grid-cols-3 gap-4 pt-4 border-t text-center">
             <div className="flex flex-col items-center space-y-1">
@@ -388,7 +388,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
               Write a Review
             </button>
           </div>
-          
+
           {showReviewForm && (
             <div className="mb-6 p-4 border rounded-lg">
               <ReviewForm
@@ -402,10 +402,9 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
               />
             </div>
           )}
-          
-          <ProductReviews 
-            productId={product.id} productName={product.name} 
-            reviews={reviews}
+
+          <ProductReviews
+            productId={product.id}
           />
         </div>
       </div>
