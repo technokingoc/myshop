@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language";
@@ -24,6 +24,12 @@ import {
   Briefcase,
   HeartHandshake,
   Tag,
+  TrendingUp,
+  Clock,
+  Sparkles,
+  ChevronLeft,
+  Play,
+  Pause,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +52,8 @@ const dict = {
     statsProducts: "products",
     statsOrders: "happy customers",
     featured: "Featured Stores",
+    newArrivals: "New Arrivals",
+    trending: "Trending Now",
     viewAll: "View all",
     visit: "Visit",
     products: "products",
@@ -56,6 +64,15 @@ const dict = {
     ctaBtn: "Create your store — it's free",
     noStores: "Be the first to create a store!",
     createStore: "Create your store",
+    freshProducts: "Fresh products added recently",
+    hotItems: "What's hot right now",
+    fromStore: "from",
+    addedDays: "Added {days} days ago",
+    orders: "orders",
+    wishlisted: "in wishlists",
+    autoRotating: "Auto-rotating",
+    pauseCarousel: "Pause carousel",
+    playCarousel: "Play carousel",
   },
   pt: {
     heroTitle: "Descubra lojas e produtos locais",
@@ -66,6 +83,8 @@ const dict = {
     statsProducts: "produtos",
     statsOrders: "clientes felizes",
     featured: "Lojas em Destaque",
+    newArrivals: "Novidades",
+    trending: "Em Alta",
     viewAll: "Ver todas",
     visit: "Visitar",
     products: "produtos",
@@ -76,6 +95,15 @@ const dict = {
     ctaBtn: "Criar sua loja — é grátis",
     noStores: "Seja o primeiro a criar uma loja!",
     createStore: "Criar sua loja",
+    freshProducts: "Produtos frescos adicionados recentemente",
+    hotItems: "O que está em alta agora",
+    fromStore: "de",
+    addedDays: "Adicionado há {days} dias",
+    orders: "pedidos",
+    wishlisted: "em wishlists",
+    autoRotating: "Rotação automática",
+    pauseCarousel: "Pausar carrossel",
+    playCarousel: "Tocar carrossel",
   },
 };
 
@@ -90,6 +118,32 @@ interface StoreData {
   productCount: number;
   avgRating: number;
   reviewCount: number;
+}
+
+interface ProductData {
+  id: number;
+  name: string;
+  price: number;
+  compareAtPrice: number | null;
+  imageUrl: string;
+  shortDescription: string;
+  category: string;
+  stockQuantity: number;
+  trackInventory: boolean;
+  createdAt: string;
+  daysAgo?: number;
+  store: {
+    slug: string;
+    name: string;
+    city: string;
+    logoUrl: string;
+  };
+  trending?: {
+    score: number;
+    orderCount: number;
+    wishlistCount: number;
+    timeframe: string;
+  };
 }
 
 interface Stats { sellers: number; products: number; orders: number; }
@@ -117,8 +171,14 @@ export default function HomePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [dbCategories, setDbCategories] = useState<CategoryData[]>([]);
   const [searchQ, setSearchQ] = useState("");
+  const [newArrivals, setNewArrivals] = useState<ProductData[]>([]);
+  const [trendingProducts, setTrendingProducts] = useState<ProductData[]>([]);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const [currentStoreIndex, setCurrentStoreIndex] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Fetch stores
     fetch("/api/stores?limit=8&sort=popular")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
@@ -127,15 +187,56 @@ export default function HomePage() {
         }
       })
       .catch(() => {});
+
+    // Fetch stats
     fetch("/api/stores/stats")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => d && setStats(d))
       .catch(() => {});
+
+    // Fetch categories
     fetch("/api/categories")
       .then((r) => r.ok ? r.json() : [])
       .then((d) => { if (Array.isArray(d)) setDbCategories(d); })
       .catch(() => {});
+
+    // Fetch new arrivals
+    fetch("/api/products/new-arrivals?limit=8&days=14")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.products) {
+          setNewArrivals(d.products);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch trending products
+    fetch("/api/products/trending?limit=8&timeframe=7d")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.products) {
+          setTrendingProducts(d.products);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  // Auto-rotating carousel for featured stores
+  useEffect(() => {
+    if (stores.length <= 1 || isCarouselPaused) return;
+
+    intervalRef.current = setInterval(() => {
+      setCurrentStoreIndex((prev) => (prev + 1) % Math.min(stores.length, 6)); // Show max 6 stores in rotation
+    }, 4000); // Rotate every 4 seconds
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [stores.length, isCarouselPaused]);
+
+  const toggleCarousel = useCallback(() => {
+    setIsCarouselPaused(!isCarouselPaused);
+  }, [isCarouselPaused]);
 
   // Flatten categories for display
   const categoryPills = useMemo(() => {
@@ -249,21 +350,79 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured stores — horizontal scroll */}
+      {/* Featured stores — auto-rotating carousel */}
       <section className="py-16 bg-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900">{t.featured}</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-bold text-slate-900">{t.featured}</h2>
+              {stores.length > 1 && (
+                <button
+                  onClick={toggleCarousel}
+                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  title={isCarouselPaused ? t.playCarousel : t.pauseCarousel}
+                >
+                  {isCarouselPaused ? (
+                    <Play className="h-3 w-3" />
+                  ) : (
+                    <Pause className="h-3 w-3" />
+                  )}
+                  <span className="hidden sm:inline">{t.autoRotating}</span>
+                </button>
+              )}
+            </div>
             <Link href="/stores" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700">
               {t.viewAll} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
 
           {stores.length > 0 ? (
-            <div className="mt-6 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {stores.map((store) => (
-                <FeaturedStoreCard key={store.slug} store={store} t={t} />
-              ))}
+            <div className="mt-6 relative">
+              {/* Carousel Navigation */}
+              {stores.length > 1 && (
+                <div className="absolute -left-4 top-1/2 -translate-y-1/2 z-10">
+                  <button
+                    onClick={() => setCurrentStoreIndex((prev) => (prev - 1 + Math.min(stores.length, 6)) % Math.min(stores.length, 6))}
+                    className="p-2 rounded-full bg-white border border-slate-200 shadow-lg hover:shadow-xl transition-all text-slate-600 hover:text-slate-900"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              {stores.length > 1 && (
+                <div className="absolute -right-4 top-1/2 -translate-y-1/2 z-10">
+                  <button
+                    onClick={() => setCurrentStoreIndex((prev) => (prev + 1) % Math.min(stores.length, 6))}
+                    className="p-2 rounded-full bg-white border border-slate-200 shadow-lg hover:shadow-xl transition-all text-slate-600 hover:text-slate-900"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Store Cards */}
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {stores.slice(currentStoreIndex, currentStoreIndex + 4).concat(
+                  stores.length > currentStoreIndex + 4 ? stores.slice(0, Math.max(0, currentStoreIndex + 4 - stores.length)) : []
+                ).slice(0, 4).map((store, index) => (
+                  <FeaturedStoreCard key={`${store.slug}-${index}`} store={store} t={t} />
+                ))}
+              </div>
+
+              {/* Carousel Indicators */}
+              {stores.length > 4 && (
+                <div className="flex justify-center mt-4 gap-2">
+                  {Array.from({ length: Math.min(stores.length, 6) }).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentStoreIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentStoreIndex ? 'bg-green-600' : 'bg-slate-300 hover:bg-slate-400'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="mt-8 text-center">
@@ -288,6 +447,58 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* New Arrivals Section */}
+      {newArrivals.length > 0 && (
+        <section className="py-16 bg-slate-50/50">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <Clock className="h-6 w-6 text-green-600" />
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t.newArrivals}</h2>
+                  <p className="text-sm text-slate-600">{t.freshProducts}</p>
+                </div>
+              </div>
+              <Link href="/stores?sort=recent" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700">
+                {t.viewAll} <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {newArrivals.slice(0, 8).map((product) => (
+                <ProductCard key={product.id} product={product} t={t} showMetric="date" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Trending Products Section */}
+      {trendingProducts.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t.trending}</h2>
+                  <p className="text-sm text-slate-600">{t.hotItems}</p>
+                </div>
+              </div>
+              <Link href="/stores?sort=trending" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700">
+                {t.viewAll} <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {trendingProducts.slice(0, 8).map((product) => (
+                <ProductCard key={product.id} product={product} t={t} showMetric="trending" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* How it works — ultra compact */}
       <section className="border-y border-slate-100 bg-slate-50/50 py-16">
@@ -330,6 +541,109 @@ export default function HomePage() {
         Browse Stores
       </FAB>
     </div>
+  );
+}
+
+/* Product card component for new arrivals and trending sections */
+function ProductCard({ 
+  product, 
+  t, 
+  showMetric 
+}: { 
+  product: ProductData; 
+  t: Record<string, string>;
+  showMetric: 'date' | 'trending';
+}) {
+  const daysAgo = Math.floor((Date.now() - new Date(product.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+  
+  return (
+    <Link
+      href={`/s/${product.store.slug}/products/${product.id}`}
+      className="group bg-white rounded-2xl border border-slate-200 hover:border-green-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+    >
+      {/* Product Image */}
+      <div className="aspect-square relative bg-slate-100 overflow-hidden">
+        {product.imageUrl ? (
+          <img 
+            src={product.imageUrl} 
+            alt={product.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy" 
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="h-12 w-12 text-slate-300" />
+          </div>
+        )}
+        
+        {/* Stock Badge */}
+        {product.trackInventory && product.stockQuantity <= 5 && product.stockQuantity > 0 && (
+          <div className="absolute top-3 left-3 px-2 py-1 bg-orange-500 text-white text-xs font-medium rounded-full">
+            {product.stockQuantity} left
+          </div>
+        )}
+        
+        {/* Price Badge for compare at price */}
+        {product.compareAtPrice && product.compareAtPrice > product.price && (
+          <div className="absolute top-3 right-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
+            {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}% OFF
+          </div>
+        )}
+      </div>
+
+      {/* Product Info */}
+      <div className="p-4">
+        <h3 className="font-semibold text-slate-900 line-clamp-2 mb-2 group-hover:text-green-900 transition-colors">
+          {product.name}
+        </h3>
+        
+        {/* Price */}
+        <div className="flex items-center space-x-2 mb-2">
+          <span className="text-lg font-bold text-slate-900">
+            ${product.price.toFixed(2)}
+          </span>
+          {product.compareAtPrice && product.compareAtPrice > product.price && (
+            <span className="text-sm text-slate-500 line-through">
+              ${product.compareAtPrice.toFixed(2)}
+            </span>
+          )}
+        </div>
+
+        {/* Store Info */}
+        <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
+          <span>{t.fromStore} <span className="font-medium">{product.store.name}</span></span>
+          {product.store.city && (
+            <>
+              <span>•</span>
+              <MapPin className="h-3 w-3" />
+              <span>{product.store.city}</span>
+            </>
+          )}
+        </p>
+
+        {/* Metric Display */}
+        <div className="flex items-center text-xs text-slate-600">
+          {showMetric === 'date' && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3 text-green-500" />
+              <span>{t.addedDays.replace('{days}', daysAgo.toString())}</span>
+            </div>
+          )}
+          {showMetric === 'trending' && product.trending && (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <TrendingUp className="h-3 w-3 text-red-500" />
+                <span>{product.trending.orderCount} {t.orders}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Star className="h-3 w-3 text-amber-500" />
+                <span>{product.trending.wishlistCount} {t.wishlisted}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }
 

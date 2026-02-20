@@ -10,3 +10,6 @@ export function getDb() {
   const sql = neon(url);
   return drizzle(sql, { schema });
 }
+
+// Export a default instance for convenience
+export const db = getDb();

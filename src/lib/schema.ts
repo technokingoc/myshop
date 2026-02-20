@@ -969,3 +969,106 @@ export const planChangeRequests = pgTable("plan_change_requests", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Referral program tables
+export const referralPrograms = pgTable("referral_programs", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  
+  // Program settings
+  isActive: boolean("is_active").default(true),
+  name: varchar("name", { length: 256 }).default("Referral Program"),
+  description: text("description").default(""),
+  
+  // Reward configuration
+  referrerRewardType: varchar("referrer_reward_type", { length: 32 }).default("percentage"), // 'percentage', 'fixed'
+  referrerRewardValue: numeric("referrer_reward_value", { precision: 8, scale: 2 }).default("10.00"),
+  referredRewardType: varchar("referred_reward_type", { length: 32 }).default("percentage"), // 'percentage', 'fixed'
+  referredRewardValue: numeric("referred_reward_value", { precision: 8, scale: 2 }).default("5.00"),
+  
+  // Program limits
+  maxReferrals: integer("max_referrals").default(-1), // -1 = unlimited
+  maxRewardAmount: numeric("max_reward_amount", { precision: 10, scale: 2 }).default("0"), // 0 = unlimited
+  validityDays: integer("validity_days").default(30), // Days link is valid
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const referralLinks = pgTable("referral_links", {
+  id: serial("id").primaryKey(),
+  programId: integer("program_id").notNull().references(() => referralPrograms.id, { onDelete: "cascade" }),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  
+  // Link details
+  code: varchar("code", { length: 64 }).notNull().unique(), // Unique referral code
+  targetUrl: text("target_url"), // Specific product/page to refer to, null = store homepage
+  
+  // Usage tracking
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  totalRevenue: numeric("total_revenue", { precision: 12, scale: 2 }).default("0"),
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const referralTracking = pgTable("referral_tracking", {
+  id: serial("id").primaryKey(),
+  linkId: integer("link_id").notNull().references(() => referralLinks.id, { onDelete: "cascade" }),
+  
+  // Visitor tracking
+  visitorId: varchar("visitor_id", { length: 128 }), // Browser fingerprint or session ID
+  ipAddress: varchar("ip_address", { length: 45 }), // IPv4/IPv6
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  
+  // Action tracking
+  action: varchar("action", { length: 32 }).notNull(), // 'click', 'conversion', 'purchase'
+  orderId: integer("order_id").references(() => orders.id, { onDelete: "set null" }),
+  customerId: integer("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  
+  // Revenue tracking
+  orderValue: numeric("order_value", { precision: 12, scale: 2 }).default("0"),
+  rewardAmount: numeric("reward_amount", { precision: 10, scale: 2 }).default("0"),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Email marketing campaigns (UI only, no actual sending)
+export const emailCampaigns = pgTable("email_campaigns", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  
+  // Campaign details
+  name: varchar("name", { length: 256 }).notNull(),
+  subject: varchar("subject", { length: 256 }).notNull(),
+  content: text("content").notNull(),
+  
+  // Audience
+  audienceType: varchar("audience_type", { length: 32 }).default("all"), // 'all', 'customers', 'subscribers'
+  audienceFilter: jsonb("audience_filter").$type<{
+    city?: string;
+    country?: string;
+    minPurchases?: number;
+    tags?: string[];
+  }>().default({}),
+  
+  // Scheduling
+  status: varchar("status", { length: 32 }).default("draft"), // 'draft', 'scheduled', 'sent', 'cancelled'
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  
+  // Mock statistics (since no actual sending)
+  estimatedRecipients: integer("estimated_recipients").default(0),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
