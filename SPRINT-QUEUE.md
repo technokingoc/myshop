@@ -87,7 +87,7 @@
 
 ---
 
-## S61 — Delivery & Shipping: Zones & Calculators
+## [x] S61 — Delivery & Shipping: Zones & Calculators ✅
 
 **Goal:** Configurable delivery zones and shipping cost calculation.
 
