@@ -27,6 +27,7 @@ import ReviewForm from "@/components/review-form";
 import PromotionBanner from "@/components/promotions/promotion-banner";
 import FlashSaleBanner from "@/components/promotions/flash-sale-banner";
 import FlashSaleAutoApply from "@/components/promotions/flash-sale-auto-apply";
+import SocialShare from "@/components/social-share";
 
 import { OptimizedImage, ProductImage, StoreLogoImage, StoreBannerImage } from "@/components/optimized-image";
 
@@ -1035,6 +1036,16 @@ function ContactTab({ seller, t }: { seller: Seller; t: Record<string, string> }
           </div>
         </div>
       )}
+      
+      {/* Enhanced Social Share */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <SocialShare 
+          url={`/s/${seller.slug}`}
+          title={seller.name}
+          description={seller.description || `Discover great products at ${seller.name}`}
+          imageUrl={seller.logoUrl}
+        />
+      </div>
     </div>
   );
 }

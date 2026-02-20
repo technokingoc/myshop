@@ -15,6 +15,7 @@ import { getTheme } from "@/lib/theme-colors";
 import ProductReviews from "@/components/product-reviews";
 import ReviewForm from "@/components/review-form";
 import { ProductJsonLd, StoreJsonLd } from "@/components/json-ld";
+import SocialShare from "@/components/social-share";
 
 interface Props {
   product: any;
@@ -177,9 +178,13 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
           </div>
 
           <div className="flex items-center space-x-2">
-            <button onClick={shareProduct} className="p-2 rounded-lg hover:bg-gray-100">
-              <Share2 className="h-5 w-5" />
-            </button>
+            <SocialShare 
+              url={`/s/${slug}/products/${product.id}`}
+              title={product.name}
+              description={product.shortDescription}
+              imageUrl={product.imageUrl}
+              compact
+            />
             <button
               onClick={() => setIsWishlisted(!isWishlisted)}
               className={`p-2 rounded-lg hover:bg-gray-100 ${isWishlisted ? 'text-red-500' : ''}`}
@@ -373,6 +378,16 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* Social Share Section */}
+        <div className="bg-white rounded-lg p-6">
+          <SocialShare 
+            url={`/s/${slug}/products/${product.id}`}
+            title={product.name}
+            description={product.shortDescription || `Check out ${product.name} from ${currentStore?.name}`}
+            imageUrl={product.imageUrl}
+          />
         </div>
 
         {/* Reviews Section */}

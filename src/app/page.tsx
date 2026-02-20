@@ -73,6 +73,8 @@ const dict = {
     autoRotating: "Auto-rotating",
     pauseCarousel: "Pause carousel",
     playCarousel: "Play carousel",
+    nearYou: "Stores Near You",
+    localStores: "Discover local stores in your area",
   },
   pt: {
     heroTitle: "Descubra lojas e produtos locais",
@@ -104,6 +106,8 @@ const dict = {
     autoRotating: "Rotação automática",
     pauseCarousel: "Pausar carrossel",
     playCarousel: "Tocar carrossel",
+    nearYou: "Lojas Perto de Si",
+    localStores: "Descubra lojas locais na sua área",
   },
 };
 
@@ -173,6 +177,7 @@ export default function HomePage() {
   const [searchQ, setSearchQ] = useState("");
   const [newArrivals, setNewArrivals] = useState<ProductData[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<ProductData[]>([]);
+  const [locationStores, setLocationStores] = useState<StoreData[]>([]);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
   const [currentStoreIndex, setCurrentStoreIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -219,6 +224,37 @@ export default function HomePage() {
         }
       })
       .catch(() => {});
+
+    // Fetch location-based stores (try to detect user location)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Get location-based stores
+          const { latitude, longitude } = position.coords;
+          fetch(`/api/stores?limit=6&sort=popular&lat=${latitude}&lng=${longitude}&maxDistance=50`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => {
+              if (d?.stores && d.stores.length > 0) {
+                setLocationStores(d.stores);
+              }
+            })
+            .catch(() => {});
+        },
+        () => {
+          // Fallback to city-based recommendations for Mozambique
+          const mozambiqueCities = ["Maputo", "Beira", "Nampula", "Matola", "Chimoio"];
+          const randomCity = mozambiqueCities[Math.floor(Math.random() * mozambiqueCities.length)];
+          fetch(`/api/stores?limit=6&sort=popular&location=${randomCity}`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => {
+              if (d?.stores && d.stores.length > 0) {
+                setLocationStores(d.stores);
+              }
+            })
+            .catch(() => {});
+        }
+      );
+    }
   }, []);
 
   // Auto-rotating carousel for featured stores
@@ -494,6 +530,32 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {trendingProducts.slice(0, 8).map((product) => (
                 <ProductCard key={product.id} product={product} t={t} showMetric="trending" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Location-Based Store Recommendations */}
+      {locationStores.length > 0 && (
+        <section className="py-16 bg-slate-50/30">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-6 w-6 text-green-600" />
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t.nearYou}</h2>
+                  <p className="text-sm text-slate-600">{t.localStores}</p>
+                </div>
+              </div>
+              <Link href="/stores?sort=distance" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700">
+                {t.viewAll} <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {locationStores.slice(0, 6).map((store) => (
+                <FeaturedStoreCard key={`location-${store.slug}`} store={store} t={t} />
               ))}
             </div>
           </div>

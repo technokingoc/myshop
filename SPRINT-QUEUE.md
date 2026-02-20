@@ -33,7 +33,7 @@ Must be production-ready for real Mozambique merchants.
 
 ### Phase 5: Growth & Monetization
 - [x] **S52: Subscription Billing** ✅ — Deployed 2026-02-20 — Stripe/payment integration for seller tiers. Free → Pro → Business upgrade flow. Usage metering. Invoice generation. Grace period handling.
-- [ ] **S53: Store Discovery v2** — Featured stores carousel. New arrivals section. Trending products. Location-based recommendations. Category landing pages.
+- [x] **S53: Store Discovery v2** ✅ — Deployed 2026-02-20 — Featured stores carousel. New arrivals section. Trending products. Location-based recommendations. Category landing pages.
 - [ ] **S54: Marketing Tools** — Email marketing for sellers (new product, promotion). Social sharing buttons. Referral program. Affiliate links.
 - [ ] **S55: API & Webhooks** — REST API for inventory sync. Order webhook notifications. Product feed export. Integration marketplace prep.
 

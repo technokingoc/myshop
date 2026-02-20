@@ -24,6 +24,10 @@ import {
   Truck,
   Warehouse,
   Crown,
+  Mail,
+  Users,
+  Share2,
+  Target,
 } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -68,6 +72,11 @@ const dict = {
     store: "Store",
     insights: "Insights",
     more: "More",
+    marketing: "Marketing",
+    emailMarketing: "Email Marketing",
+    referrals: "Referrals",
+    affiliates: "Affiliate Links",
+    socialSharing: "Social Sharing",
   },
   pt: {
     home: "Início",
@@ -96,6 +105,11 @@ const dict = {
     store: "Loja",
     insights: "Informações",
     more: "Mais",
+    marketing: "Marketing",
+    emailMarketing: "Marketing por Email",
+    referrals: "Referências",
+    affiliates: "Links de Afiliado",
+    socialSharing: "Partilha Social",
   },
 };
 
@@ -224,6 +238,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/dashboard/shipping")) return "shipping";
     if (pathname.startsWith("/dashboard/notifications")) return "notifications";
     if (pathname.startsWith("/dashboard/subscription")) return "subscription";
+    if (pathname.startsWith("/dashboard/marketing/email")) return "email-marketing";
+    if (pathname.startsWith("/dashboard/marketing/referrals")) return "referrals";
+    if (pathname.startsWith("/dashboard/marketing/affiliates")) return "affiliates";
+    if (pathname.startsWith("/dashboard/marketing")) return "marketing";
     return "dashboard";
   }, [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -271,6 +289,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     { label: t.inventory, icon: Warehouse, href: "/dashboard/inventory", key: "inventory" },
     { label: t.shipping, icon: Truck, href: "/dashboard/shipping", key: "shipping" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
+    { label: t.marketing, icon: Target, href: "/dashboard/marketing", key: "marketing" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
     { label: t.promotions, icon: Megaphone, href: "/dashboard/promotions", key: "promotions" },
     { label: t.flashSales, icon: Zap, href: "/dashboard/flash-sales", key: "flash-sales" },
@@ -291,6 +310,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     { label: t.inventory, icon: Warehouse, href: "/dashboard/inventory", key: "inventory" },
     { label: t.shipping, icon: Truck, href: "/dashboard/shipping", key: "shipping" },
     { label: t.reviews, icon: MessageSquare, href: "/dashboard/reviews", key: "reviews" },
+    { label: t.marketing, icon: Target, href: "/dashboard/marketing", key: "marketing" },
     { label: t.coupons, icon: TicketPercent, href: "/dashboard/coupons", key: "coupons" },
     { label: t.promotions, icon: Megaphone, href: "/dashboard/promotions", key: "promotions" },
     { label: t.flashSales, icon: Zap, href: "/dashboard/flash-sales", key: "flash-sales" },

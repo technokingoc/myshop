@@ -1072,3 +1072,130 @@ export const emailCampaigns = pgTable("email_campaigns", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Affiliate links table
+export const affiliateLinks = pgTable("affiliate_links", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  productId: integer("product_id").references(() => catalogItems.id, { onDelete: "cascade" }),
+  
+  // Link details
+  code: varchar("code", { length: 64 }).notNull().unique(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description").default(""),
+  
+  // Commission settings
+  commissionType: varchar("commission_type", { length: 16 }).default("percentage"), // 'percentage' or 'fixed'
+  commissionValue: numeric("commission_value", { precision: 8, scale: 2 }).default("10.00"),
+  
+  // Tracking
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  totalRevenue: numeric("total_revenue", { precision: 12, scale: 2 }).default("0"),
+  totalCommission: numeric("total_commission", { precision: 12, scale: 2 }).default("0"),
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Affiliate tracking table
+export const affiliateTracking = pgTable("affiliate_tracking", {
+  id: serial("id").primaryKey(),
+  linkId: integer("link_id").notNull().references(() => affiliateLinks.id, { onDelete: "cascade" }),
+  
+  // Visitor tracking
+  visitorId: varchar("visitor_id", { length: 128 }),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  
+  // Action tracking
+  action: varchar("action", { length: 32 }).notNull(), // 'click', 'conversion', 'purchase'
+  orderId: integer("order_id").references(() => orders.id, { onDelete: "set null" }),
+  customerId: integer("customer_id").references(() => users.id, { onDelete: "set null" }),
+  
+  // Revenue tracking
+  orderValue: numeric("order_value", { precision: 12, scale: 2 }).default("0"),
+  commissionAmount: numeric("commission_amount", { precision: 10, scale: 2 }).default("0"),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Social share tracking table
+export const socialShares = pgTable("social_shares", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  productId: integer("product_id").references(() => catalogItems.id, { onDelete: "set null" }), // NULL for store shares
+  
+  // Share details
+  platform: varchar("platform", { length: 32 }).notNull(), // 'whatsapp', 'facebook', 'twitter', 'copy_link'
+  sharedUrl: text("shared_url").notNull(),
+  shareTitle: varchar("share_title", { length: 256 }).default(""),
+  
+  // Tracking
+  visitorId: varchar("visitor_id", { length: 128 }),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Email templates table
+export const emailTemplates = pgTable("email_templates", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  
+  // Template details
+  name: varchar("name", { length: 256 }).notNull(),
+  subject: varchar("subject", { length: 256 }).notNull(),
+  content: text("content").notNull(), // HTML content
+  previewText: text("preview_text").default(""), // Email preview text
+  
+  // Template type
+  templateType: varchar("template_type", { length: 32 }).default("custom"), // 'new_product', 'promotion', 'custom'
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Email subscribers table
+export const emailSubscribers = pgTable("email_subscribers", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").references(() => sellers.id, { onDelete: "cascade" }), // Legacy support
+  
+  // Subscriber details
+  email: varchar("email", { length: 256 }).notNull(),
+  name: varchar("name", { length: 256 }).default(""),
+  phone: varchar("phone", { length: 64 }).default(""),
+  
+  // Subscription settings
+  status: varchar("status", { length: 32 }).default("subscribed"), // 'subscribed', 'unsubscribed', 'bounced'
+  source: varchar("source", { length: 64 }).default("manual"), // 'manual', 'import', 'signup', 'purchase'
+  
+  // Segmentation
+  city: varchar("city", { length: 256 }).default(""),
+  country: varchar("country", { length: 64 }).default(""),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  
+  // Customer relationship
+  customerId: integer("customer_id").references(() => users.id, { onDelete: "set null" }),
+  totalPurchases: integer("total_purchases").default(0),
+  lastPurchaseDate: timestamp("last_purchase_date", { withTimezone: true }),
+  
+  subscribedAt: timestamp("subscribed_at", { withTimezone: true }).defaultNow(),
+  unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
