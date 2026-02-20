@@ -18,14 +18,6 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
     const offset = (page - 1) * limit;
 
-    // Get blocked users to filter them out
-    const blockedUsers = await db
-      .select({ blockedUserId: userBlocks.blockedUserId })
-      .from(userBlocks)
-      .where(eq(userBlocks.blockerId, userId));
-
-    const blockedUserIds = blockedUsers.map(b => b.blockedUserId);
-
     // Build base query conditions
     const baseConditions = [
       or(
@@ -35,18 +27,8 @@ export async function GET(request: NextRequest) {
       eq(conversations.status, status)
     ];
 
-    // Add blocked user filter if there are any blocked users
-    if (blockedUserIds.length > 0) {
-      const blockedSellerCondition = and(
-        eq(conversations.customerId, userId), 
-        inArray(conversations.sellerId, blockedUserIds)
-      );
-      const blockedCustomerCondition = and(
-        eq(conversations.sellerId, userId), 
-        inArray(conversations.customerId, blockedUserIds)
-      );
-      baseConditions.push(not(or(blockedSellerCondition, blockedCustomerCondition)));
-    }
+    // TODO: Add blocked users filtering after database migration
+    // This will be enabled once the user_blocks table is created
 
     // Build conversations query
     let conversationsQuery = db
