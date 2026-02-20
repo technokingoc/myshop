@@ -6,9 +6,11 @@ import { useLanguage } from "@/lib/language";
 import {
   Star, MessageSquare, Loader2, CheckCircle, Clock, EyeOff, Eye,
   ThumbsUp, Calendar, User, Package, Camera, MoreHorizontal,
-  Filter, Search
+  Filter, Search, BarChart3, TrendingUp
 } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
+import ReviewAnalyticsDashboard from "@/components/review-analytics-dashboard";
+import SellerResponseForm from "@/components/seller-response-form";
 
 const dict = {
   en: {
@@ -58,6 +60,13 @@ const dict = {
     sortRecent: "Most Recent",
     sortRating: "Rating",
     sortHelpful: "Most Helpful",
+    
+    // New S60 features
+    reviews: "Reviews",
+    analytics: "Analytics",
+    respond: "Respond",
+    responsePosted: "Response posted successfully",
+    viewResponse: "View Response",
   },
   pt: {
     title: "Gestão de Avaliações",
@@ -106,6 +115,13 @@ const dict = {
     sortRecent: "Mais Recentes",
     sortRating: "Classificação",
     sortHelpful: "Mais Úteis",
+    
+    // New S60 features
+    reviews: "Avaliações",
+    analytics: "Análises",
+    respond: "Responder",
+    responsePosted: "Resposta publicada com sucesso",
+    viewResponse: "Ver Resposta",
   },
 };
 
@@ -124,6 +140,13 @@ interface Review {
   productName: string;
   productId: number;
   productImageUrl: string;
+  sellerResponse?: {
+    id: number;
+    content: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 interface ReviewSummary {
@@ -144,6 +167,8 @@ export default function SellerReviewsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [updating, setUpdating] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState('reviews');
+  const [showingResponseForm, setShowingResponseForm] = useState<number | null>(null);
 
   useEffect(() => {
     fetchReviews();
@@ -373,7 +398,38 @@ export default function SellerReviewsPage() {
         </div>
       </div>
 
-      {/* Summary Stats */}
+      {/* Tab Navigation */}
+      <div className="flex gap-1 p-1 bg-slate-100 rounded-lg mb-6 w-fit">
+        <button
+          onClick={() => setActiveTab('reviews')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeTab === 'reviews'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <MessageSquare className="h-4 w-4" />
+          {t.reviews}
+        </button>
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeTab === 'analytics'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <BarChart3 className="h-4 w-4" />
+          {t.analytics}
+        </button>
+      </div>
+
+      {/* Content based on active tab */}
+      {activeTab === 'analytics' ? (
+        <ReviewAnalyticsDashboard />
+      ) : (
+        <>
+          {/* Summary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="flex items-center justify-between">
@@ -565,6 +621,8 @@ export default function SellerReviewsPage() {
             );
           })}
         </div>
+      )}
+      </>
       )}
     </div>
   );

@@ -281,3 +281,65 @@ export async function sendRestockReminder(
 
   await send(sellerEmail, subject, html);
 }
+
+export async function sendReviewRequestEmail(
+  customerEmail: string,
+  details: {
+    customerName: string;
+    storeName: string;
+    orderRef: string;
+    orderItems: Array<{
+      productId: number;
+      productName: string;
+      productImage?: string;
+    }>;
+    reviewUrl: string;
+  },
+  lang: Lang = "en"
+) {
+  const isEn = lang === "en";
+  
+  const subject = isEn
+    ? `How was your experience with ${details.storeName}?`
+    : `Como foi a sua experiência com ${details.storeName}?`;
+
+  const itemsList = details.orderItems.length > 0 
+    ? details.orderItems.map(item => `<li>${item.productName}</li>`).join('')
+    : `<li>${isEn ? 'Your recent purchase' : 'A sua compra recente'}</li>`;
+
+  const html = wrap(`
+    <h1 style="font-size:20px;color:#0f172a;margin:0 0 16px">${isEn ? "Share Your Experience!" : "Partilhe a Sua Experiência!"}</h1>
+    <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 8px">
+      ${isEn ? "Hi" : "Olá"} ${details.customerName},
+    </p>
+    <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 16px">
+      ${isEn 
+        ? `We hope you're enjoying your recent purchase from ${details.storeName}! Your feedback helps other customers make informed decisions and helps sellers improve their service.`
+        : `Esperamos que esteja a gostar da sua compra recente em ${details.storeName}! O seu feedback ajuda outros clientes a tomar decisões informadas e ajuda os vendedores a melhorar o seu serviço.`
+      }
+    </p>
+    
+    <div style="margin:16px 0;padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+      <p style="color:#475569;font-size:14px;margin:0 0 8px"><strong>${isEn ? 'Order:' : 'Pedido:'}</strong> ${details.orderRef}</p>
+      <p style="color:#475569;font-size:14px;margin:0 0 8px"><strong>${isEn ? 'Items:' : 'Itens:'}</strong></p>
+      <ul style="color:#475569;font-size:14px;margin:8px 0 0 20px;padding:0">
+        ${itemsList}
+      </ul>
+    </div>
+    
+    <div style="text-align:center;margin:24px 0">
+      <a href="${details.reviewUrl}" style="display:inline-block;background:#059669;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600">
+        ${isEn ? "⭐ Write a Review" : "⭐ Escrever Avaliação"}
+      </a>
+    </div>
+    
+    <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;text-align:center">
+      ${isEn 
+        ? "Your review helps build trust in our marketplace community. Thank you for your time!" 
+        : "A sua avaliação ajuda a construir confiança na nossa comunidade de marketplace. Obrigado pelo seu tempo!"
+      }
+    </p>
+  `);
+
+  await send(customerEmail, subject, html);
+}

@@ -98,9 +98,10 @@ export async function POST(request: NextRequest) {
           description = `Flat rate shipping`;
           
           // Check for free shipping threshold
-          if (method.freeShippingMinOrder > 0 && cartTotal >= method.freeShippingMinOrder) {
+          const freeShippingThreshold = parseFloat(method.freeShippingMinOrder || '0');
+          if (freeShippingThreshold > 0 && cartTotal >= freeShippingThreshold) {
             cost = 0;
-            description = `Free shipping (order over ${currency} ${method.freeShippingMinOrder})`;
+            description = `Free shipping (order over ${currency} ${freeShippingThreshold})`;
           }
           break;
 
@@ -112,9 +113,10 @@ export async function POST(request: NextRequest) {
           description = `${currency} ${method.rate}/kg`;
           
           // Check for free shipping threshold
-          if (method.freeShippingMinOrder > 0 && cartTotal >= method.freeShippingMinOrder) {
+          const freeShippingThreshold2 = parseFloat(method.freeShippingMinOrder || '0');
+          if (freeShippingThreshold2 > 0 && cartTotal >= freeShippingThreshold2) {
             cost = 0;
-            description = `Free shipping (order over ${currency} ${method.freeShippingMinOrder})`;
+            description = `Free shipping (order over ${currency} ${freeShippingThreshold2})`;
           }
           break;
 
