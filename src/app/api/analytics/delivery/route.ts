@@ -33,7 +33,7 @@ type DeliveryAnalyticsData = {
     orderId: number;
     status: string;
     customerName: string;
-    updatedAt: string;
+    // updatedAt: string; // Not available in orders table
     deliveryTime?: number;
   }[];
 };
@@ -200,7 +200,7 @@ export async function GET(request: Request) {
         gte(orders.createdAt, dateFrom),
         lte(orders.createdAt, dateTo)
       ))
-      .orderBy(desc(orders.updatedAt))
+      .orderBy(desc(orders.createdAt))
       .limit(10);
 
     const recentActivity = recentActivityQuery.map(order => {
@@ -215,7 +215,7 @@ export async function GET(request: Request) {
         orderId: order.orderId,
         status: order.status,
         customerName: order.customerName,
-        updatedAt: order.updatedAt.toISOString(),
+        // updatedAt: order.updatedAt.toISOString(), // Field not available
         deliveryTime,
       };
     });
