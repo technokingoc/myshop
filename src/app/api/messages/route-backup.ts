@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "active";
     const page = parseInt(searchParams.get("page") || "1");
@@ -25,25 +24,6 @@ export async function GET(request: NextRequest) {
       .where(eq(userBlocks.blockerId, userId));
 
     const blockedUserIds = blockedUsers.map(b => b.blockedUserId);
-
-    // Build base query conditions
-    const baseConditions = [
-      or(
-        eq(conversations.customerId, userId),
-        eq(conversations.sellerId, userId)
-      ),
-      eq(conversations.status, status)
-    ];
-
-    // Add blocked user filter if there are any blocked users
-    if (blockedUserIds.length > 0) {
-      baseConditions.push(
-        not(or(
-          and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
-          and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
-        ))
-      );
-    }
 
     // Build conversations query
     let conversationsQuery = db
@@ -87,7 +67,27 @@ export async function GET(request: NextRequest) {
         and(eq(conversations.customerId, userId), eq(users.id, conversations.sellerId)),
         and(eq(conversations.sellerId, userId), eq(users.id, conversations.customerId))
       ))
-      .where(and(...baseConditions))
+      .where(
+        blockedUserIds.length > 0 
+          ? and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status),
+              not(or(
+                and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
+                and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
+              )!)
+            )
+          : and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status)
+            )
+      )
       .orderBy(desc(conversations.lastMessageAt))
       .limit(limit)
       .offset(offset);
@@ -98,7 +98,27 @@ export async function GET(request: NextRequest) {
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(conversations)
-      .where(and(...baseConditions));
+      .where(
+        blockedUserIds.length > 0 
+          ? and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status),
+              not(or(
+                and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
+                and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
+              )!)
+            )
+          : and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status)
+            )
+      );
 
     const totalCount = totalCountResult[0]?.count || 0;
 
@@ -130,7 +150,6 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
     const body = await request.json();
     const {
       storeId,
