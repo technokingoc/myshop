@@ -106,7 +106,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           height: 400,
           alt: `${store.name} logo`
         }] : undefined),
-        type: "business.business",
+        type: "website",
         locale: "en_US",
       },
       twitter: {

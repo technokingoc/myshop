@@ -71,7 +71,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       id: catalogItems.id,
       name: catalogItems.name,
       createdAt: catalogItems.createdAt,
-      updatedAt: catalogItems.updatedAt,
       sellerId: catalogItems.sellerId,
       sellerSlug: sellers.slug,
       storeSlug: stores.slug,
@@ -81,7 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .leftJoin(sellers, eq(catalogItems.sellerId, sellers.id))
     .leftJoin(stores, eq(catalogItems.sellerId, stores.userId))
     .where(eq(catalogItems.status, "Published"))
-    .orderBy(catalogItems.updatedAt)
+    .orderBy(catalogItems.createdAt)
     .limit(10000); // Limit to prevent memory issues
 
     const storePages: MetadataRoute.Sitemap = [
