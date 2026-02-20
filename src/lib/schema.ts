@@ -1374,3 +1374,138 @@ export const typingIndicators = pgTable("typing_indicators", {
   // Auto-cleanup old indicators (handled by app logic)
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// S58 Extensions - Message reports and blocking
+export const messageReports = pgTable("message_reports", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  reporterId: integer("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  reportedUserId: integer("reported_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Report details
+  reason: varchar("reason", { length: 32 }).notNull(), // 'spam', 'harassment', 'inappropriate', 'fraud', 'other'
+  description: text("description").default(""),
+  category: varchar("category", { length: 32 }).default("inappropriate"), // 'inappropriate', 'safety', 'fraud', 'spam'
+  
+  // Moderation status
+  status: varchar("status", { length: 32 }).default("pending"), // 'pending', 'reviewed', 'resolved', 'dismissed'
+  moderatedBy: integer("moderated_by").references(() => users.id),
+  moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+  moderatorNotes: text("moderator_notes").default(""),
+  actionTaken: varchar("action_taken", { length: 64 }).default(""), // 'warning', 'temp_ban', 'permanent_ban', 'none'
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// User blocking system
+export const userBlocks = pgTable("user_blocks", {
+  id: serial("id").primaryKey(),
+  blockerId: integer("blocker_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  blockedUserId: integer("blocked_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Block details
+  reason: varchar("reason", { length: 32 }).default(""), // 'spam', 'harassment', 'inappropriate', 'other'
+  notes: text("notes").default(""),
+  
+  // Block scope
+  blockType: varchar("block_type", { length: 32 }).default("messages"), // 'messages', 'orders', 'all'
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Content filtering rules
+export const contentFilters = pgTable("content_filters", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => stores.id, { onDelete: "cascade" }), // null = global
+  
+  // Filter configuration
+  name: varchar("name", { length: 256 }).notNull(),
+  enabled: boolean("enabled").default(true),
+  filterType: varchar("filter_type", { length: 32 }).notNull(), // 'phone', 'email', 'url', 'keyword', 'regex'
+  
+  // Filter patterns
+  patterns: jsonb("patterns").$type<string[]>().default([]), // Array of patterns to match
+  caseSensitive: boolean("case_sensitive").default(false),
+  wholeWordsOnly: boolean("whole_words_only").default(false),
+  
+  // Actions
+  action: varchar("action", { length: 32 }).default("flag"), // 'flag', 'block', 'replace', 'warn'
+  replacement: text("replacement").default("[FILTERED]"), // Replacement text
+  severity: varchar("severity", { length: 16 }).default("medium"), // 'low', 'medium', 'high'
+  
+  // Statistics
+  matchCount: integer("match_count").default(0),
+  lastMatch: timestamp("last_match", { withTimezone: true }),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Message filter matches (for audit trail)
+export const messageFilterMatches = pgTable("message_filter_matches", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+  filterId: integer("filter_id").notNull().references(() => contentFilters.id, { onDelete: "cascade" }),
+  
+  // Match details
+  matchedText: text("matched_text").notNull(),
+  filterPattern: text("filter_pattern").notNull(),
+  actionTaken: varchar("action_taken", { length: 32 }).notNull(), // 'flagged', 'blocked', 'replaced', 'warned'
+  
+  // Context
+  originalContent: text("original_content").default(""), // Store original if replaced
+  position: integer("position").default(0), // Position in message where match occurred
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Message file uploads
+export const messageFiles = pgTable("message_files", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+  uploadedBy: integer("uploaded_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // File details
+  fileName: varchar("file_name", { length: 256 }).notNull(),
+  fileType: varchar("file_type", { length: 64 }).notNull(), // MIME type
+  fileSize: integer("file_size").notNull(), // Size in bytes
+  fileUrl: text("file_url").notNull(), // Storage URL
+  
+  // File metadata
+  width: integer("width"), // For images
+  height: integer("height"), // For images
+  duration: integer("duration"), // For videos/audio in seconds
+  
+  // Security
+  virusScanned: boolean("virus_scanned").default(false),
+  scanResult: varchar("scan_result", { length: 32 }).default("pending"), // 'clean', 'infected', 'error'
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Conversation moderation flags
+export const conversationFlags = pgTable("conversation_flags", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  flaggedBy: integer("flagged_by").references(() => users.id), // null = auto-flagged
+  
+  // Flag details
+  reason: varchar("reason", { length: 64 }).notNull(), // 'inappropriate', 'spam', 'suspicious_activity', 'policy_violation'
+  description: text("description").default(""),
+  severity: varchar("severity", { length: 16 }).default("medium"), // 'low', 'medium', 'high', 'critical'
+  
+  // Auto-flag metadata
+  autoFlagged: boolean("auto_flagged").default(false),
+  triggerRules: jsonb("trigger_rules").$type<string[]>().default([]), // Filter IDs that triggered flag
+  
+  // Moderation status
+  status: varchar("status", { length: 32 }).default("pending"), // 'pending', 'reviewed', 'resolved', 'dismissed'
+  moderatedBy: integer("moderated_by").references(() => users.id),
+  moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+  moderatorNotes: text("moderator_notes").default(""),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

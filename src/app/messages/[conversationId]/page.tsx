@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { 
   ArrowLeft, 
   Send, 
@@ -58,7 +58,7 @@ interface ConversationInfo {
 }
 
 export default function ConversationPage() {
-  const t = useTranslations("messages");
+  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const conversationId = parseInt(params.conversationId as string);

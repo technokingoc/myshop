@@ -91,3 +91,5 @@ export async function checkAuth(): Promise<any | null> {
     return null;
   }
 }
+
+export const auth = fetchSession;

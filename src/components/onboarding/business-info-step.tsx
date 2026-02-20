@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { ImageUpload } from "@/components/image-upload";
 import { Store, MapPin, Tag, FileText, Upload } from "lucide-react";
 
@@ -19,7 +19,7 @@ export function BusinessInfoStep({
   onNext,
   canProceed
 }: BusinessInfoStepProps) {
-  const t = useTranslations("onboarding.businessInfo");
+  const { t } = useLanguage();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Generate slug from store name

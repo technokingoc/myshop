@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { 
   CheckCircle2, 
   Circle, 
@@ -33,7 +33,7 @@ export function SetupChecklistCard({
   className = ""
 }: SetupChecklistCardProps) {
   const router = useRouter();
-  const t = useTranslations("setupChecklist");
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(expanded);
 
   if (!onboardingStatus) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { storeTemplates, getTemplate } from "@/lib/store-templates";
 import { Smartphone, Monitor, Eye, Check } from "lucide-react";
 
@@ -17,7 +17,7 @@ export function TemplateSelectionStep({
   updateFormData,
   canProceed
 }: TemplateSelectionStepProps) {
-  const t = useTranslations("onboarding.templates");
+  const { t } = useLanguage();
   const [previewMode, setPreviewMode] = useState<"mobile" | "desktop">("desktop");
   const [previewTemplate, setPreviewTemplate] = useState(formData.selectedTemplate || "classic");
 

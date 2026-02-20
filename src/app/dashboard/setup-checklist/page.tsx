@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { SetupChecklistCard } from "@/components/onboarding/setup-checklist-card";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
 
 export default function SetupChecklistPage() {
   const router = useRouter();
-  const t = useTranslations("setupChecklist");
+  const { t } = useLanguage();
   const [onboardingStatus, setOnboardingStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

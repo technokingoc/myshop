@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { 
   CheckCircle2, 
   Circle, 
@@ -27,7 +27,7 @@ export function ChecklistStep({
   onNext,
   canProceed
 }: ChecklistStepProps) {
-  const t = useTranslations("onboarding.checklist");
+  const { t } = useLanguage();
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 

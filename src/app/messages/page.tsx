@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { MessageCircle, Search, Plus, Archive, Clock, User, Store, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
-  const t = useTranslations("messages");
+  const { t } = useLanguage();
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);

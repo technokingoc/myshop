@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLanguage } from "@/lib/language";
 import { ImageUpload } from "@/components/image-upload";
 import { Package, DollarSign, FileText, Image, Hash, CheckCircle2, SkipForward } from "lucide-react";
 
@@ -18,7 +18,7 @@ export function ProductSetupStep({
   onNext,
   canProceed
 }: ProductSetupStepProps) {
-  const t = useTranslations("onboarding.products");
+  const { t } = useLanguage();
   const [productForm, setProductForm] = useState({
     name: "",
     price: "",

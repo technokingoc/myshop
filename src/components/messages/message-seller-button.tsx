@@ -28,7 +28,7 @@ export function MessageSellerButton({
   size = 'default',
   className,
 }: MessageSellerButtonProps) {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -52,7 +52,7 @@ export function MessageSellerButton({
       return t('messages.productInquiryTemplate', { productName });
     }
     if (orderId) {
-      return t('messages.orderInquiryTemplate', { orderNumber: orderId });
+      return t('messages.orderInquiryTemplate', { orderNumber: String(orderId) });
     }
     return '';
   };

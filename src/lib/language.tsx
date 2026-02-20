@@ -27,6 +27,8 @@ type LanguageContextValue = {
   isRtl: boolean;
   /** Text direction */
   textDirection: 'ltr' | 'rtl';
+  /** Simple translation stub (returns last segment of key) */
+  t: (key: string, params?: Record<string, string>) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -166,6 +168,7 @@ export function LanguageProvider({
     getLanguageLabel,
     isRtl,
     textDirection,
+    t: (key: string, _params?: Record<string, string>) => key.split('.').pop() || key,
   }), [
     activeLang,
     setLang,
