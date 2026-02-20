@@ -21,6 +21,13 @@ type Props = {
   onStatusChange: (id: string, status: OrderStatus, note?: string) => void;
   onAddNote: (id: string, note: string) => void;
   onCancelRefund: (id: string, action: "cancel" | "refund", reason: string, refundAmount?: number) => void;
+  onUpdateShipping?: (orderId: string, data: {
+    trackingNumber?: string;
+    trackingProvider?: string;
+    trackingUrl?: string;
+    estimatedDelivery?: string;
+    status?: string;
+  }) => void;
   t: Record<string, string>;
   sellerId?: number | null;
   sellerInfo?: {
@@ -32,7 +39,7 @@ type Props = {
   };
 };
 
-export function OrderDetailPanelEnhanced({ order, onClose, onStatusChange, onAddNote, onCancelRefund, t, sellerId, sellerInfo }: Props) {
+export function OrderDetailPanelEnhanced({ order, onClose, onStatusChange, onAddNote, onCancelRefund, onUpdateShipping, t, sellerId, sellerInfo }: Props) {
   const [tab, setTab] = useState<"details" | "timeline" | "notes" | "print">("details");
   const [noteText, setNoteText] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<PaymentState>("pending");
@@ -226,6 +233,15 @@ export function OrderDetailPanelEnhanced({ order, onClose, onStatusChange, onAdd
                   <input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)}
                     placeholder="External payment link (optional)" className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs" />
                 </div>
+
+                {/* Shipping Management */}
+                {onUpdateShipping && ['confirmed', 'preparing', 'shipped', 'in-transit', 'delivered'].includes(order.status) && (
+                  <ShippingManagement
+                    order={order}
+                    onUpdate={onUpdateShipping}
+                    t={t}
+                  />
+                )}
               </div>
             )}
 

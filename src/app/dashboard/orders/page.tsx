@@ -212,6 +212,46 @@ export default function OrdersPage() {
     }
   }, [sellerId, dbHealth, toast, toastText]);
 
+  const handleUpdateShipping = useCallback(async (orderId: string, data: {
+    trackingNumber?: string;
+    trackingProvider?: string;
+    trackingUrl?: string;
+    estimatedDelivery?: string;
+    status?: string;
+  }) => {
+    if (!sellerId || !dbHealth?.ok) return;
+
+    try {
+      await fetchJsonWithRetry(`/api/orders/${orderId}/shipping`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sellerId, ...data }),
+      }, 3, 'orders:update-shipping');
+
+      // Update local state
+      setOrders(prev => prev.map(o => 
+        o.id === orderId 
+          ? { 
+              ...o, 
+              ...data,
+              status: (data.status as OrderStatus) || o.status,
+            }
+          : o
+      ));
+      
+      setSelectedOrder(prev => prev?.id === orderId ? {
+        ...prev,
+        ...data,
+        status: (data.status as OrderStatus) || prev.status,
+      } : prev);
+
+      toast.success(toastText.trackingUpdated || 'Tracking information updated');
+    } catch (error) {
+      console.error('Shipping update error:', error);
+      toast.error(toastText.updateFailed || 'Failed to update tracking information');
+    }
+  }, [sellerId, dbHealth, toast, toastText]);
+
   const handleCancelOrder = useCallback(async (orderId: string, reason: string) => {
     if (!sellerId || !dbHealth?.ok) return;
     
@@ -292,6 +332,7 @@ export default function OrdersPage() {
           onStatusChange={handleStatus} 
           onAddNote={handleAddNote}
           onCancelRefund={handleCancelRefund}
+          onUpdateShipping={handleUpdateShipping}
           t={t} 
           sellerId={sellerId}
           sellerInfo={{

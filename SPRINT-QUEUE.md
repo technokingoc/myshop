@@ -72,7 +72,7 @@
 
 ---
 
-## S60 — Reviews & Ratings v2: Seller Responses & Admin
+## [x] S60 — Reviews & Ratings v2: Seller Responses & Admin ✅
 
 **Goal:** Seller engagement with reviews, admin oversight.
 
