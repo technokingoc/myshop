@@ -35,7 +35,7 @@ Must be production-ready for real Mozambique merchants.
 - [x] **S52: Subscription Billing** ✅ — Deployed 2026-02-20 — Stripe/payment integration for seller tiers. Free → Pro → Business upgrade flow. Usage metering. Invoice generation. Grace period handling.
 - [x] **S53: Store Discovery v2** ✅ — Deployed 2026-02-20 — Featured stores carousel. New arrivals section. Trending products. Location-based recommendations. Category landing pages.
 - [x] **S54: Marketing Tools** ✅ — Deployed 2026-02-20 — Email marketing for sellers (new product, promotion). Social sharing buttons. Referral program. Affiliate links.
-- [ ] **S55: API & Webhooks** — REST API for inventory sync. Order webhook notifications. Product feed export. Integration marketplace prep.
+- [x] **S55: API & Webhooks** ✅ — Deployed 2026-02-20 — REST API for inventory sync. Order webhook notifications. Product feed export. Integration marketplace prep.
 
 ## Design Standards (every sprint)
 - Light/white base, restrained accents

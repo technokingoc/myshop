@@ -11,6 +11,7 @@
     "check-stock": "node scripts/check-low-stock.js",
     "migrate-s48": "psql $DATABASE_URL -f scripts/migrate-s48-payments.sql",
     "migrate-s52": "psql $DATABASE_URL -f scripts/migrate-s52-subscriptions.sql",
+    "migrate-s55": "node scripts/run-migration.js",
     "lighthouse": "lighthouse http://localhost:3000 --output html --output-path ./lighthouse-report.html",
     "perf": "npm run build && npm run lighthouse"
   },
