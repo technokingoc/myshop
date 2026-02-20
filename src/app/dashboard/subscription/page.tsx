@@ -307,12 +307,28 @@ export default function SubscriptionPage() {
               <h3 className="font-semibold text-amber-800">{t.gracePeriod}</h3>
               <p className="text-sm text-amber-700 mt-1">{t.gracePeriodDesc}</p>
               <p className="text-sm font-medium text-amber-800 mt-2">
-                {new Date(subscription.gracePeriodEnds).toLocaleDateString()} ({t.daysLeft})
+                Expires: {new Date(subscription.gracePeriodEnds).toLocaleDateString()}
+                {(() => {
+                  const daysLeft = Math.ceil((new Date(subscription.gracePeriodEnds).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  return ` (${daysLeft} ${t.daysLeft})`;
+                })()}
               </p>
-              <button className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-                <CreditCard className="h-4 w-4" />
-                {t.updatePayment}
-              </button>
+              <div className="mt-3 flex gap-2">
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  {t.updatePayment}
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 rounded-lg border border-amber-600 bg-transparent px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                >
+                  <Crown className="h-4 w-4" />
+                  Change Plan
+                </Link>
+              </div>
             </div>
           </div>
         </div>

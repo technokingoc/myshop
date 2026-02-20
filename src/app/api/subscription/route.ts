@@ -1,81 +1,51 @@
 import { NextRequest } from "next/server";
-import { getDb } from "@/lib/db";
-import { sellers, catalogItems, orders } from "@/lib/schema";
-import { eq, and, gte, sql } from "drizzle-orm";
+import { SubscriptionService } from "@/lib/subscription-service";
+import { getSellerFromSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // In a real implementation, you'd get seller ID from session/auth
-    // For now, we'll get it from the slug or session
-    const sellerId = 1; // This should come from authentication
-    
-    const db = getDb();
-    
-    // Get seller info to get current plan
-    const seller = await db
-      .select({
-        plan: sellers.plan,
-      })
-      .from(sellers)
-      .where(eq(sellers.id, sellerId))
-      .limit(1);
-      
-    if (seller.length === 0) {
-      return Response.json({ error: "Seller not found" }, { status: 404 });
+    // Get seller from session/auth
+    const sellerId = await getSellerFromSession(request);
+    if (!sellerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    const currentPlan = seller[0].plan || "free";
+    const subscriptionService = new SubscriptionService();
     
-    // Get usage metrics
-    const now = new Date();
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Get subscription data
+    const subscription = await subscriptionService.getSubscription(sellerId);
     
-    // Count products
-    const productCount = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(catalogItems)
-      .where(eq(catalogItems.sellerId, sellerId));
+    if (!subscription) {
+      // No subscription found, return default free plan data
+      const usage = await subscriptionService.getCurrentUsage(sellerId);
+      
+      return Response.json({
+        currentPlan: "free",
+        status: "active",
+        nextBillingDate: null,
+        gracePeriodEnds: null,
+        usage,
+        paymentMethod: null,
+        invoices: [],
+      });
+    }
     
-    // Count orders this month
-    const orderCount = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(orders)
-      .where(
-        and(
-          eq(orders.sellerId, sellerId),
-          gte(orders.createdAt, firstOfMonth)
-        )
-      );
-    
-    // Mock subscription data - in a real app, this would come from a payment provider
+    // Format response data
     const subscriptionData = {
-      currentPlan: currentPlan as "free" | "pro" | "business",
-      status: "active" as const,
-      nextBillingDate: currentPlan === "free" ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      gracePeriodEnds: null,
-      usage: {
-        products: {
-          current: productCount[0]?.count || 0,
-          limit: currentPlan === "free" ? 10 : currentPlan === "pro" ? 100 : -1,
-        },
-        orders: {
-          current: orderCount[0]?.count || 0,
-          limit: currentPlan === "free" ? 50 : -1,
-        },
-      },
-      paymentMethod: currentPlan === "free" ? null : {
-        type: "Visa",
-        last4: "4242",
-      },
-      invoices: currentPlan === "free" ? [] : [
-        {
-          id: "inv_1",
-          amount: currentPlan === "pro" ? 19 : 49,
-          status: "paid" as const,
-          date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          downloadUrl: "/api/invoices/inv_1/download",
-        },
-      ],
+      currentPlan: subscription.plan,
+      status: subscription.status,
+      nextBillingDate: subscription.currentPeriodEnd?.toISOString() || null,
+      gracePeriodEnds: subscription.gracePeriodEnd?.toISOString() || null,
+      usage: subscription.usage,
+      paymentMethod: subscription.paymentMethod,
+      invoices: subscription.invoices.map(invoice => ({
+        id: invoice.id.toString(),
+        amount: invoice.amount,
+        status: invoice.status,
+        date: invoice.date.toISOString(),
+        downloadUrl: `/api/invoices/${invoice.id}/download`,
+        pdfUrl: invoice.pdfUrl,
+      })),
     };
     
     return Response.json(subscriptionData);

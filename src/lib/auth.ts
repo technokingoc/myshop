@@ -37,3 +37,37 @@ export function rememberEmail(email: string) {
 export function getRememberedEmail() {
   return typeof window !== "undefined" ? localStorage.getItem("myshop_last_email") || "" : "";
 }
+
+// Server-side: get seller ID from session (cookie-based)
+export async function getSellerFromSession(request: Request): Promise<number | null> {
+  try {
+    // Get session cookie
+    const cookies = request.headers.get('cookie');
+    if (!cookies) return null;
+    
+    // Parse the session - this is a simplified version
+    // In a real implementation, you'd validate and decrypt the session properly
+    const sessionMatch = cookies.match(/myshop_session=([^;]+)/);
+    if (!sessionMatch) return null;
+    
+    // For now, let's fetch from the me endpoint internally
+    // In a production app, you'd decrypt the session cookie directly
+    const baseUrl = request.url.includes('localhost') 
+      ? 'http://localhost:3000' 
+      : request.headers.get('origin') || '';
+    
+    const sessionResponse = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: {
+        cookie: cookies,
+      },
+    });
+    
+    if (!sessionResponse.ok) return null;
+    
+    const sessionData = await sessionResponse.json();
+    return sessionData.session?.sellerId || null;
+  } catch (error) {
+    console.error('Error getting seller from session:', error);
+    return null;
+  }
+}

@@ -18,11 +18,8 @@ const dict = {
     ctaTitle: "Ready to start?",
     ctaSub: "Create your store in minutes. No credit card required for the free plan.",
     ctaBtn: "Create your store",
-    comingSoonTitle: "Coming soon",
-    comingSoonMsg: "Payments are not yet available. Please contact us to upgrade your plan.",
-    close: "Close",
-    contactUs: "Contact us",
     mostPopular: "Most popular",
+    loginToUpgrade: "Login to upgrade",
   },
   pt: {
     title: "Preços",
@@ -34,11 +31,8 @@ const dict = {
     ctaTitle: "Pronto para começar?",
     ctaSub: "Crie a sua loja em minutos. Não é necessário cartão de crédito para o plano grátis.",
     ctaBtn: "Criar a sua loja",
-    comingSoonTitle: "Em breve",
-    comingSoonMsg: "Pagamentos ainda não estão disponíveis. Contacte-nos para fazer upgrade do seu plano.",
-    close: "Fechar",
-    contactUs: "Contacte-nos",
     mostPopular: "Mais popular",
+    loginToUpgrade: "Entrar para upgrade",
   },
 };
 
@@ -50,6 +44,8 @@ export default function PricingPage() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
 
   useEffect(() => {
     fetchSession().then(async (s) => {
@@ -72,6 +68,57 @@ export default function PricingPage() {
   const allFeatureKeys = Array.from(
     new Set(plans.flatMap((p) => p.features.map((f) => f.key)))
   );
+
+  const handleUpgrade = async (planId: PlanId) => {
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+
+    setSelectedPlan(planId);
+    setShowModal(true);
+  };
+
+  const confirmUpgrade = async () => {
+    if (!selectedPlan) return;
+
+    setUpgrading(true);
+    try {
+      const response = await fetch('/api/subscription/upgrade', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          plan: selectedPlan,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Handle success
+        if (result.clientSecret) {
+          // Redirect to payment confirmation if needed
+          window.location.href = `/dashboard/subscription?confirm=${result.clientSecret}`;
+        } else {
+          // Plan changed successfully
+          setCurrentPlan(selectedPlan);
+          setShowModal(false);
+          // Show success message
+          alert('Plan upgraded successfully!');
+        }
+      } else {
+        throw new Error(result.error || 'Failed to upgrade plan');
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to upgrade plan');
+    } finally {
+      setUpgrading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -133,9 +180,21 @@ export default function PricingPage() {
                   >
                     {t.getStarted}
                   </Link>
-                ) : (
+                ) : session ? (
                   <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={upgrading}
+                    className={`mt-6 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition ${
+                      isPro
+                        ? "bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                        : "bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
+                    }`}
+                  >
+                    {upgrading ? "Processing..." : t.upgrade}
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
                     className={`mt-6 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition ${
                       isPro
                         ? "bg-green-600 text-white hover:bg-green-700"
@@ -143,7 +202,7 @@ export default function PricingPage() {
                     }`}
                   >
                     {t.upgrade}
-                  </button>
+                  </Link>
                 )}
               </div>
             );
@@ -206,19 +265,50 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Coming soon modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40" onClick={() => setShowModal(false)}>
-          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-slate-900">{t.comingSoonTitle}</h3>
-            <p className="mt-2 text-sm text-slate-600">{t.comingSoonMsg}</p>
-            <div className="mt-5 flex gap-2">
-              <button onClick={() => setShowModal(false)} className="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                {t.close}
+      {/* Upgrade confirmation modal */}
+      {showModal && selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40" onClick={() => !upgrading && setShowModal(false)}>
+          <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-900">
+              Upgrade to {PLANS[selectedPlan].name[lang]}
+            </h3>
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Monthly price:</span>
+                <span className="font-bold text-slate-900">
+                  {PLANS[selectedPlan].price}<span className="text-sm font-normal">{PLANS[selectedPlan].period[lang]}</span>
+                </span>
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                You'll be charged immediately. Your next billing date will be one month from today.
+              </div>
+            </div>
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold text-slate-900">What you'll get:</h4>
+              <ul className="mt-2 space-y-1">
+                {PLANS[selectedPlan].features.filter(f => f.included).slice(0, 4).map((feature) => (
+                  <li key={feature.key} className="flex items-center gap-2 text-sm text-slate-600">
+                    <Check className="h-3 w-3 text-green-600" />
+                    {feature.label[lang]}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button 
+                onClick={() => !upgrading && setShowModal(false)} 
+                disabled={upgrading}
+                className="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
               </button>
-              <a href="mailto:support@myshop.co.mz" className="flex-1 rounded-lg bg-green-600 py-2 text-center text-sm font-semibold text-white hover:bg-green-700">
-                {t.contactUs}
-              </a>
+              <button 
+                onClick={confirmUpgrade}
+                disabled={upgrading}
+                className="flex-1 rounded-lg bg-green-600 py-2 text-center text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+              >
+                {upgrading ? 'Processing...' : 'Confirm Upgrade'}
+              </button>
             </div>
           </div>
         </div>

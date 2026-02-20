@@ -1,49 +1,66 @@
 import { NextRequest } from "next/server";
-import { getDb } from "@/lib/db";
-import { sellers } from "@/lib/schema";
-import { eq } from "drizzle-orm";
-import { PLANS } from "@/lib/plans";
+import { SubscriptionService } from "@/lib/subscription-service";
+import { getSellerFromSession } from "@/lib/auth";
+import { PLANS, type PlanId } from "@/lib/plans";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { plan } = body;
+    const { plan, paymentMethodId, effectiveImmediately = true } = body;
     
     if (!plan || !PLANS[plan as keyof typeof PLANS]) {
       return Response.json({ error: "Invalid plan" }, { status: 400 });
     }
     
-    // In a real implementation, you'd:
-    // 1. Get seller ID from session/auth
-    // 2. Process payment with payment provider (Stripe, etc.)
-    // 3. Update subscription in payment provider
-    // 4. Update local database
+    // Get seller from session/auth
+    const sellerId = await getSellerFromSession(request);
+    if (!sellerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
     
-    const sellerId = 1; // This should come from authentication
-    const db = getDb();
+    const subscriptionService = new SubscriptionService();
     
-    // Update seller plan
-    await db
-      .update(sellers)
-      .set({
-        plan: plan,
-        updatedAt: new Date(),
-      })
-      .where(eq(sellers.id, sellerId));
+    // Check if this is a new subscription or plan change
+    const currentSubscription = await subscriptionService.getSubscription(sellerId);
     
-    // In a real implementation, you'd also:
-    // - Create invoice record
-    // - Send confirmation email
-    // - Log the upgrade event
-    // - Handle prorations if mid-cycle
-    
-    return Response.json({ 
-      success: true,
-      message: "Plan upgraded successfully",
-      newPlan: plan
-    });
+    if (!currentSubscription || currentSubscription.plan === 'free') {
+      // Creating new subscription
+      const result = await subscriptionService.createSubscription(
+        sellerId,
+        plan as PlanId,
+        paymentMethodId
+      );
+      
+      return Response.json({
+        success: true,
+        message: "Subscription created successfully",
+        subscription: result.subscription,
+        clientSecret: result.clientSecret,
+        newPlan: plan,
+      });
+    } else {
+      // Changing existing subscription
+      const result = await subscriptionService.changeSubscription(
+        sellerId,
+        plan as PlanId,
+        effectiveImmediately
+      );
+      
+      return Response.json({
+        success: true,
+        message: "Plan changed successfully",
+        newPlan: plan,
+        stripeSubscription: result.stripeSubscription,
+      });
+    }
   } catch (error) {
     console.error("Subscription upgrade error:", error);
-    return Response.json({ error: "Failed to upgrade plan" }, { status: 500 });
+    
+    let errorMessage = "Failed to update subscription";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
+    return Response.json({ error: errorMessage }, { status: 500 });
   }
 }

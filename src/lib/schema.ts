@@ -729,3 +729,243 @@ export const revenues = pgTable("revenues", {
 });
 
 // Note: using the first settlements table definition above
+
+// Subscription billing tables for S52
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 128 }).unique(),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 128 }).unique(),
+  stripePriceId: varchar("stripe_price_id", { length: 128 }),
+  
+  // Plan information
+  plan: varchar("plan", { length: 32 }).notNull().default("free"), // 'free', 'pro', 'business'
+  status: varchar("status", { length: 32 }).notNull().default("active"), // 'active', 'canceled', 'past_due', 'trialing', 'incomplete'
+  
+  // Billing details
+  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  cancelAt: timestamp("cancel_at", { withTimezone: true }),
+  canceledAt: timestamp("canceled_at", { withTimezone: true }),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  
+  // Trial information
+  trialStart: timestamp("trial_start", { withTimezone: true }),
+  trialEnd: timestamp("trial_end", { withTimezone: true }),
+  
+  // Grace period for failed payments
+  gracePeriodStart: timestamp("grace_period_start", { withTimezone: true }),
+  gracePeriodEnd: timestamp("grace_period_end", { withTimezone: true }),
+  
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    lastPaymentFailed?: boolean;
+    lastPaymentFailedAt?: string;
+    downgradeAt?: string;
+    upgradeFrom?: string;
+  }>().default({}),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Usage tracking for subscription limits
+export const usageRecords = pgTable("usage_records", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  subscriptionId: integer("subscription_id").references(() => subscriptions.id, { onDelete: "cascade" }),
+  
+  // Usage period
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+  
+  // Usage metrics
+  productsUsed: integer("products_used").default(0),
+  ordersProcessed: integer("orders_processed").default(0),
+  storageUsedMB: integer("storage_used_mb").default(0),
+  
+  // Limits for this period (captured from plan at time of creation)
+  productsLimit: integer("products_limit").default(-1), // -1 = unlimited
+  ordersLimit: integer("orders_limit").default(-1), // -1 = unlimited
+  storageLimitMB: integer("storage_limit_mb").default(-1), // -1 = unlimited
+  
+  // Status
+  limitExceeded: boolean("limit_exceeded").default(false),
+  warningsSent: jsonb("warnings_sent").$type<string[]>().default([]), // ['products_80', 'orders_90']
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Monthly invoices with line items
+export const subscriptionInvoices = pgTable("subscription_invoices", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  subscriptionId: integer("subscription_id").references(() => subscriptions.id, { onDelete: "cascade" }),
+  stripeInvoiceId: varchar("stripe_invoice_id", { length: 128 }).unique(),
+  
+  // Invoice details
+  invoiceNumber: varchar("invoice_number", { length: 64 }).notNull().unique(),
+  status: varchar("status", { length: 32 }).notNull().default("draft"), // 'draft', 'open', 'paid', 'void', 'uncollectible'
+  
+  // Amounts in cents
+  subtotal: integer("subtotal").notNull().default(0),
+  tax: integer("tax").default(0),
+  total: integer("total").notNull().default(0),
+  amountPaid: integer("amount_paid").default(0),
+  amountRemaining: integer("amount_remaining").default(0),
+  
+  currency: varchar("currency", { length: 8 }).default("USD"),
+  
+  // Billing period
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+  
+  // Important dates
+  invoiceDate: timestamp("invoice_date", { withTimezone: true }).notNull(),
+  dueDate: timestamp("due_date", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  voidedAt: timestamp("voided_at", { withTimezone: true }),
+  
+  // PDF generation
+  pdfGenerated: boolean("pdf_generated").default(false),
+  pdfUrl: text("pdf_url").default(""),
+  pdfGeneratedAt: timestamp("pdf_generated_at", { withTimezone: true }),
+  
+  // Customer details (snapshot at time of invoice)
+  customerDetails: jsonb("customer_details").$type<{
+    name: string;
+    email: string;
+    address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+    };
+  }>().default({ name: "", email: "" }),
+  
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    stripeHostedInvoiceUrl?: string;
+    stripeInvoicePdf?: string;
+    paymentIntentId?: string;
+  }>().default({}),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Invoice line items
+export const subscriptionInvoiceItems = pgTable("subscription_invoice_items", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").notNull().references(() => subscriptionInvoices.id, { onDelete: "cascade" }),
+  stripeInvoiceItemId: varchar("stripe_invoice_item_id", { length: 128 }),
+  
+  // Line item details
+  description: text("description").notNull(),
+  quantity: integer("quantity").default(1),
+  unitAmount: integer("unit_amount").notNull(), // in cents
+  amount: integer("amount").notNull(), // quantity * unitAmount, in cents
+  currency: varchar("currency", { length: 8 }).default("USD"),
+  
+  // Plan information for this line item
+  plan: varchar("plan", { length: 32 }).default(""), // 'pro', 'business'
+  pricingType: varchar("pricing_type", { length: 32 }).default("subscription"), // 'subscription', 'usage', 'one_time'
+  
+  // Usage details if applicable
+  usageStart: timestamp("usage_start", { withTimezone: true }),
+  usageEnd: timestamp("usage_end", { withTimezone: true }),
+  
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    planFeatures?: string[];
+    overage?: { type: string; quantity: number; rate: number; };
+  }>().default({}),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Payment methods for subscriptions
+export const subscriptionPaymentMethods = pgTable("subscription_payment_methods", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  stripePaymentMethodId: varchar("stripe_payment_method_id", { length: 128 }).notNull().unique(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 128 }).notNull(),
+  
+  // Card details
+  type: varchar("type", { length: 32 }).notNull(), // 'card', 'bank_account', etc.
+  brand: varchar("brand", { length: 32 }).default(""), // 'visa', 'mastercard', etc.
+  last4: varchar("last4", { length: 4 }).default(""),
+  expMonth: integer("exp_month"),
+  expYear: integer("exp_year"),
+  
+  // Status
+  isDefault: boolean("is_default").default(false),
+  status: varchar("status", { length: 32 }).default("active"), // 'active', 'inactive', 'expired'
+  
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    fingerprint?: string;
+    country?: string;
+    funding?: string;
+  }>().default({}),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Billing events log for audit trail
+export const billingEvents = pgTable("billing_events", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  subscriptionId: integer("subscription_id").references(() => subscriptions.id, { onDelete: "cascade" }),
+  
+  // Event details
+  eventType: varchar("event_type", { length: 64 }).notNull(), // 'subscription.created', 'payment.succeeded', etc.
+  stripeEventId: varchar("stripe_event_id", { length: 128 }).unique(),
+  
+  // Event data
+  eventData: jsonb("event_data").default({}),
+  processedSuccessfully: boolean("processed_successfully").default(true),
+  errorMessage: text("error_message").default(""),
+  retryCount: integer("retry_count").default(0),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Plan change requests (for handling upgrades/downgrades)
+export const planChangeRequests = pgTable("plan_change_requests", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  subscriptionId: integer("subscription_id").references(() => subscriptions.id, { onDelete: "cascade" }),
+  
+  // Change details
+  fromPlan: varchar("from_plan", { length: 32 }).notNull(),
+  toPlan: varchar("to_plan", { length: 32 }).notNull(),
+  changeType: varchar("change_type", { length: 32 }).notNull(), // 'upgrade', 'downgrade'
+  effectiveDate: timestamp("effective_date", { withTimezone: true }),
+  
+  // Request status
+  status: varchar("status", { length: 32 }).notNull().default("pending"), // 'pending', 'completed', 'failed', 'cancelled'
+  requestedBy: integer("requested_by").references(() => users.id),
+  
+  // Proration details
+  prorationAmount: integer("proration_amount").default(0), // in cents
+  prorationDescription: text("proration_description").default(""),
+  
+  // Stripe information
+  stripeSubscriptionScheduleId: varchar("stripe_subscription_schedule_id", { length: 128 }),
+  
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    reason?: string;
+    previousPlanFeatures?: string[];
+    newPlanFeatures?: string[];
+  }>().default({}),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
