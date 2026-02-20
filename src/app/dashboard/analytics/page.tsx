@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/language";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BarChart3,
   ShoppingCart,
@@ -19,12 +21,16 @@ import {
   UserCheck,
   Award,
   RefreshCw,
+  Truck,
 } from "lucide-react";
 
 const dict = {
   en: {
     title: "Seller Analytics Dashboard",
     subtitle: "Comprehensive insights into your store performance and customer behavior.",
+    // Navigation
+    generalAnalytics: "General Analytics",
+    deliveryAnalytics: "Delivery Analytics",
     // Periods
     period7d: "7 days",
     period30d: "30 days",
@@ -89,6 +95,9 @@ const dict = {
   pt: {
     title: "Painel de Análises do Vendedor",
     subtitle: "Insights abrangentes sobre o desempenho da sua loja e comportamento dos clientes.",
+    // Navigation
+    generalAnalytics: "Análises Gerais",
+    deliveryAnalytics: "Análises de Entrega",
     // Periods  
     period7d: "7 dias",
     period30d: "30 dias",
@@ -186,12 +195,28 @@ type AnalyticsData = {
 
 export default function AnalyticsPage() {
   const { lang } = useLanguage();
+  const pathname = usePathname();
   const t = useMemo(() => dict[lang], [lang]);
   const [period, setPeriod] = useState("30d");
   const [groupBy, setGroupBy] = useState("day");
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+
+  const analyticsNavItems = [
+    {
+      href: "/dashboard/analytics",
+      label: t.generalAnalytics,
+      icon: BarChart3,
+      active: pathname === "/dashboard/analytics"
+    },
+    {
+      href: "/dashboard/analytics/delivery",
+      label: t.deliveryAnalytics,
+      icon: Truck,
+      active: pathname.startsWith("/dashboard/analytics/delivery")
+    }
+  ];
 
   useEffect(() => {
     setLoading(true);
@@ -266,6 +291,29 @@ export default function AnalyticsPage() {
 
   return (
     <>
+      {/* Analytics Navigation */}
+      <div className="mb-6 border-b border-slate-200">
+        <nav className="flex space-x-8">
+          {analyticsNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2 pb-4 border-b-2 px-1 text-sm font-medium transition-colors ${
+                  item.active
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
