@@ -28,6 +28,9 @@ export async function GET(_: Request, context: { params: Promise<{ token: string
         sellerName: sellers.name,
         sellerSocialLinks: sellers.socialLinks,
         sellerEmail: sellers.email,
+        trackingNumber: orders.trackingNumber,
+        estimatedDelivery: orders.estimatedDelivery,
+        notes: orders.notes,
       })
       .from(orders)
       .leftJoin(catalogItems, eq(orders.itemId, catalogItems.id))
@@ -39,6 +42,12 @@ export async function GET(_: Request, context: { params: Promise<{ token: string
     const payment = await getPaymentStatus(orderId);
 
     const socialLinks = (row.sellerSocialLinks || {}) as { whatsapp?: string };
+
+    // Check if delivery has been confirmed (looking in notes for now)
+    const deliveryConfirmed = row.notes?.includes('DELIVERY CONFIRMATION') || false;
+    const deliveryConfirmedAt = deliveryConfirmed 
+      ? row.statusHistory?.find(h => h.note?.includes('Delivery confirmed'))?.at || null
+      : null;
 
     return NextResponse.json({
       token,
@@ -53,6 +62,12 @@ export async function GET(_: Request, context: { params: Promise<{ token: string
       sellerEmail: row.sellerEmail || null,
       customerName: row.customerName,
       statusHistory: row.statusHistory || [],
+      trackingNumber: row.trackingNumber || null,
+      trackingProvider: 'Correios de Moçambique', // Default for now
+      trackingUrl: row.trackingNumber ? `https://www.correios.co.mz/track?code=${row.trackingNumber}` : null,
+      estimatedDelivery: row.estimatedDelivery,
+      deliveryConfirmed,
+      deliveryConfirmedAt,
     });
   } catch {
     return NextResponse.json({ error: "Could not load tracking info" }, { status: 503 });
