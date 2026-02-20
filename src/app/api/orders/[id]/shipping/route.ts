@@ -170,7 +170,7 @@ export async function PUT(
 
           // Send notification using the notification service
           try {
-            await notifyOrderStatusChanged(orderId as any, order.sellerId, order.customerId, data.status || 'shipped');
+            await notifyOrderStatusChanged(orderId, data.status || 'shipped', order.sellerId);
           } catch (notificationError) {
             console.warn('Failed to send notification:', notificationError);
             // Don't fail the main request if notification fails

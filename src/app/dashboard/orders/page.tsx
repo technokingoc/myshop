@@ -248,7 +248,7 @@ export default function OrdersPage() {
       toast.success(toastText.updated || 'Tracking information updated');
     } catch (error) {
       console.error('Shipping update error:', error);
-      toast.error(toastText.updateFailed || 'Failed to update tracking information');
+      toast.error((toastText as any).updateFailed || 'Failed to update tracking information');
     }
   }, [sellerId, dbHealth, toast, toastText]);
 

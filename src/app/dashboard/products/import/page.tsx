@@ -81,7 +81,7 @@ const FIELD_MAPPING_OPTIONS = [
 
 export default function ProductImportPage() {
   const { t } = useLanguage();
-  const { addToast } = useToast();
+  const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [file, setFile] = useState<File | null>(null);
@@ -101,14 +101,11 @@ export default function ProductImportPage() {
   const loadImportHistory = async () => {
     try {
       setIsLoadingHistory(true);
-      const response = await fetchJsonWithRetry("/api/dashboard/products/history?type=import&limit=10");
+      const response: any = await fetchJsonWithRetry("/api/dashboard/products/history?type=import&limit=10");
       setHistory(response.history || []);
     } catch (error) {
       console.error("Failed to load import history:", error);
-      addToast({
-        type: "error",
-        message: t("products.import.historyLoadError"),
-      });
+      toast.error(t("products.import.historyLoadError"));
     } finally {
       setIsLoadingHistory(false);
     }
@@ -119,10 +116,7 @@ export default function ProductImportPage() {
     if (!selectedFile) return;
 
     if (!selectedFile.name.endsWith('.csv')) {
-      addToast({
-        type: "error",
-        message: t("products.import.invalidFileType"),
-      });
+      toast.error(t("products.import.invalidFileType"));
       return;
     }
 
@@ -151,10 +145,7 @@ export default function ProductImportPage() {
       setMapping(autoMapping);
     } catch (error) {
       console.error("Failed to parse CSV headers:", error);
-      addToast({
-        type: "error",
-        message: t("products.import.parseError"),
-      });
+      toast.error(t("products.import.parseError"));
     }
   };
 
@@ -178,10 +169,7 @@ export default function ProductImportPage() {
       setShowPreview(true);
     } catch (error) {
       console.error("Preview failed:", error);
-      addToast({
-        type: "error",
-        message: t("products.import.previewError"),
-      });
+      toast.error(t("products.import.previewError"));
     } finally {
       setIsUploading(false);
     }
@@ -206,13 +194,10 @@ export default function ProductImportPage() {
       setImportResult(result);
 
       if (result.success) {
-        addToast({
-          type: "success",
-          message: t("products.import.success", {
+        toast.success(t("products.import.success", {
             created: result.created,
             updated: result.updated,
-          }),
-        });
+        }));
         
         // Reset form
         setFile(null);
@@ -225,17 +210,11 @@ export default function ProductImportPage() {
         // Refresh history
         loadImportHistory();
       } else {
-        addToast({
-          type: "error",
-          message: t("products.import.error"),
-        });
+        toast.error(t("products.import.error"));
       }
     } catch (error) {
       console.error("Import failed:", error);
-      addToast({
-        type: "error",
-        message: t("products.import.error"),
-      });
+      toast.error(t("products.import.error"));
     } finally {
       setIsImporting(false);
     }
@@ -246,12 +225,9 @@ export default function ProductImportPage() {
     const missingFields = requiredFields.filter(field => !mapping[field.key]);
     
     if (missingFields.length > 0) {
-      addToast({
-        type: "error",
-        message: t("products.import.missingRequiredFields", {
-          fields: missingFields.map(f => f.label).join(', ')
-        }),
-      });
+      toast.error(t("products.import.missingRequiredFields", {
+          fields: missingFields.map(f => f.label).join(', '),
+      }));
       return false;
     }
     
@@ -268,16 +244,10 @@ export default function ProductImportPage() {
       link.click();
       document.body.removeChild(link);
       
-      addToast({
-        type: "success",
-        message: t("products.import.templateDownloaded"),
-      });
+      toast.success(t("products.import.templateDownloaded"));
     } catch (error) {
       console.error("Template download failed:", error);
-      addToast({
-        type: "error",
-        message: t("products.import.templateError"),
-      });
+      toast.error(t("products.import.templateError"));
     }
   };
 
@@ -372,7 +342,7 @@ export default function ProductImportPage() {
                     </Label>
                     <Select 
                       value={mapping[field.key] || ''} 
-                      onValueChange={(value) => setMapping(prev => ({ ...prev, [field.key]: value }))}
+                      onValueChange={(value: string) => setMapping(prev => ({ ...prev, [field.key]: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={t("products.import.selectColumn")} />
@@ -461,7 +431,7 @@ export default function ProductImportPage() {
                     ))}
                     {importResult.errors.length > 10 && (
                       <p className="text-sm text-gray-500 text-center">
-                        {t("products.import.moreErrors", { count: importResult.errors.length - 10 })}
+                        {t("products.import.moreErrors", { count: String(importResult.errors.length - 10) })}
                       </p>
                     )}
                   </div>

@@ -189,17 +189,13 @@ export async function notifyDeliveryStatusChange(statusChange: DeliveryStatusCha
     // Send email notification
     if (isEmailAddress) {
       try {
-        await sendOrderStatusUpdate({
-          customerEmail: statusChange.customerContact,
-          customerName: statusChange.customerName,
-          orderId: statusChange.orderId,
-          oldStatus: statusChange.oldStatus,
-          newStatus: statusChange.newStatus,
-          trackingNumber: statusChange.trackingNumber,
-          estimatedDelivery: statusChange.estimatedDelivery,
-          notes: statusChange.notes,
-          trackingUrl: `/track/ORD-${statusChange.orderId}`,
-        });
+        await sendOrderStatusUpdate(
+          statusChange.customerContact,
+          `ORD-${statusChange.orderId}`,
+          statusChange.newStatus,
+          'pt',
+          `/track/ORD-${statusChange.orderId}`
+        );
         
         // Update log to mark email as sent
         if (logId) {
@@ -282,15 +278,13 @@ export async function sendDeliveryConfirmationReminder(orderId: number): Promise
     
     // Send reminder via appropriate channel
     if (isEmail(order.customerContact)) {
-      await sendOrderStatusUpdate({
-        customerEmail: order.customerContact,
-        customerName: order.customerName,
-        orderId: order.id,
-        oldStatus: 'delivered',
-        newStatus: 'delivered',
-        notes: 'Delivery confirmation reminder',
-        trackingUrl: `/track/ORD-${order.id}`,
-      });
+      await sendOrderStatusUpdate(
+        order.customerContact,
+        `ORD-${order.id}`,
+        'delivered',
+        'pt',
+        `/track/ORD-${order.id}`
+      );
     } else if (isPhoneNumber(order.customerContact)) {
       const { sendSMS } = await import('@/lib/sms-service');
       await sendSMS({

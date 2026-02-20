@@ -37,7 +37,7 @@ interface ExportHistory {
 
 export default function ProductExportPage() {
   const { t } = useLanguage();
-  const { addToast } = useToast();
+  const toast = useToast();
   
   const [isExporting, setIsExporting] = useState(false);
   const [includeVariants, setIncludeVariants] = useState(false);
@@ -51,14 +51,11 @@ export default function ProductExportPage() {
   const loadExportHistory = async () => {
     try {
       setIsLoadingHistory(true);
-      const response = await fetchJsonWithRetry("/api/dashboard/products/history?type=export&limit=10");
+      const response: any = await fetchJsonWithRetry("/api/dashboard/products/history?type=export&limit=10");
       setHistory(response.history || []);
     } catch (error) {
       console.error("Failed to load export history:", error);
-      addToast({
-        type: "error",
-        message: t("products.export.historyLoadError"),
-      });
+      toast.error(t("products.export.historyLoadError"));
     } finally {
       setIsLoadingHistory(false);
     }
@@ -78,10 +75,7 @@ export default function ProductExportPage() {
       link.click();
       document.body.removeChild(link);
       
-      addToast({
-        type: "success",
-        message: t("products.export.success"),
-      });
+      toast.success(t("products.export.success"));
 
       // Refresh history
       setTimeout(() => {
@@ -90,10 +84,7 @@ export default function ProductExportPage() {
 
     } catch (error) {
       console.error("Export failed:", error);
-      addToast({
-        type: "error",
-        message: t("products.export.error"),
-      });
+      toast.error(t("products.export.error"));
     } finally {
       setIsExporting(false);
     }

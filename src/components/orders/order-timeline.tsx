@@ -29,7 +29,7 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
   completed: { bg: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-500" },
 };
 
-const FLOW_STEPS: OrderStatus[] = ["placed", "confirmed", "processing", "shipped", "delivered"];
+const FLOW_STEPS: OrderStatus[] = ["placed", "confirmed", "preparing", "shipped", "delivered"];
 
 type StatusHistoryEntry = { status: string; at: string; note?: string };
 

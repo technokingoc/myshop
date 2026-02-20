@@ -65,7 +65,7 @@ const statusColorMap: Record<string, string> = {
 
 export default function DeliveryAnalyticsPage() {
   const { lang } = useLanguage();
-  const t = getDict(lang).analytics as unknown as Record<string, string>;
+  const t = (getDict(lang) as any).analytics as Record<string, string> ?? {};
   const toast = useToast();
 
   const [analytics, setAnalytics] = useState<DeliveryAnalytics | null>(null);

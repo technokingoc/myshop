@@ -34,7 +34,7 @@ export default function StockOverviewWidget({ className = "" }: StockOverviewWid
       setLoading(true);
       setError(null);
       
-      const response = await fetchJsonWithRetry('/api/inventory/stock-overview');
+      const response: any = await fetchJsonWithRetry('/api/inventory/stock-overview');
       if (response.success) {
         setOverview(response.data);
       } else {

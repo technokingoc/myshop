@@ -7,7 +7,7 @@ import { useToast } from "@/components/toast-provider";
 import Link from "next/link";
 import {
   Package, TrendingDown, AlertTriangle, Clock, Settings, RefreshCw,
-  PackageX, AlertCircle, ChevronRight, Bell, BellOff, Eye, EyeOff,
+  PackageX, PackageCheck, AlertCircle, ChevronRight, Bell, BellOff, Eye, EyeOff,
   ArrowUp, ArrowDown, BarChart3, Target, Calendar, User
 } from "lucide-react";
 
@@ -203,7 +203,7 @@ const dict = {
 export default function InventoryAlertsPage() {
   const { lang } = useLanguage();
   const t = dict[lang];
-  const { showToast } = useToast();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [stockOverview, setStockOverview] = useState<StockOverview | null>(null);
@@ -217,35 +217,35 @@ export default function InventoryAlertsPage() {
       setLoading(true);
       
       // Load stock overview
-      const overviewResponse = await fetchJsonWithRetry('/api/inventory/stock-overview');
+      const overviewResponse: any = await fetchJsonWithRetry('/api/inventory/stock-overview');
       if (overviewResponse.success) {
         setStockOverview(overviewResponse.data);
       }
       
       // Load active alerts
-      const alertsResponse = await fetchJsonWithRetry('/api/inventory/alerts');
+      const alertsResponse: any = await fetchJsonWithRetry('/api/inventory/alerts');
       if (alertsResponse.success) {
         setAlerts(alertsResponse.data);
       }
       
       // Load restock suggestions
-      const suggestionsResponse = await fetchJsonWithRetry('/api/inventory/restock-suggestions');
+      const suggestionsResponse: any = await fetchJsonWithRetry('/api/inventory/restock-suggestions');
       if (suggestionsResponse.success) {
         setRestockSuggestions(suggestionsResponse.data);
       }
       
       // Load settings
-      const settingsResponse = await fetchJsonWithRetry('/api/inventory/settings');
+      const settingsResponse: any = await fetchJsonWithRetry('/api/inventory/settings');
       if (settingsResponse.success) {
         setAutoHideOutOfStock(settingsResponse.data.autoHideOutOfStock || false);
       }
       
     } catch (error) {
-      showToast(t.error, 'error');
+      toast.error(t.error);
     } finally {
       setLoading(false);
     }
-  }, [showToast, t.error]);
+  }, [toast, t.error]);
 
   useEffect(() => {
     loadData();
@@ -253,7 +253,7 @@ export default function InventoryAlertsPage() {
 
   const handleAcknowledgeAlert = async (alertId: number) => {
     try {
-      const response = await fetchJsonWithRetry(`/api/inventory/alerts/${alertId}/acknowledge`, {
+      const response: any = await fetchJsonWithRetry(`/api/inventory/alerts/${alertId}/acknowledge`, {
         method: 'POST',
       });
       
@@ -263,37 +263,37 @@ export default function InventoryAlertsPage() {
             ? { ...alert, status: 'acknowledged' as const } 
             : alert
         ));
-        showToast('Alert acknowledged', 'success');
+        toast.success('Alert acknowledged');
       } else {
-        showToast('Failed to acknowledge alert', 'error');
+        toast.error('Failed to acknowledge alert');
       }
     } catch (error) {
-      showToast('Failed to acknowledge alert', 'error');
+      toast.error('Failed to acknowledge alert');
     }
   };
 
   const handleResolveAlert = async (alertId: number) => {
     try {
-      const response = await fetchJsonWithRetry(`/api/inventory/alerts/${alertId}/resolve`, {
+      const response: any = await fetchJsonWithRetry(`/api/inventory/alerts/${alertId}/resolve`, {
         method: 'POST',
       });
       
       if (response.success) {
         setAlerts(prev => prev.filter(alert => alert.id !== alertId));
-        showToast('Alert resolved', 'success');
+        toast.success('Alert resolved');
         loadData(); // Refresh data to update overview
       } else {
-        showToast('Failed to resolve alert', 'error');
+        toast.error('Failed to resolve alert');
       }
     } catch (error) {
-      showToast('Failed to resolve alert', 'error');
+      toast.error('Failed to resolve alert');
     }
   };
 
   const handleToggleAutoHide = async () => {
     try {
       const newValue = !autoHideOutOfStock;
-      const response = await fetchJsonWithRetry('/api/inventory/settings', {
+      const response: any = await fetchJsonWithRetry('/api/inventory/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ autoHideOutOfStock: newValue }),
@@ -301,15 +301,12 @@ export default function InventoryAlertsPage() {
       
       if (response.success) {
         setAutoHideOutOfStock(newValue);
-        showToast(
-          newValue ? t.hideOutOfStock : t.showOutOfStock, 
-          'success'
-        );
+        toast.success(newValue ? t.hideOutOfStock : t.showOutOfStock);
       } else {
-        showToast('Failed to update setting', 'error');
+        toast.error('Failed to update setting');
       }
     } catch (error) {
-      showToast('Failed to update setting', 'error');
+      toast.error('Failed to update setting');
     }
   };
 
