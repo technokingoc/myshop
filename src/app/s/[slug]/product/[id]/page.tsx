@@ -72,34 +72,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const description = product.shortDescription || `${product.name} from ${storeName}`;
     const price = parseFloat(product.price) || 0;
+    const compareAtPrice = product.compareAtPrice ? parseFloat(product.compareAtPrice) : undefined;
+    const hasDiscount = compareAtPrice && compareAtPrice > price;
+    
+    // Enhanced title with pricing info for better CTR
+    const titleWithPrice = `${product.name} - ${seller?.currency || store?.currency || "USD"} ${price}${hasDiscount ? ` (was ${compareAtPrice})` : ""} - ${storeName}`;
+    
+    // Enhanced description with key selling points
+    const enhancedDescription = description + (hasDiscount ? ` Save ${Math.round((1 - price / compareAtPrice) * 100)}% off the regular price.` : '') + ` Free delivery available. Shop now at ${storeName}.`;
 
     return {
-      title: `${product.name} - ${storeName}`,
-      description,
+      title: titleWithPrice,
+      description: enhancedDescription,
       keywords: [
         product.name,
         product.category || "",
         storeName,
         product.type,
         "online store",
-        "buy online"
+        "buy online",
+        "e-commerce",
+        "Mozambique",
+        ...(hasDiscount ? ["discount", "sale", "promotion"] : []),
+        ...(product.category ? [product.category.toLowerCase()] : [])
       ].filter(Boolean),
       openGraph: {
-        title: `${product.name} - ${storeName}`,
-        description,
+        title: titleWithPrice,
+        description: enhancedDescription,
         url: productUrl,
         siteName: "MyShop",
-        images: images.map(img => ({
+        images: images.map((img, index) => ({
           url: img,
-          alt: product.name,
+          alt: index === 0 ? product.name : `${product.name} - Image ${index + 1}`,
+          width: 1200,
+          height: 630,
         })),
-        type: "website",
+        type: "product",
+        locale: "en_US",
       },
       twitter: {
         card: "summary_large_image",
-        title: `${product.name} - ${storeName}`,
-        description,
-        images: images.length > 0 ? [images[0]] : [],
+        site: "@MyShopMZ",
+        title: titleWithPrice,
+        description: enhancedDescription,
+        images: images.length > 0 ? [{
+          url: images[0],
+          alt: product.name,
+        }] : [],
       },
       alternates: {
         canonical: productUrl,
@@ -107,8 +126,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       other: {
         "product:price:amount": price.toString(),
         "product:price:currency": seller?.currency || store?.currency || "USD",
-        "product:availability": "in stock",
+        "product:availability": product.status === "Published" ? "in stock" : "out of stock",
+        "product:condition": "new",
         "product:brand": storeName,
+        "product:retailer": "MyShop",
+        "product:category": product.category || "",
+        ...(hasDiscount && {
+          "product:sale_price": price.toString(),
+          "product:original_price": compareAtPrice.toString(),
+        }),
+        // Rich snippets for Google
+        "og:price:amount": price.toString(),
+        "og:price:currency": seller?.currency || store?.currency || "USD",
+        "product:retailer_item_id": product.id.toString(),
       },
     };
   } catch (error) {

@@ -7,10 +7,51 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        disallow: ["/dashboard/", "/api/", "/admin/", "/setup"],
+        allow: ["/", "/s/", "/stores", "/pricing", "/register", "/login", "/customer/register", "/open-store"],
+        disallow: [
+          "/dashboard/", 
+          "/api/", 
+          "/admin/", 
+          "/setup",
+          "/customer/",
+          "/cart",
+          "/checkout",
+          "/track/",
+          "/_next/",
+          "/favicon.ico",
+        ],
+        crawlDelay: 1,
       },
+      {
+        userAgent: "Googlebot",
+        allow: ["/", "/s/", "/stores", "/pricing", "/register", "/open-store"],
+        disallow: [
+          "/dashboard/", 
+          "/api/", 
+          "/admin/", 
+          "/setup",
+          "/customer/",
+          "/cart",
+          "/checkout",
+          "/track/",
+        ],
+      },
+      {
+        userAgent: "Bingbot",
+        allow: ["/", "/s/", "/stores", "/pricing"],
+        disallow: [
+          "/dashboard/", 
+          "/api/", 
+          "/admin/", 
+          "/setup",
+          "/customer/",
+          "/cart",
+          "/checkout",
+        ],
+        crawlDelay: 2,
+      }
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }

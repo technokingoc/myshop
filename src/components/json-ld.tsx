@@ -213,3 +213,147 @@ export function WebsiteJsonLd({
     />
   );
 }
+
+export function OrganizationJsonLd({
+  name,
+  url,
+  logo,
+  description,
+  contactPoint,
+  sameAs,
+  address,
+}: {
+  name: string;
+  url: string;
+  logo?: string;
+  description?: string;
+  contactPoint?: {
+    telephone?: string;
+    email?: string;
+    contactType?: string;
+    areaServed?: string;
+    availableLanguage?: string[];
+  };
+  sameAs?: string[];
+  address?: {
+    streetAddress?: string;
+    addressLocality?: string;
+    addressCountry?: string;
+    postalCode?: string;
+  };
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name,
+    url,
+    ...(logo && { logo }),
+    ...(description && { description }),
+    ...(contactPoint && {
+      contactPoint: {
+        "@type": "ContactPoint",
+        ...contactPoint,
+      },
+    }),
+    ...(sameAs && { sameAs }),
+    ...(address && {
+      address: {
+        "@type": "PostalAddress",
+        ...address,
+      },
+    }),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+export function FAQJsonLd({
+  questions,
+}: {
+  questions: Array<{
+    question: string;
+    answer: string;
+  }>;
+}) {
+  if (!questions.length) return null;
+
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: questions.map(({ question, answer }) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: answer,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+export function CollectionPageJsonLd({
+  name,
+  description,
+  url,
+  products,
+}: {
+  name: string;
+  description?: string;
+  url: string;
+  products?: Array<{
+    name: string;
+    url: string;
+    image?: string;
+    price?: string;
+    currency?: string;
+  }>;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name,
+    ...(description && { description }),
+    url,
+    ...(products && products.length > 0 && {
+      mainEntity: {
+        "@type": "ItemList",
+        itemListElement: products.map((product, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          item: {
+            "@type": "Product",
+            name: product.name,
+            url: product.url,
+            ...(product.image && { image: product.image }),
+            ...(product.price && product.currency && {
+              offers: {
+                "@type": "Offer",
+                price: product.price,
+                priceCurrency: product.currency,
+              },
+            }),
+          },
+        })),
+      },
+    }),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}

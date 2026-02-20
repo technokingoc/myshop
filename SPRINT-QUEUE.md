@@ -26,7 +26,7 @@ Must be production-ready for real Mozambique merchants.
 - [x] **S47: Inventory Management** ✅ — Deployed 2026-02-19 — Stock level tracking. Low stock alerts. Restock reminders. Stock history. Multi-warehouse support (future).
 
 ### Phase 4: Platform & Scale
-- [ ] **S48: Payment Integration** — M-Pesa integration (Mozambique). Bank transfer instructions. Payment confirmation flow. Payment status tracking. Revenue settlement.
+- [x] **S48: Payment Integration** ✅ — Deployed 2026-02-20 — M-Pesa integration (Mozambique). Bank transfer instructions. Payment confirmation flow. Payment status tracking. Revenue settlement.
 - [ ] **S49: SEO & Performance** — Dynamic meta tags per product/store. Structured data (JSON-LD). Sitemap generation. Image optimization (WebP, lazy load). Core Web Vitals optimization. Target Lighthouse 90+.
 - [ ] **S50: Admin Panel v2** — Platform-wide analytics. Seller verification workflow. Content moderation queue. Category/location management UI. Platform fee configuration. User management.
 - [ ] **S51: Multi-language v2** — Complete EN/PT coverage. Seller store language setting. Customer language preference. RTL prep (future).

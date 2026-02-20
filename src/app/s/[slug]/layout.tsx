@@ -62,8 +62,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://myshop.co.mz";
     const storeUrl = `${baseUrl}/s/${slug}`;
     
-    const title = `${store.name} — ${store.description?.slice(0, 100) || "Online Store"} | MyShop`;
-    const description = store.description || `Shop at ${store.name} on MyShop. ${store.businessType || "Retail"} store located in ${[store.city, store.country].filter(Boolean).join(', ')}.`;
+    const title = `${store.name} — ${store.description?.slice(0, 80) || "Online Store"} | MyShop`;
+    const locationStr = [store.city, store.country].filter(Boolean).join(', ');
+    const description = store.description || `Shop at ${store.name} on MyShop. ${store.businessType || "Retail"} store${locationStr ? ` located in ${locationStr}` : ''}. Fast delivery, secure payments, quality products.`;
     
     const keywords = [
       store.name,
@@ -71,8 +72,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       store.city,
       store.country,
       "online store",
-      "buy online",
-      "MyShop"
+      "buy online", 
+      "e-commerce",
+      "MyShop",
+      "Mozambique",
+      "shopping",
+      "delivery",
+      ...(store.businessType?.toLowerCase().includes('food') || store.businessType?.toLowerCase().includes('restaurant') 
+        ? ["food delivery", "restaurant", "takeaway"] 
+        : []),
+      ...(store.businessType?.toLowerCase().includes('service') 
+        ? ["services", "professional services"] 
+        : [])
     ].filter((k): k is string => Boolean(k) && typeof k === 'string');
 
     return {
@@ -88,16 +99,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: store.bannerUrl,
           width: 1200,
           height: 630,
-          alt: `${store.name} banner`
-        }] : undefined,
-        type: "website",
+          alt: `${store.name} - ${store.businessType || 'Store'} in ${locationStr || 'Mozambique'}`
+        }] : (store.logoUrl ? [{
+          url: store.logoUrl,
+          width: 400,
+          height: 400,
+          alt: `${store.name} logo`
+        }] : undefined),
+        type: "business.business",
         locale: "en_US",
       },
       twitter: {
         card: "summary_large_image",
-        title: store.name,
+        site: "@MyShopMZ",
+        title,
         description,
-        images: store.bannerUrl ? [store.bannerUrl] : undefined,
+        images: store.bannerUrl ? [{
+          url: store.bannerUrl,
+          alt: `${store.name} banner`
+        }] : (store.logoUrl ? [{
+          url: store.logoUrl,
+          alt: `${store.name} logo`
+        }] : undefined),
       },
       alternates: {
         canonical: storeUrl,
@@ -106,6 +129,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         "business:contact_data:locality": store.city || "",
         "business:contact_data:country_name": store.country || "",
         "business:contact_data:business_type": store.businessType || "Retail",
+        "og:locality": store.city || "",
+        "og:country-name": store.country || "",
+        "business:hours": "24/7", // Can be enhanced with actual business hours
+        "business:contact_data:phone_number": "", // Can be enhanced with actual phone
+        "place:location:latitude": "", // Can be enhanced with actual coordinates
+        "place:location:longitude": "",
       },
     };
   } catch (error) {

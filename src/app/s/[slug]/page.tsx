@@ -17,7 +17,7 @@ import SimpleToast from "@/components/toast-simple";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
 import { getTheme } from "@/lib/theme-colors";
 import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
-import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
+import { StoreJsonLd, ProductJsonLd, BreadcrumbJsonLd, CollectionPageJsonLd } from "@/components/json-ld";
 import { SafeImg } from "@/components/safe-img";
 import { FAB } from "@/components/fab";
 import { useCategories, flattenCategories } from "@/components/category-select";
@@ -346,8 +346,75 @@ export default function StorefrontPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50">
-      <StoreJsonLd name={seller.name} description={seller.description || ""} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} logo={seller.logoUrl || undefined} image={seller.bannerUrl || undefined} address={seller.address || undefined} city={seller.city || undefined} country={seller.country || undefined} />
-      {products.map((p) => <ProductJsonLd key={p.id} name={p.name} description={p.shortDescription || undefined} image={p.imageUrl || undefined} price={p.price} currency={seller.currency || "USD"} url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} seller={seller.name} />)}
+      <StoreJsonLd 
+        name={seller.name} 
+        description={seller.description || ""} 
+        url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`} 
+        logo={seller.logoUrl || undefined} 
+        image={seller.bannerUrl || undefined} 
+        address={seller.address || undefined} 
+        city={seller.city || undefined} 
+        country={seller.country || undefined}
+        telephone={seller.socialLinks?.whatsapp ? `+${seller.socialLinks.whatsapp.replace(/\D/g, '')}` : undefined}
+        socialLinks={seller.socialLinks}
+      />
+      
+      <BreadcrumbJsonLd 
+        items={[
+          { name: "MyShop", url: typeof window !== "undefined" ? window.location.origin : "" },
+          { name: "Stores", url: typeof window !== "undefined" ? `${window.location.origin}/stores` : "/stores" },
+          { name: seller.name, url: typeof window !== "undefined" ? window.location.href : `/s/${slug}` }
+        ]}
+      />
+
+      {activeTab === "products" && products.length > 0 && (
+        <CollectionPageJsonLd
+          name={`${seller.name} Products`}
+          description={`Shop products from ${seller.name}. ${seller.description || ''}`}
+          url={typeof window !== "undefined" ? window.location.href : `/s/${slug}`}
+          products={filtered.slice(0, 12).map(p => ({
+            name: p.name,
+            url: typeof window !== "undefined" ? `${window.location.origin}/s/${slug}/product/${p.id}` : `/s/${slug}/product/${p.id}`,
+            image: p.imageUrl || undefined,
+            price: p.price,
+            currency: seller.currency || "USD"
+          }))}
+        />
+      )}
+      
+      {products.slice(0, 20).map((p) => {
+        const images = [p.imageUrl];
+        try {
+          if (p.imageUrls) {
+            const additionalImages = JSON.parse(p.imageUrls);
+            if (Array.isArray(additionalImages)) {
+              images.push(...additionalImages);
+            }
+          }
+        } catch {}
+
+        return (
+          <ProductJsonLd 
+            key={p.id} 
+            name={p.name} 
+            description={p.shortDescription || undefined} 
+            image={p.imageUrl || undefined} 
+            images={images.filter(Boolean)}
+            price={p.price} 
+            currency={seller.currency || "USD"} 
+            url={typeof window !== "undefined" ? `${window.location.origin}/s/${slug}/product/${p.id}` : `/s/${slug}/product/${p.id}`} 
+            seller={seller.name}
+            category={p.category || undefined}
+            sku={p.id.toString()}
+            availability="InStock"
+            condition="NewCondition"
+            aggregateRating={productRatings[p.id] ? {
+              ratingValue: productRatings[p.id].average,
+              ratingCount: productRatings[p.id].count
+            } : undefined}
+          />
+        );
+      })}
 
       <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">

@@ -233,10 +233,63 @@ select {
 /* Enhanced hover states for premium feel */
 .hover-lift {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform: translateZ(0); /* Force GPU acceleration */
+  will-change: transform; /* Optimize for animations */
 }
 .hover-lift:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth scrolling for better UX */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Optimize font rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Optimize images for better loading */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Content visibility optimization */
+.lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 500px;
+}
+
+/* Optimized focus styles for better accessibility and performance */
+:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+  transition: outline 0.1s ease;
 }
 
 /* Print styles for packing slips */

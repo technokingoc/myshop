@@ -1,0 +1,41 @@
+{
+  "name": "MyShop - Create Your Online Store",
+  "short_name": "MyShop",
+  "description": "Build a professional storefront in minutes. Designed for small businesses and informal sellers in Mozambique and beyond.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot2.png", 
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["business", "shopping", "productivity"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "orientation": "portrait-primary"
+}
