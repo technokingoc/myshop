@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSellerFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { conversations, messages, users, stores, catalogItems, orders, userBlocks } from "@/lib/schema";
 import { eq, desc, and, or, sql, not, inArray } from "drizzle-orm";
@@ -7,12 +7,10 @@ import { eq, desc, and, or, sql, not, inArray } from "drizzle-orm";
 // GET /api/messages - List conversations for authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getSellerFromSession(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = parseInt(session.user.id);
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "active";
     const page = parseInt(searchParams.get("page") || "1");
@@ -69,18 +67,27 @@ export async function GET(request: NextRequest) {
         and(eq(conversations.customerId, userId), eq(users.id, conversations.sellerId)),
         and(eq(conversations.sellerId, userId), eq(users.id, conversations.customerId))
       ))
-      .where(and(
-        or(
-          eq(conversations.customerId, userId),
-          eq(conversations.sellerId, userId)
-        ),
-        eq(conversations.status, status),
-        // Filter out conversations with blocked users
-        blockedUserIds.length > 0 ? not(or(
-          and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
-          and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
-        )) : undefined
-      ))
+      .where(
+        blockedUserIds.length > 0 
+          ? and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status),
+              not(or(
+                and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
+                and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
+              ))
+            )
+          : and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status)
+            )
+      )
       .orderBy(desc(conversations.lastMessageAt))
       .limit(limit)
       .offset(offset);
@@ -91,18 +98,27 @@ export async function GET(request: NextRequest) {
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(conversations)
-      .where(and(
-        or(
-          eq(conversations.customerId, userId),
-          eq(conversations.sellerId, userId)
-        ),
-        eq(conversations.status, status),
-        // Filter out conversations with blocked users
-        blockedUserIds.length > 0 ? not(or(
-          and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
-          and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
-        )) : undefined
-      ));
+      .where(
+        blockedUserIds.length > 0 
+          ? and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status),
+              not(or(
+                and(eq(conversations.customerId, userId), inArray(conversations.sellerId, blockedUserIds)),
+                and(eq(conversations.sellerId, userId), inArray(conversations.customerId, blockedUserIds))
+              ))
+            )
+          : and(
+              or(
+                eq(conversations.customerId, userId),
+                eq(conversations.sellerId, userId)
+              ),
+              eq(conversations.status, status)
+            )
+      );
 
     const totalCount = totalCountResult[0]?.count || 0;
 
@@ -130,12 +146,10 @@ export async function GET(request: NextRequest) {
 // POST /api/messages - Start a new conversation
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getSellerFromSession(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = parseInt(session.user.id);
     const body = await request.json();
     const {
       storeId,

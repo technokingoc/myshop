@@ -8,11 +8,11 @@ import { eq, and, or, sql } from "drizzle-orm";
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session as any).user.id);
     const body = await request.json();
     const { blockedUserId, reason = "", notes = "", blockType = "messages" } = body;
 
@@ -111,11 +111,11 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session as any).user.id);
     const { searchParams } = new URL(request.url);
     const blockedUserId = searchParams.get("userId");
 
@@ -177,11 +177,11 @@ export async function DELETE(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session as any).user.id);
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);

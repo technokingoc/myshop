@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSellerFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { 
   conversations, 
@@ -18,12 +18,10 @@ export async function GET(
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getSellerFromSession(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = parseInt(session.user.id);
     const { conversationId: convId } = await params;
     const conversationId = parseInt(convId);
     const { searchParams } = new URL(request.url);
@@ -183,12 +181,10 @@ export async function POST(
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getSellerFromSession(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = parseInt(session.user.id);
     const { conversationId: convId } = await params;
     const conversationId = parseInt(convId);
     const body = await request.json();
@@ -265,7 +261,7 @@ export async function POST(
         metadata: JSON.stringify(metadata),
         readByCustomer: userId === conv.customerId,
         readBySeller: userId === conv.sellerId,
-      })
+      } as any)
       .returning({
         id: messages.id,
         createdAt: messages.createdAt,
@@ -287,7 +283,7 @@ export async function POST(
             actionTaken: match.action,
             originalContent: match.originalContent || "",
             position: match.position || 0,
-          });
+          } as any);
       }
     }
 

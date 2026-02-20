@@ -17,11 +17,11 @@ export async function POST(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session as any).user.id);
     const { conversationId: convId } = await params;
     const conversationId = parseInt(convId);
     const body = await request.json();

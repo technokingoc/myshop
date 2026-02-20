@@ -8,11 +8,11 @@ import { eq, and, or, desc, sql } from "drizzle-orm";
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session as any).user.id);
     const { searchParams } = new URL(request.url);
     const conversationIds = searchParams.get("conversations")?.split(",").map(id => parseInt(id)) || [];
 
@@ -146,11 +146,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session as any).user.id);
     const body = await request.json();
     const { conversationId, isTyping = true } = body;
 

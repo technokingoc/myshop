@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSellerFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { conversations, messageFiles } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
@@ -22,12 +22,10 @@ export async function POST(
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getSellerFromSession(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = parseInt(session.user.id);
     const { conversationId: convId } = await params;
     const conversationId = parseInt(convId);
 
@@ -108,7 +106,7 @@ export async function POST(
     const fileRecord = await db
       .insert(messageFiles)
       .values({
-        messageId: null, // Will be set when message is created
+        messageId: null as any, // Will be set when message is created
         uploadedBy: userId,
         fileName: file.name,
         fileType: file.type,
@@ -118,7 +116,7 @@ export async function POST(
         height,
         virusScanned: false, // In production, scan files before allowing access
         scanResult: "pending",
-      })
+      } as any)
       .returning({
         id: messageFiles.id,
         fileName: messageFiles.fileName,
@@ -150,12 +148,10 @@ export async function GET(
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getSellerFromSession(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = parseInt(session.user.id);
     const { conversationId: convId } = await params;
     const conversationId = parseInt(convId);
 
