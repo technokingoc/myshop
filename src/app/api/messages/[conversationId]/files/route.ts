@@ -19,7 +19,7 @@ const ALLOWED_FILE_TYPES = [
 // POST /api/messages/[conversationId]/files - Upload file to conversation
 export async function POST(
   request: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     const session = await auth();
@@ -28,7 +28,8 @@ export async function POST(
     }
 
     const userId = parseInt(session.user.id);
-    const conversationId = parseInt(params.conversationId);
+    const { conversationId: convId } = await params;
+    const conversationId = parseInt(convId);
 
     // Verify user has access to this conversation
     const conversation = await db
@@ -146,7 +147,7 @@ export async function POST(
 // GET /api/messages/[conversationId]/files - Get files in conversation
 export async function GET(
   request: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     const session = await auth();
@@ -155,7 +156,8 @@ export async function GET(
     }
 
     const userId = parseInt(session.user.id);
-    const conversationId = parseInt(params.conversationId);
+    const { conversationId: convId } = await params;
+    const conversationId = parseInt(convId);
 
     // Verify user has access to this conversation
     const conversation = await db

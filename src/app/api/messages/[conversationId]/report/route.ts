@@ -13,7 +13,7 @@ import { eq, and, sql } from "drizzle-orm";
 // POST /api/messages/[conversationId]/report - Report a message or conversation
 export async function POST(
   request: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     const session = await auth();
@@ -22,7 +22,8 @@ export async function POST(
     }
 
     const userId = parseInt(session.user.id);
-    const conversationId = parseInt(params.conversationId);
+    const { conversationId: convId } = await params;
+    const conversationId = parseInt(convId);
     const body = await request.json();
     const { 
       messageId, 

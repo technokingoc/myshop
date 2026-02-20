@@ -701,6 +701,115 @@
       "loadFailed": "Falha ao carregar mensagens. Tente novamente.",
       "networkError": "Erro de rede. Verifique a sua ligação.",
       "serverError": "Erro do servidor. Tente novamente mais tarde."
+    },
+    "s58": {
+      "uploadFile": "Carregar Ficheiro",
+      "uploadingFile": "Carregando ficheiro...",
+      "fileUploaded": "Ficheiro carregado com sucesso",
+      "fileUploadFailed": "Falha ao carregar ficheiro",
+      "supportedFormats": "Formatos suportados: Imagens, PDF, Texto, Documentos Word. Tamanho máx: 10MB",
+      "reportMessage": "Reportar Mensagem",
+      "reportConversation": "Reportar Conversa",
+      "reportSubmitted": "Relatório enviado com sucesso",
+      "reportFailed": "Falha ao enviar relatório",
+      "blockUser": "Bloquear Utilizador",
+      "blockUserConfirm": "Isto impedirá este utilizador de lhe enviar mensagens e ocultará todas as conversas com ele.",
+      "blockReason": "Motivo (opcional)",
+      "userBlocked": "Utilizador bloqueado com sucesso",
+      "blockFailed": "Falha ao bloquear utilizador",
+      "unblockUser": "Desbloquear Utilizador",
+      "userUnblocked": "Utilizador desbloqueado com sucesso",
+      "blockedUsers": "Utilizadores Bloqueados",
+      "noBlockedUsers": "Nenhum utilizador bloqueado",
+      "contentFiltered": "Conteúdo filtrado",
+      "messageFiltered": "Mensagem enviada com filtragem de conteúdo aplicada",
+      "reportReasons": {
+        "spam": "Spam",
+        "harassment": "Assédio",
+        "inappropriate": "Conteúdo Inadequado",
+        "fraud": "Fraude/Esquema",
+        "other": "Outro"
+      },
+      "blockReasons": {
+        "spam": "Mensagens de spam",
+        "harassment": "Assédio",
+        "inappropriate": "Comportamento inadequado",
+        "other": "Outro"
+      },
+      "orderCard": {
+        "orderNumber": "Pedido #{number}",
+        "aboutOrder": "Esta conversa é sobre o seu pedido.",
+        "viewOrderDetails": "Ver Detalhes do Pedido"
+      },
+      "productCard": {
+        "aboutProduct": "Esta conversa é sobre este produto.",
+        "viewProduct": "Ver Produto"
+      },
+      "moderation": {
+        "title": "Moderação de Mensagens",
+        "pendingReports": "Relatórios Pendentes",
+        "pendingFlags": "Sinalizações Pendentes",
+        "totalReports": "Total de Relatórios",
+        "totalFlags": "Total de Sinalizações",
+        "messageReports": "Relatórios de Mensagens",
+        "conversationFlags": "Sinalizações de Conversas",
+        "noReports": "Nenhum relatório de mensagem encontrado",
+        "noFlags": "Nenhuma sinalização de conversa encontrada",
+        "reviewAction": "Revisar",
+        "takeModerationAction": "Tomar Ação de Moderação",
+        "action": "Ação",
+        "moderationNotes": "Notas",
+        "applyAction": "Aplicar Ação",
+        "actionApplied": "Ação de moderação aplicada com sucesso",
+        "actionFailed": "Falha ao aplicar ação de moderação",
+        "actions": {
+          "dismiss": "Descartar",
+          "approve": "Aprovar (Fechar conversa)",
+          "warn": "Avisar Utilizador",
+          "tempBan": "Banimento Temporário",
+          "permanentBan": "Banimento Permanente",
+          "deleteMessage": "Eliminar Mensagem"
+        },
+        "severity": {
+          "low": "Baixa",
+          "medium": "Média",
+          "high": "Alta",
+          "critical": "Crítica"
+        },
+        "status": {
+          "pending": "Pendente",
+          "resolved": "Resolvido",
+          "dismissed": "Descartado"
+        },
+        "filters": {
+          "title": "Filtros de Conteúdo",
+          "createFilter": "Criar Filtro",
+          "editFilter": "Editar Filtro",
+          "deleteFilter": "Eliminar Filtro",
+          "filterName": "Nome do Filtro",
+          "filterType": "Tipo de Filtro",
+          "patterns": "Padrões",
+          "action": "Ação",
+          "replacement": "Texto de Substituição",
+          "severity": "Severidade",
+          "enabled": "Ativado",
+          "matchCount": "Correspondências",
+          "lastMatch": "Última Correspondência",
+          "filterTypes": {
+            "phone": "Números de Telefone",
+            "email": "Endereços de Email",
+            "url": "URLs",
+            "keyword": "Palavras-chave",
+            "regex": "Expressão Regular"
+          },
+          "filterActions": {
+            "flag": "Sinalizar para Revisão",
+            "block": "Bloquear Mensagem",
+            "replace": "Substituir Conteúdo",
+            "warn": "Avisar Utilizador"
+          }
+        }
+      }
     }
   },
   "messages": {

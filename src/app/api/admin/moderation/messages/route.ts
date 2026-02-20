@@ -17,7 +17,7 @@ import { eq, desc, and, or, sql, inArray, isNull } from "drizzle-orm";
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const user = await db
       .select({ role: users.role })
       .from(users)
-      .where(eq(users.id, parseInt(session.user.id)))
+      .where(eq(users.id, parseInt((session as any).user.id)))
       .limit(1);
 
     if (!user[0] || user[0].role !== "admin") {
@@ -182,11 +182,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const adminId = parseInt(session.user.id);
+    const adminId = parseInt((session as any).user.id);
 
     // Check if user is admin
     const user = await db
