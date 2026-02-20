@@ -17,10 +17,6 @@ const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
     optimizeCss: true,
-    optimizeServerReact: true,
-    turbotrace: {
-      logLevel: 'error'
-    },
   },
 
   // Compiler optimizations
@@ -85,15 +81,6 @@ const nextConfig: NextConfig = {
         ]
       },
       {
-        source: '/((?!api/).*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate'
-          }
-        ]
-      },
-      {
         source: '/_next/static/(.*)',
         headers: [
           {
@@ -121,34 +108,8 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      // Optimize bundle splitting
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          ...config.optimization.splitChunks,
-          cacheGroups: {
-            ...config.optimization.splitChunks?.cacheGroups,
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-            },
-          },
-        },
-      };
-    }
-
-    return config;
-  },
-
   // PoweredByHeader
   poweredByHeader: false,
-
-  // Gzip compression
-  compress: true,
 
   // Generate ETags for static assets
   generateEtags: true,
