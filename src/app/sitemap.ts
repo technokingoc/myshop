@@ -103,8 +103,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Individual product pages - use the store slug as base
     const productPages: MetadataRoute.Sitemap = allProducts.map((p) => {
       const storeSlug = p.storeSlug || p.sellerSlug;
-      // Use updatedAt if available, fallback to createdAt
-      const lastModified = p.updatedAt || p.createdAt;
+      // Use createdAt for last modified
+      const lastModified = p.createdAt;
       // Higher priority for recently updated products
       const isRecent = lastModified && (Date.now() - new Date(lastModified).getTime()) < 7 * 24 * 60 * 60 * 1000;
       
