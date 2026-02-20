@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { customerReviews, catalogItems, orders } from "@/lib/schema";
 import { getDb } from "@/lib/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { getCustomerSession } from "@/lib/customer-session";
 import { notifyNewReview } from "@/lib/notification-service";
 
@@ -95,7 +95,7 @@ export async function POST(
           and(
             eq(customerReviews.customerId, session.customerId),
             eq(customerReviews.catalogItemId, productId),
-            eq(customerReviews.orderId, null) // Only check non-order reviews
+            isNull(customerReviews.orderId) // Only check non-order reviews
           )
         );
 
