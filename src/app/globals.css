@@ -408,3 +408,97 @@ img {
     vertical-align: top !important;
   }
 }
+
+/* RTL Support - Logical CSS Properties */
+.rtl-ready {
+  /* Use logical properties for margin and padding */
+  margin-inline-start: var(--margin-start, 0);
+  margin-inline-end: var(--margin-end, 0);
+  padding-inline-start: var(--padding-start, 0);
+  padding-inline-end: var(--padding-end, 0);
+  
+  /* Use logical properties for borders */
+  border-inline-start: var(--border-start, none);
+  border-inline-end: var(--border-end, none);
+  
+  /* Use logical properties for positioning */
+  inset-inline-start: var(--start, auto);
+  inset-inline-end: var(--end, auto);
+}
+
+/* RTL-aware utility classes */
+.ms-auto { margin-inline-start: auto; }
+.me-auto { margin-inline-end: auto; }
+.ps-0 { padding-inline-start: 0; }
+.pe-0 { padding-inline-end: 0; }
+.ps-1 { padding-inline-start: 0.25rem; }
+.pe-1 { padding-inline-end: 0.25rem; }
+.ps-2 { padding-inline-start: 0.5rem; }
+.pe-2 { padding-inline-end: 0.5rem; }
+.ps-3 { padding-inline-start: 0.75rem; }
+.pe-3 { padding-inline-end: 0.75rem; }
+.ps-4 { padding-inline-start: 1rem; }
+.pe-4 { padding-inline-end: 1rem; }
+.ps-6 { padding-inline-start: 1.5rem; }
+.pe-6 { padding-inline-end: 1.5rem; }
+
+.ms-1 { margin-inline-start: 0.25rem; }
+.me-1 { margin-inline-end: 0.25rem; }
+.ms-2 { margin-inline-start: 0.5rem; }
+.me-2 { margin-inline-end: 0.5rem; }
+.ms-3 { margin-inline-start: 0.75rem; }
+.me-3 { margin-inline-end: 0.75rem; }
+.ms-4 { margin-inline-start: 1rem; }
+.me-4 { margin-inline-end: 1rem; }
+.ms-6 { margin-inline-start: 1.5rem; }
+.me-6 { margin-inline-end: 1.5rem; }
+
+.text-start { text-align: start; }
+.text-end { text-align: end; }
+
+/* RTL-aware flexbox utilities */
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+
+/* Language-specific adjustments */
+[dir="rtl"] {
+  /* Icons and elements that should flip in RTL */
+  .flip-rtl {
+    transform: scaleX(-1);
+  }
+  
+  /* Elements that should NOT flip in RTL */
+  .no-flip {
+    transform: none;
+  }
+}
+
+/* Language switcher styling */
+.language-switch {
+  /* Ensure consistent appearance across locales */
+  font-feature-settings: "tnum" 1;
+}
+
+/* Form elements with logical properties */
+.form-input {
+  padding-inline-start: 0.75rem;
+  padding-inline-end: 0.75rem;
+  text-align: start;
+}
+
+.form-input[dir="rtl"] {
+  /* Specific RTL adjustments if needed */
+}
+
+/* Button spacing with logical properties */
+.btn-with-icon {
+  gap: 0.5rem;
+}
+
+.btn-with-icon .icon-start {
+  margin-inline-end: 0.25rem;
+}
+
+.btn-with-icon .icon-end {
+  margin-inline-start: 0.25rem;
+}

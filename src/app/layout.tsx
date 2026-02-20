@@ -110,7 +110,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           description="Create your online store in minutes. Designed for small businesses and informal sellers in Mozambique and beyond."
           searchAction={`${baseUrl}/stores?q={search_term_string}`}
         />
-        <LanguageProvider>
+        <LanguageProvider
+          initialStoreLanguage="en"
+          initialUserPreference={null}
+        >
           <ToastProvider>
             <AppChrome>{children}</AppChrome>
           </ToastProvider>
