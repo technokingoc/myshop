@@ -6,7 +6,7 @@ import { getSellerFromSession } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const sellerId = await getSellerFromSession(req);
@@ -14,7 +14,8 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const alertId = parseInt(params.id);
+    const { id } = await params;
+    const alertId = parseInt(id);
     if (isNaN(alertId)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 });
     }
