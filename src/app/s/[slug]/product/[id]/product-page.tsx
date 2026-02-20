@@ -392,8 +392,8 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
           {showReviewForm && (
             <div className="mb-6 p-4 border rounded-lg">
               <ReviewForm
-                catalogItemId={product.id}
-                onSubmit={() => {
+                productId={product.id} productName={product.name}
+                onSuccess={() => {
                   setShowReviewForm(false);
                   // Refresh page to show new review
                   window.location.reload();
@@ -404,7 +404,7 @@ export default function ProductPage({ product, seller, store, reviews, slug }: P
           )}
           
           <ProductReviews 
-            catalogItemId={product.id} 
+            productId={product.id} productName={product.name} 
             reviews={reviews}
           />
         </div>

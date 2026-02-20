@@ -15,7 +15,6 @@ import CartSummary from "@/components/cart/cart-summary";
 import { CartManager } from "@/lib/cart";
 import SimpleToast from "@/components/toast-simple";
 import { PlaceholderImage, AvatarPlaceholder } from "@/components/placeholder-image";
-import SafeImg from "@/components/safe-img";
 import { getTheme } from "@/lib/theme-colors";
 import { getTemplate, type StoreTemplate } from "@/lib/store-templates";
 import { StoreJsonLd, ProductJsonLd } from "@/components/json-ld";
