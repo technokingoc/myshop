@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Fix workspace root detection
+  outputFileTracingRoot: __dirname,
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
@@ -16,7 +18,7 @@ const nextConfig: NextConfig = {
 
   // Performance optimizations
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false,
   },
 
   // Compiler optimizations
