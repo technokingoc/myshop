@@ -1,4 +1,5 @@
 import { pgTable, serial, text, varchar, numeric, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // Unified users table (replaces both sellers and customers)
 export const users = pgTable("users", {
