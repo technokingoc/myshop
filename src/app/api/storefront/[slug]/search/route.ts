@@ -34,7 +34,7 @@ export async function GET(
 
     const conditions = [
       eq(catalogItems.sellerId, seller.id),
-      eq(catalogItems.status, "Published"),
+      sql`${catalogItems.status} IN ('active', 'Published')`,
     ];
 
     // Full-text search on name and description
@@ -127,7 +127,7 @@ export async function GET(
       .where(
         and(
           eq(catalogItems.sellerId, seller.id),
-          eq(catalogItems.status, "Published"),
+          sql`${catalogItems.status} IN ('active', 'Published')`,
           sql`${catalogItems.category} IS NOT NULL AND ${catalogItems.category} != ''`
         )
       );
@@ -142,7 +142,7 @@ export async function GET(
       .where(
         and(
           eq(catalogItems.sellerId, seller.id),
-          eq(catalogItems.status, "Published")
+          sql`${catalogItems.status} IN ('active', 'Published')`
         )
       );
 
