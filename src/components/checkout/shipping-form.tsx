@@ -405,7 +405,7 @@ export default function ShippingForm({
                           </div>
                           <div className="text-right">
                             <div className="font-semibold text-gray-900">
-                              {method.cost === 0 ? 'Free' : `$${method.cost.toFixed(2)}`}
+                              {method.cost === 0 ? 'Free' : `MZN ${method.cost.toFixed(2)}`}
                             </div>
                             <div className="flex items-center text-sm text-gray-500">
                               <Clock className="w-3 h-3 mr-1" />
@@ -513,7 +513,7 @@ export default function ShippingForm({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">{selectedMethod.name}</span>
                 <span className="font-medium text-gray-900">
-                  {selectedMethod.cost === 0 ? 'Free' : `$${selectedMethod.cost.toFixed(2)}`}
+                  {selectedMethod.cost === 0 ? 'Free' : `MZN ${selectedMethod.cost.toFixed(2)}`}
                 </span>
               </div>
               <div className="flex items-center text-sm text-gray-500">

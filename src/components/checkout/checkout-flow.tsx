@@ -203,38 +203,41 @@ export default function CheckoutFlow({ lang }: CheckoutFlowProps) {
             </Link>
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-900 mb-8">{dict.checkout.title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 sm:mb-8">{dict.checkout.title}</h1>
           
-          {/* Progress Steps */}
+          {/* Progress Steps — responsive */}
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
-              <div key={step.key} className="flex items-center">
-                <button
-                  onClick={() => goToStep(step.key)}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                    step.key === currentStep 
-                      ? 'bg-green-600 border-green-600 text-white' 
-                      : step.completed 
+              <div key={step.key} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center sm:flex-row sm:items-center gap-1 sm:gap-0">
+                  <button
+                    onClick={() => goToStep(step.key)}
+                    className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-colors shrink-0 ${
+                      step.key === currentStep 
                         ? 'bg-green-600 border-green-600 text-white' 
-                        : 'border-gray-300 text-gray-500 bg-white hover:border-green-600'
-                  }`}
-                  disabled={!step.completed && step.key !== currentStep && !validateCurrentStep()}
-                >
-                  {step.completed ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <span className="text-sm font-medium">{index + 1}</span>
-                  )}
-                </button>
-                
-                <span className={`ml-3 text-sm font-medium ${
-                  step.key === currentStep ? 'text-green-600' : 'text-gray-500'
-                }`}>
-                  {step.label}
-                </span>
+                        : step.completed 
+                          ? 'bg-green-600 border-green-600 text-white' 
+                          : 'border-gray-300 text-gray-500 bg-white hover:border-green-600'
+                    }`}
+                    disabled={!step.completed && step.key !== currentStep && !validateCurrentStep()}
+                  >
+                    {step.completed ? (
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                    ) : (
+                      <span className="text-xs sm:text-sm font-medium">{index + 1}</span>
+                    )}
+                  </button>
+                  
+                  <span className={`text-[10px] sm:text-sm font-medium text-center sm:text-left sm:ml-2 leading-tight ${
+                    step.key === currentStep ? 'text-green-600' : 'text-gray-500'
+                  }`}>
+                    <span className="hidden sm:inline">{step.label}</span>
+                    <span className="sm:hidden">{step.label.split(' ')[0]}</span>
+                  </span>
+                </div>
                 
                 {index < steps.length - 1 && (
-                  <div className={`mx-4 h-px w-16 ${
+                  <div className={`flex-1 mx-1 sm:mx-3 h-px ${
                     step.completed ? 'bg-green-600' : 'bg-gray-300'
                   }`} />
                 )}
@@ -245,7 +248,7 @@ export default function CheckoutFlow({ lang }: CheckoutFlowProps) {
       </div>
       
       {/* Step Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {currentStep === 'review' && (
           <OrderReview 
             lang={lang}
