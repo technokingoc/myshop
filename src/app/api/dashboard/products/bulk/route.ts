@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { catalogItems, productVariants } from "@/lib/schema";
+import { catalogItems, productVariants, bulkJobs, priceHistory, productTags, productTagAssignments } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { getSellerFromSession } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
@@ -51,6 +51,10 @@ export async function POST(request: NextRequest) {
       
       case 'assign_category':
         result = await assignCategory(sellerId, validProductIds, data);
+        break;
+
+      case 'assign_tags':
+        result = await assignTags(sellerId, validProductIds, data);
         break;
         
       case 'publish':
@@ -233,24 +237,121 @@ async function storePriceHistory(
   updates: Array<{ id: number; oldPrice: string; newPrice: string }>,
   changeData: any
 ) {
-  // For now, store in a simple table structure
-  // In a real implementation, you'd have a proper price_history table
-  
-  const historyData = {
+  // Store bulk job
+  await db.insert(bulkJobs).values({
+    id: jobId,
     sellerId,
-    jobId,
-    changeType: changeData.type,
-    changeAction: changeData.action,
-    changeValue: changeData.value,
-    updates,
-    createdAt: new Date().toISOString(),
-    canUndo: true
-  };
+    jobType: 'price_adjustment',
+    status: 'completed',
+    progress: 100,
+    totalItems: updates.length,
+    processedItems: updates.length,
+    payload: {
+      changeType: changeData.type,
+      changeAction: changeData.action,
+      changeValue: changeData.value
+    },
+    results: {
+      updatedProducts: updates.length
+    },
+    completedAt: new Date()
+  });
 
-  // Store in platform settings for now (would be better in a dedicated table)
-  await db.execute(sql`
-    INSERT INTO platform_settings (key, value) 
-    VALUES (${`price_history_${jobId}`}, ${JSON.stringify(historyData)})
-    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-  `);
+  // Store individual price changes
+  for (const update of updates) {
+    await db.insert(priceHistory).values({
+      jobId,
+      sellerId,
+      productId: update.id,
+      oldPrice: update.oldPrice,
+      newPrice: update.newPrice,
+      changeType: changeData.type,
+      changeAction: changeData.action,
+      changeValue: changeData.value.toString(),
+      canUndo: true
+    });
+  }
+}
+
+async function assignTags(sellerId: number, productIds: number[], data: any) {
+  const { tagIds, action } = data; // action can be 'add' or 'replace'
+  
+  if (!tagIds || tagIds.length === 0) {
+    throw new Error("Tags are required");
+  }
+
+  // Verify all tags belong to this seller
+  const sellerTags = await db
+    .select({ id: productTags.id })
+    .from(productTags)
+    .where(and(
+      eq(productTags.sellerId, sellerId),
+      inArray(productTags.id, tagIds)
+    ));
+
+  const validTagIds = sellerTags.map(tag => tag.id);
+  
+  if (validTagIds.length !== tagIds.length) {
+    throw new Error("Some tags don't belong to this seller");
+  }
+
+  if (action === 'replace') {
+    // Remove existing tag assignments for these products
+    await db
+      .delete(productTagAssignments)
+      .where(inArray(productTagAssignments.productId, productIds));
+  }
+
+  // Add new tag assignments (using INSERT ... ON CONFLICT DO NOTHING for add mode)
+  let assignedCount = 0;
+  for (const productId of productIds) {
+    for (const tagId of validTagIds) {
+      try {
+        if (action === 'add') {
+          // Use INSERT with ON CONFLICT DO NOTHING to avoid duplicates
+          await db.execute(sql`
+            INSERT INTO product_tag_assignments (product_id, tag_id) 
+            VALUES (${productId}, ${tagId})
+            ON CONFLICT (product_id, tag_id) DO NOTHING
+          `);
+        } else {
+          // For replace, we already cleared existing assignments
+          await db.insert(productTagAssignments).values({
+            productId,
+            tagId
+          });
+        }
+        assignedCount++;
+      } catch (error) {
+        console.error(`Failed to assign tag ${tagId} to product ${productId}:`, error);
+      }
+    }
+  }
+
+  // Update tag counts
+  await updateTagCounts(validTagIds);
+
+  return {
+    success: true,
+    assigned: assignedCount,
+    action,
+    products: productIds.length,
+    tags: validTagIds.length
+  };
+}
+
+async function updateTagCounts(tagIds: number[]) {
+  for (const tagId of tagIds) {
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(productTagAssignments)
+      .where(eq(productTagAssignments.tagId, tagId));
+
+    const count = countResult[0]?.count || 0;
+
+    await db
+      .update(productTags)
+      .set({ productCount: count })
+      .where(eq(productTags.id, tagId));
+  }
 }

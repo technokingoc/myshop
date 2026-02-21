@@ -1744,3 +1744,57 @@ export const deliveryIssues = pgTable("delivery_issues", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// S65: Bulk operations tracking
+export const bulkJobs = pgTable("bulk_jobs", {
+  id: varchar("id", { length: 128 }).primaryKey(), // UUID
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  jobType: varchar("job_type", { length: 64 }).notNull(), // "price_adjustment", "category_assignment", etc.
+  status: varchar("status", { length: 32 }).notNull().default("pending"), // "pending", "running", "completed", "failed"
+  progress: integer("progress").notNull().default(0), // percentage 0-100
+  totalItems: integer("total_items").notNull().default(0),
+  processedItems: integer("processed_items").notNull().default(0),
+  failedItems: integer("failed_items").notNull().default(0),
+  payload: jsonb("payload").default({}), // operation-specific data
+  results: jsonb("results").default({}), // results and error details
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).default(sql`NOW() + INTERVAL \047 7 days\047`)
+});
+
+// S65: Price change history for undo functionality
+export const priceHistory = pgTable("price_history", {
+  id: serial("id").primaryKey(),
+  jobId: varchar("job_id", { length: 128 }).references(() => bulkJobs.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  productId: integer("product_id").notNull().references(() => catalogItems.id, { onDelete: "cascade" }),
+  oldPrice: numeric("old_price", { precision: 12, scale: 2 }).notNull(),
+  newPrice: numeric("new_price", { precision: 12, scale: 2 }).notNull(),
+  changeType: varchar("change_type", { length: 32 }).notNull(), // "percentage", "fixed", "set"
+  changeAction: varchar("change_action", { length: 32 }).notNull(), // "increase", "decrease", "set"
+  changeValue: varchar("change_value", { length: 32 }).notNull(), // the actual value used (e.g., "10" for 10%)
+  canUndo: boolean("can_undo").notNull().default(true),
+  undoneAt: timestamp("undone_at", { withTimezone: true }),
+  undoneBy: integer("undone_by").references(() => sellers.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+// S65: Product tags for better organization
+export const productTags = pgTable("product_tags", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  color: varchar("color", { length: 32 }).default("#3B82F6"), // hex color for UI
+  sellerId: integer("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  productCount: integer("product_count").default(0), // denormalized count for performance
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+// S65: Many-to-many relationship between products and tags
+export const productTagAssignments = pgTable("product_tag_assignments", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => catalogItems.id, { onDelete: "cascade" }),
+  tagId: integer("tag_id").notNull().references(() => productTags.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});

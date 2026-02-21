@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { platformSettings } from "@/lib/schema";
-import { like, desc } from "drizzle-orm";
+import { priceHistory, bulkJobs, catalogItems } from "@/lib/schema";
+import { eq, desc } from "drizzle-orm";
 import { getSellerFromSession } from "@/lib/auth";
 
 interface PriceHistoryEntry {
@@ -25,53 +25,50 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all price history records for this seller
+    // Get price history with job and product details
     const historyRecords = await db
       .select({
-        key: platformSettings.key,
-        value: platformSettings.value,
-        updatedAt: platformSettings.updatedAt
+        historyId: priceHistory.id,
+        jobId: priceHistory.jobId,
+        productId: priceHistory.productId,
+        productName: catalogItems.name,
+        oldPrice: priceHistory.oldPrice,
+        newPrice: priceHistory.newPrice,
+        changeType: priceHistory.changeType,
+        changeAction: priceHistory.changeAction,
+        changeValue: priceHistory.changeValue,
+        canUndo: priceHistory.canUndo,
+        undoneAt: priceHistory.undoneAt,
+        createdAt: priceHistory.createdAt,
+        jobType: bulkJobs.jobType,
+        jobStatus: bulkJobs.status
       })
-      .from(platformSettings)
-      .where(like(platformSettings.key, 'price_history_%'))
-      .orderBy(desc(platformSettings.updatedAt));
+      .from(priceHistory)
+      .leftJoin(catalogItems, eq(priceHistory.productId, catalogItems.id))
+      .leftJoin(bulkJobs, eq(priceHistory.jobId, bulkJobs.id))
+      .where(eq(priceHistory.sellerId, sellerId))
+      .orderBy(desc(priceHistory.createdAt))
+      .limit(100);
 
-    const historyEntries: PriceHistoryEntry[] = [];
+    const historyEntries: PriceHistoryEntry[] = historyRecords.map(record => {
+      const canUndo = record.canUndo && 
+                      !record.undoneAt && 
+                      isWithinUndoWindow(record.createdAt.toISOString());
 
-    for (const record of historyRecords) {
-      try {
-        const historyData = JSON.parse(record.value || '{}');
-        
-        // Filter records for this seller
-        if (historyData.sellerId === sellerId) {
-          const jobId = historyData.jobId;
-          const createdAt = historyData.createdAt;
-          const canUndo = historyData.canUndo && isWithinUndoWindow(createdAt);
-          
-          // Create entries for each product in this job
-          for (const update of historyData.updates || []) {
-            historyEntries.push({
-              id: `${jobId}_${update.id}`,
-              jobId,
-              productId: update.id,
-              productName: update.productName,
-              oldPrice: update.oldPrice,
-              newPrice: update.newPrice,
-              changeType: historyData.changeType || 'fixed',
-              changeAction: historyData.changeAction || 'set',
-              changeValue: historyData.changeValue || '0',
-              canUndo,
-              createdAt
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing price history data:', error);
-      }
-    }
-
-    // Sort by creation date, newest first
-    historyEntries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return {
+        id: `${record.jobId}_${record.productId}`,
+        jobId: record.jobId || '',
+        productId: record.productId,
+        productName: record.productName || 'Unknown Product',
+        oldPrice: record.oldPrice,
+        newPrice: record.newPrice,
+        changeType: record.changeType as 'percentage' | 'fixed' | 'set',
+        changeAction: record.changeAction,
+        changeValue: record.changeValue,
+        canUndo,
+        createdAt: record.createdAt.toISOString()
+      };
+    });
 
     // Group by job for better display
     const groupedHistory = groupHistoryByJob(historyEntries);

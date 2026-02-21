@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { catalogItems, platformSettings } from "@/lib/schema";
+import { catalogItems, priceHistory, bulkJobs } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { getSellerFromSession } from "@/lib/auth";
 
@@ -17,35 +17,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
     }
 
-    // Get the price history record
-    const historyResult = await db
-      .select({
-        key: platformSettings.key,
-        value: platformSettings.value
-      })
-      .from(platformSettings)
-      .where(eq(platformSettings.key, `price_history_${jobId}`))
-      .limit(1);
+    // Get the price history records for this job
+    const historyRecords = await db
+      .select()
+      .from(priceHistory)
+      .where(and(
+        eq(priceHistory.jobId, jobId),
+        eq(priceHistory.sellerId, sellerId)
+      ));
 
-    if (historyResult.length === 0) {
+    if (historyRecords.length === 0) {
       return NextResponse.json(
         { error: "Price history not found" },
         { status: 404 }
       );
     }
 
-    const historyData = JSON.parse(historyResult[0].value || '{}');
-
-    // Verify this belongs to the current seller
-    if (historyData.sellerId !== sellerId) {
+    // Check if any record is already undone
+    const alreadyUndone = historyRecords.some(record => record.undoneAt);
+    if (alreadyUndone) {
       return NextResponse.json(
-        { error: "Unauthorized to undo this operation" },
-        { status: 403 }
+        { error: "This price change has already been undone" },
+        { status: 400 }
       );
     }
 
-    // Check if within undo window (24 hours)
-    const createdAt = new Date(historyData.createdAt);
+    // Check if within undo window (24 hours) for the first record
+    const firstRecord = historyRecords[0];
+    const createdAt = firstRecord.createdAt;
     const now = new Date();
     const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
     
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!historyData.canUndo) {
+    if (!firstRecord.canUndo) {
       return NextResponse.json(
         { error: "This price change cannot be undone" },
         { status: 400 }
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify all products still belong to this seller
-    const productIds = historyData.updates.map((u: any) => u.id);
+    const productIds = historyRecords.map(record => record.productId);
     const currentProducts = await db
       .select({ id: catalogItems.id })
       .from(catalogItems)
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
       ));
 
     const currentProductIds = currentProducts.map(p => p.id);
-    const missingProducts = productIds.filter((id: number) => !currentProductIds.includes(id));
+    const missingProducts = productIds.filter(id => !currentProductIds.includes(id));
     
     if (missingProducts.length > 0) {
       return NextResponse.json(
@@ -87,19 +86,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Revert prices
-    const revertedCount = await revertPrices(historyData.updates);
+    const revertedCount = await revertPricesFromHistory(historyRecords);
 
-    // Mark as undone
-    await db.execute(sql`
-      UPDATE platform_settings 
-      SET value = ${JSON.stringify({
-        ...historyData,
-        canUndo: false,
-        undoneAt: new Date().toISOString(),
+    // Mark all records as undone
+    await db
+      .update(priceHistory)
+      .set({
+        undoneAt: new Date(),
         undoneBy: sellerId
-      })}
-      WHERE key = ${`price_history_${jobId}`}
-    `);
+      })
+      .where(and(
+        eq(priceHistory.jobId, jobId),
+        eq(priceHistory.sellerId, sellerId)
+      ));
 
     return NextResponse.json({
       success: true,
@@ -116,21 +115,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function revertPrices(updates: Array<{ id: number; oldPrice: string; newPrice: string }>) {
+async function revertPricesFromHistory(historyRecords: any[]) {
   let revertedCount = 0;
 
-  for (const update of updates) {
+  for (const record of historyRecords) {
     try {
       await db
         .update(catalogItems)
         .set({ 
-          price: update.oldPrice
+          price: record.oldPrice
         })
-        .where(eq(catalogItems.id, update.id));
+        .where(eq(catalogItems.id, record.productId));
       
       revertedCount++;
     } catch (error) {
-      console.error(`Failed to revert price for product ${update.id}:`, error);
+      console.error(`Failed to revert price for product ${record.productId}:`, error);
       // Continue with other products even if one fails
     }
   }

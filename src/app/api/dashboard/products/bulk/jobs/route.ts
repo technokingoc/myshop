@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { platformSettings } from "@/lib/schema";
-import { like, desc, sql } from "drizzle-orm";
+import { bulkJobs } from "@/lib/schema";
+import { eq, desc, sql } from "drizzle-orm";
 import { getSellerFromSession } from "@/lib/auth";
+import { v4 as uuidv4 } from "uuid";
 
 interface BulkJob {
   id: string;
@@ -23,46 +24,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all bulk job records for this seller
+    // Get bulk jobs for this seller
     const jobRecords = await db
-      .select({
-        key: platformSettings.key,
-        value: platformSettings.value,
-        updatedAt: platformSettings.updatedAt
-      })
-      .from(platformSettings)
-      .where(like(platformSettings.key, 'bulk_job_%'))
-      .orderBy(desc(platformSettings.updatedAt));
+      .select()
+      .from(bulkJobs)
+      .where(eq(bulkJobs.sellerId, sellerId))
+      .orderBy(desc(bulkJobs.createdAt))
+      .limit(50);
 
-    const jobs: BulkJob[] = [];
-
-    for (const record of jobRecords) {
-      try {
-        const jobData = JSON.parse(record.value || '{}');
-        
-        // Filter jobs for this seller
-        if (jobData.sellerId === sellerId) {
-          jobs.push({
-            id: record.key.replace('bulk_job_', ''),
-            type: jobData.type || 'unknown',
-            status: jobData.status || 'pending',
-            progress: jobData.progress || 0,
-            total: jobData.total || 0,
-            processed: jobData.processed || 0,
-            errors: jobData.errors || [],
-            createdAt: jobData.createdAt || record.updatedAt?.toISOString() || new Date().toISOString()
-          });
-        }
-      } catch (error) {
-        console.error('Error parsing job data:', error);
-      }
-    }
-
-    // Sort by creation date, newest first
-    jobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const jobs: BulkJob[] = jobRecords.map(job => ({
+      id: job.id,
+      type: job.jobType,
+      status: job.status as 'pending' | 'running' | 'completed' | 'failed',
+      progress: job.progress,
+      total: job.totalItems,
+      processed: job.processedItems,
+      errors: (job.results as any)?.errors || [],
+      createdAt: job.createdAt.toISOString()
+    }));
 
     return NextResponse.json({
-      jobs: jobs.slice(0, 50) // Limit to last 50 jobs
+      jobs
     });
 
   } catch (error) {
@@ -82,26 +64,33 @@ export async function POST(request: NextRequest) {
     }
 
     const jobData = await request.json();
-    const jobId = jobData.id || `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const jobId = jobData.id || uuidv4();
 
-    const job: BulkJob = {
+    const newJob = {
       id: jobId,
-      type: jobData.type || 'unknown',
-      status: 'pending',
+      sellerId,
+      jobType: jobData.type || 'unknown',
+      status: 'pending' as const,
       progress: 0,
-      total: jobData.total || 0,
-      processed: 0,
-      errors: [],
-      createdAt: new Date().toISOString(),
-      sellerId
+      totalItems: jobData.total || 0,
+      processedItems: 0,
+      failedItems: 0,
+      payload: jobData.payload || {},
+      results: {}
     };
 
-    // Store job in platform settings
-    await db.execute(sql`
-      INSERT INTO platform_settings (key, value) 
-      VALUES (${`bulk_job_${jobId}`}, ${JSON.stringify(job)})
-      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-    `);
+    const [insertedJob] = await db.insert(bulkJobs).values(newJob).returning();
+
+    const job: BulkJob = {
+      id: insertedJob.id,
+      type: insertedJob.jobType,
+      status: insertedJob.status as 'pending' | 'running' | 'completed' | 'failed',
+      progress: insertedJob.progress,
+      total: insertedJob.totalItems,
+      processed: insertedJob.processedItems,
+      errors: [],
+      createdAt: insertedJob.createdAt.toISOString()
+    };
 
     return NextResponse.json({ job });
 
